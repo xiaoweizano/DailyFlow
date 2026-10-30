@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 42 33% 98%;
+    --foreground: 220 16% 14%;
+    --surface: 0 0% 100%;
+    --surface-muted: 45 20% 95%;
+    --surface-raised: 42 30% 99%;
+    --border: 220 12% 86%;
+    --border-strong: 220 10% 76%;
+    --primary: 172 44% 30%;
+    --primary-hover: 172 44% 25%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 26 58% 48%;
+    --accent-soft: 31 72% 92%;
+    --success: 150 46% 34%;
+    --warning: 35 78% 40%;
+    --danger: 2 64% 48%;
+    --info: 210 62% 44%;
+    --muted-foreground: 220 9% 43%;
+    --focus: 172 54% 38%;
+    --sidebar-width: 232px;
+    --topbar-height: 56px;
+    --statusbar-height: 32px;
+    --radius-control: 6px;
+    --radius-panel: 8px;
+    --font-ui:
+      "Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --font-mono:
+      "SFMono-Regular", "Cascadia Code", "Roboto Mono", "Noto Sans Mono CJK SC", monospace;
+
+    color-scheme: light;
+    font-family: var(--font-ui);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html,
+  body,
+  #root {
+    min-width: 0;
+    min-height: 100%;
+    margin: 0;
+  }
+
+  html {
+    background: hsl(var(--background));
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--focus));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
+  }
+}
+
+@layer components {
+  .df-shell {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) var(--statusbar-height);
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background: hsl(var(--background));
+  }
+
+  .df-sidebar {
+    grid-row: 1 / 3;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border-right: 1px solid hsl(var(--border));
+    background: hsl(var(--surface-muted));
+  }
+
+  .df-main {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    grid-template-rows: var(--topbar-height) minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .df-workspace {
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .df-statusbar {
+    grid-column: 2;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-top: 1px solid hsl(var(--border));
+    background: hsl(var(--surface));
+    padding: 0 16px;
+    color: hsl(var(--muted-foreground));
+    font-size: 12px;
+  }
+
+  .df-page-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(256px, 320px);
+    min-height: 100%;
+  }
+
+  .df-page-main {
+    min-width: 0;
+    padding: clamp(24px, 4vw, 52px);
+  }
+
+  .df-context-panel {
+    min-width: 0;
+    border-left: 1px solid hsl(var(--border));
+    background: hsl(var(--surface-raised));
+    padding: 24px;
+  }
+
+  .df-dot-field {
+    background-image: radial-gradient(hsl(var(--border-strong) / 0.45) 0.7px, transparent 0.7px);
+    background-size: 18px 18px;
+  }
+}
+
+@media (max-width: 1179px) {
+  .df-page-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .df-context-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  :root {
+    --sidebar-width: 76px;
+  }
+
+  .df-nav-copy,
+  .df-brand-copy,
+  .df-nav-section-label,
+  .df-sidebar-footer-copy {
+    display: none;
+  }
+
+  .df-nav-link {
+    justify-content: center;
+    padding-inline: 0;
+  }
+
+  .df-topbar-search {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 719px) {
+  :root {
+    --sidebar-width: 60px;
+    --topbar-height: 52px;
+  }
+
+  .df-page-main {
+    padding: 20px 16px 32px;
+  }
+
+  .df-statusbar {
+    padding-inline: 10px;
+  }
+
+  .df-statusbar-secondary,
+  .df-topbar-divider,
+  .df-topbar-shortcut {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

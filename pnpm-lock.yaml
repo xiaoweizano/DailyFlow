@@ -211,6 +211,10 @@ importers:
       tailwind-merge:
         specifier: ^2.5.0
         version: 2.6.1
+    devDependencies:
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.1(react@19.3.1)
 
 packages:
 

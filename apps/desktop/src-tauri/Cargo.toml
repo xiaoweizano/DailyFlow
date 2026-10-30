@@ -1,0 +1,17 @@
+[package]
+name = "dailyflow-desktop"
+version = "0.1.0"
+description = "DailyFlow desktop application shell"
+authors = ["DailyFlow"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
