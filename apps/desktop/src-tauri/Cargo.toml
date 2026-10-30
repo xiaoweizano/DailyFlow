@@ -10,8 +10,18 @@ rust-version = "1.77.2"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+base64 = "0.22"
+rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
-tauri = { version = "2", features = [] }
+serde_json = "1"
+sha2 = "0.10"
+tauri = { version = "2", features = [], optional = true }
+unicode-normalization = "0.1"
+uuid = { version = "1.8", features = ["v7"] }
+
+[dev-dependencies]
+tempfile = "3"
 
 [features]
-custom-protocol = ["tauri/custom-protocol"]
+desktop-shell = ["dep:tauri"]
+custom-protocol = ["desktop-shell", "tauri/custom-protocol"]

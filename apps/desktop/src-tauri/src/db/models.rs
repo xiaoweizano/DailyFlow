@@ -1,0 +1,272 @@
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum JournalSaveCheckpoint {
+    Autosave,
+    Explicit,
+    Restore,
+    Import,
+}
+
+impl JournalSaveCheckpoint {
+    pub(crate) fn change_source(self) -> JournalChangeSource {
+        match self {
+            Self::Autosave => JournalChangeSource::Autosave,
+            Self::Explicit => JournalChangeSource::Explicit,
+            Self::Restore => JournalChangeSource::Restore,
+            Self::Import => JournalChangeSource::Import,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum JournalChangeSource {
+    Autosave,
+    Explicit,
+    Restore,
+    Import,
+    Migration,
+}
+
+impl JournalChangeSource {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Autosave => "autosave",
+            Self::Explicit => "explicit",
+            Self::Restore => "restore",
+            Self::Import => "import",
+            Self::Migration => "migration",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SearchEntityType {
+    Journal,
+    KnowledgeItem,
+    Task,
+    StructuredBlock,
+}
+
+impl SearchEntityType {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Journal => "journal",
+            Self::KnowledgeItem => "knowledge_item",
+            Self::Task => "task",
+            Self::StructuredBlock => "structured_block",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StructuredBlockInput {
+    pub id: String,
+    pub block_type: String,
+    pub schema_version: i64,
+    pub data: Value,
+    pub order_key: String,
+    pub rendered_text: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchDocumentInput {
+    pub id: String,
+    pub entity_type: SearchEntityType,
+    pub entity_id: String,
+    pub title: String,
+    pub body_text: String,
+    pub structured_text: String,
+    pub tags_text: String,
+    pub normalized_text: String,
+    pub tokenized_text: String,
+    pub local_date: Option<String>,
+    pub updated_at: String,
+    pub content_hash: String,
+    pub index_version: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveJournalSnapshot {
+    pub journal_id: String,
+    pub journal_date: String,
+    pub timezone: String,
+    pub title: String,
+    pub content_json: Value,
+    pub editor_schema_version: i64,
+    pub content_markdown: String,
+    pub content_plain_text: String,
+    pub content_hash: String,
+    pub projection_version: i64,
+    pub excerpt: String,
+    pub expected_revision: Option<i64>,
+    pub checkpoint: JournalSaveCheckpoint,
+    pub tags: Vec<String>,
+    pub structured_blocks: Vec<StructuredBlockInput>,
+    pub search_documents: Vec<SearchDocumentInput>,
+    pub saved_at: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedJournalSnapshot {
+    pub journal_id: String,
+    pub revision: i64,
+    pub saved_at: String,
+    pub content_hash: String,
+    pub version_created: bool,
+    pub search_index_state: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RestoreJournalVersionInput {
+    pub journal_id: String,
+    pub version_revision: i64,
+    pub expected_current_revision: i64,
+    pub restored_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Journal {
+    pub id: String,
+    pub journal_date: String,
+    pub timezone: String,
+    pub title: String,
+    pub content_json: Value,
+    pub content_markdown: String,
+    pub content_plain_text: String,
+    pub editor_schema_version: i64,
+    pub projection_version: i64,
+    pub content_hash: String,
+    pub excerpt: String,
+    pub status: String,
+    pub revision: i64,
+    pub created_at: String,
+    pub updated_at: String,
+    pub deleted_at: Option<String>,
+    pub tags: Vec<String>,
+    pub structured_blocks: Vec<StructuredBlockInput>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JournalSaveState {
+    pub journal_id: String,
+    pub journal_date: String,
+    pub timezone: String,
+    pub revision: i64,
+    pub title: String,
+    pub content_hash: String,
+    pub projection_version: i64,
+    pub tags: Vec<String>,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JournalVersion {
+    pub id: String,
+    pub journal_id: String,
+    pub revision: i64,
+    pub title: String,
+    pub content_json: Value,
+    pub content_markdown: String,
+    pub content_plain_text: String,
+    pub editor_schema_version: i64,
+    pub projection_version: i64,
+    pub content_hash: String,
+    pub change_source: JournalChangeSource,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JournalVersionSummary {
+    pub journal_id: String,
+    pub revision: i64,
+    pub title: String,
+    pub change_source: JournalChangeSource,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JournalSummary {
+    pub id: String,
+    pub journal_date: String,
+    pub title: String,
+    pub excerpt: String,
+    pub revision: i64,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct JournalListQuery {
+    pub from_date: Option<String>,
+    pub to_date: Option<String>,
+    pub status: Option<String>,
+    pub cursor: Option<String>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Page<T> {
+    pub items: Vec<T>,
+    pub next_cursor: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchQuery {
+    pub text: String,
+    pub entity_types: Option<Vec<SearchEntityType>>,
+    pub from_date: Option<String>,
+    pub to_date: Option<String>,
+    pub cursor: Option<String>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchHit {
+    pub entity_type: SearchEntityType,
+    pub entity_id: String,
+    pub title: String,
+    pub snippet: String,
+    pub local_date: Option<String>,
+    pub score: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchResultPage {
+    pub items: Vec<SearchHit>,
+    pub next_cursor: Option<String>,
+    pub index_state: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchRebuildResult {
+    pub indexed_count: i64,
+    pub completed_at: String,
+}

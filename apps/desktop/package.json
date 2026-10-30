@@ -7,8 +7,8 @@
     "dev": "vite --port 1420",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:dev": "tauri dev --features desktop-shell",
+    "tauri:build": "tauri build --features desktop-shell"
   },
   "dependencies": {
     "@dailyflow/features": "workspace:*",
