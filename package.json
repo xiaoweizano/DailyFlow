@@ -1,0 +1,44 @@
+{
+  "name": "dailyflow",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.0.0 <25",
+    "pnpm": ">=11.25.0 <12"
+  },
+  "scripts": {
+    "dev:web": "pnpm --filter @dailyflow/web dev",
+    "dev:desktop": "pnpm --filter @dailyflow/desktop dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
+    "typecheck": "turbo run typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "format:check": "prettier --check .",
+    "depcruise": "depcruise apps packages --config .dependency-cruiser.cjs",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.50.0",
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.0",
+    "dependency-cruiser": "^16.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^6.0.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "postcss": "^8.4.0",
+    "prettier": "^3.0.0",
+    "tailwindcss": "^3.4.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.0.0",
+    "vite": "^7.0.0",
+    "vitest": "^3.0.0"
+  }
+}

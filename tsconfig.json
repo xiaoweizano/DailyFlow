@@ -1,0 +1,16 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./apps/desktop" },
+    { "path": "./apps/web" },
+    { "path": "./packages/domain" },
+    { "path": "./packages/application" },
+    { "path": "./packages/infrastructure" },
+    { "path": "./packages/editor" },
+    { "path": "./packages/ui" },
+    { "path": "./packages/features" },
+    { "path": "./packages/shared" },
+    { "path": "./packages/sync-contracts" },
+    { "path": "./packages/ai" }
+  ]
+}

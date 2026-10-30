@@ -1,0 +1,24 @@
+{
+  "name": "@dailyflow/features",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dailyflow/application": "workspace:*",
+    "@dailyflow/domain": "workspace:*",
+    "@dailyflow/editor": "workspace:*",
+    "@dailyflow/shared": "workspace:*",
+    "@dailyflow/ui": "workspace:*",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-router-dom": "^7.0.0",
+    "zustand": "^5.0.0"
+  }
+}

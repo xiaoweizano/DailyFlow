@@ -1,0 +1,21 @@
+{
+  "name": "@dailyflow/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles/globals.css": "./src/styles/globals.css"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.0",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "tailwind-merge": "^2.5.0"
+  }
+}

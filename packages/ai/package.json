@@ -1,0 +1,17 @@
+{
+  "name": "@dailyflow/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dailyflow/application": "workspace:*",
+    "@dailyflow/shared": "workspace:*"
+  }
+}

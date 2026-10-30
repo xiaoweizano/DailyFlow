@@ -1,0 +1,20 @@
+{
+  "name": "@dailyflow/infrastructure",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./desktop": "./src/desktop/index.ts",
+    "./web": "./src/web/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dailyflow/application": "workspace:*",
+    "@dailyflow/domain": "workspace:*",
+    "@dailyflow/shared": "workspace:*"
+  }
+}
