@@ -20,7 +20,7 @@ module.exports = {
       severity: "error",
       from: { path: "^packages/domain/src/" },
       to: {
-        path: "^packages/(?!shared/)|node_modules/(react|react-dom|@tauri-apps|dexie|better-sqlite3|sqlite3)",
+        path: "^packages/(?!domain/|shared/)|node_modules/(react|react-dom|@tauri-apps|dexie|better-sqlite3|sqlite3)",
       },
     },
     {
