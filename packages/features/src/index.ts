@@ -1,4 +1,7 @@
 export { AppShell, type AppShellProps } from "./app-shell.js";
+export { type AppRuntimeServices } from "./app-services-context.js";
+export { useAppServices } from "./app-services-hooks.js";
+export { AppServicesProvider, type AppServicesProviderProps } from "./app-services-provider.js";
 export {
   appModules,
   mainNavigation,

@@ -74,6 +74,9 @@ importers:
       '@dailyflow/features':
         specifier: workspace:*
         version: link:../../packages/features
+      '@dailyflow/infrastructure':
+        specifier: workspace:*
+        version: link:../../packages/infrastructure
       '@dailyflow/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -182,6 +185,9 @@ importers:
       '@dailyflow/shared':
         specifier: workspace:*
         version: link:../shared
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
 
   packages/shared: {}
 

@@ -1,6 +1,7 @@
 import { createElement } from "react";
 import type { RouteObject } from "react-router-dom";
 
+import { AppServicesProvider } from "./app-services-provider.js";
 import { AppShell } from "./app-shell.js";
 import type { AppRouteOptions } from "./app-modules.js";
 import { ModulePage, NotFoundPage } from "./module-page.js";
@@ -15,10 +16,19 @@ export {
 } from "./app-modules.js";
 
 export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
+  const { services, ...shellOptions } = options;
+  const shell =
+    services === undefined
+      ? createElement(AppShell, shellOptions)
+      : createElement(AppServicesProvider, {
+          services,
+          children: createElement(AppShell, shellOptions),
+        });
+
   return [
     {
       path: "/",
-      element: createElement(AppShell, options),
+      element: shell,
       children: [
         {
           index: true,

@@ -1,3 +1,5 @@
+import type { AppRuntimeServices } from "./app-services-context.js";
+
 export type AppModuleId =
   "dashboard" | "journal" | "timeline" | "knowledge" | "tasks" | "search" | "analytics" | "data";
 
@@ -13,6 +15,7 @@ export interface AppRouteOptions {
   platform: "desktop" | "web";
   storageLabel: string;
   version: string;
+  services?: AppRuntimeServices;
 }
 
 export const appModules = [

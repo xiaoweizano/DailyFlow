@@ -18,6 +18,7 @@
     "allowJs": false,
     "baseUrl": ".",
     "paths": {
+      "@dailyflow/infrastructure/*": ["packages/infrastructure/src/*/index.ts"],
       "@dailyflow/*": ["packages/*/src/index.ts"]
     }
   }

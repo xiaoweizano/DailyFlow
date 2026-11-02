@@ -15,6 +15,7 @@
   "dependencies": {
     "@dailyflow/application": "workspace:*",
     "@dailyflow/domain": "workspace:*",
-    "@dailyflow/shared": "workspace:*"
+    "@dailyflow/shared": "workspace:*",
+    "zod": "^3.24.0"
   }
 }
