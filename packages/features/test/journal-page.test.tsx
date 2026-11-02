@@ -50,6 +50,7 @@ function createServices() {
           searchIndexState: "ready" as const,
         });
       }),
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
       listVersions: vi.fn(async () => ({ items: [], nextCursor: null })),
       getVersion: vi.fn(async () => null),
       restore: vi.fn(),

@@ -12,6 +12,16 @@ export {
   type CreateAppRuntimeServicesOptions,
 } from "./app-runtime-services.js";
 export {
+  ActivityHeatmap,
+  type ActivityHeatmapProps,
+} from "./dashboard/activity-heatmap.js";
+export { DashboardPage, type DashboardPageProps } from "./dashboard/dashboard-page.js";
+export {
+  TodayJournalPanel,
+  type TodayJournalPanelProps,
+} from "./dashboard/today-journal-panel.js";
+export { TodayTasksPanel } from "./dashboard/today-tasks-panel.js";
+export {
   appModules,
   mainNavigation,
   routePaths,
@@ -34,4 +44,5 @@ export {
   type AttachmentUploadPlaceholderProps,
 } from "./journal/attachment-node-view.js";
 export { JournalEditor, type JournalEditorProps } from "./journal/journal-editor.js";
+export { JournalList, type JournalListProps } from "./journal/journal-list.js";
 export { JournalPage, type JournalPageProps } from "./journal/journal-page.js";

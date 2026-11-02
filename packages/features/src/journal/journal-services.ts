@@ -4,6 +4,8 @@ import {
   saveJournal,
   type ContentProjector,
   type JournalRepository,
+  type JournalListQuery,
+  type JournalSummary,
   type JournalVersionSummary,
   type JournalLookup,
   type Page,
@@ -23,6 +25,7 @@ export interface JournalRuntimeDependencies {
 export interface JournalRuntimeServices {
   readonly get: (input: unknown) => Promise<Result<JournalLookup, AppError>>;
   readonly save: (input: unknown) => Promise<Result<SavedJournalSnapshot, AppError>>;
+  readonly list: (query: JournalListQuery) => Promise<Page<JournalSummary>>;
   readonly listVersions: (
     journalId: EntityId,
     page: PageRequest,
@@ -53,6 +56,7 @@ export function createJournalRuntimeServices(
         },
         input,
       ),
+    list: (query) => dependencies.journals.listSummaries(query),
     listVersions: (journalId, page) => dependencies.journals.listVersions(journalId, page),
     getVersion: (journalId, revision) => dependencies.journals.getVersion(journalId, revision),
     restore: (input) =>

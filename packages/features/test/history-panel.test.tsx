@@ -36,6 +36,7 @@ function createServices() {
     journal: {
       get: vi.fn(),
       save: vi.fn(),
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
       listVersions: vi.fn(async (): Promise<Page<JournalVersionSummary>> => ({
         items: firstPage,
         nextCursor: "versions-2",

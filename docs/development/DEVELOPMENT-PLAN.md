@@ -605,31 +605,31 @@ docs/
 - Create: `packages/features/test/dashboard.test.tsx`
 - Create: `packages/features/test/journal-routing.test.tsx`
 
-- [ ] **Step 1: 写页面状态测试**
+- [x] **Step 1: 写页面状态测试**
 
   覆盖空数据库、已有今日日志、保存中、保存失败、无待办和最近知识区域。
 
-- [ ] **Step 2: 实现 Dashboard**
+- [x] **Step 2: 实现 Dashboard**
 
   今日日志和待办优先；不使用 Hero 或装饰性大卡片；所有摘要可跳转详情。
 
-- [ ] **Step 3: 实现 Journal 页面**
+- [x] **Step 3: 实现 Journal 页面**
 
   日期前后切换、历史补录、标签、附件和历史面板；主操作和保存状态固定可见。
 
-- [ ] **Step 4: 添加加载/错误/空状态**
+- [x] **Step 4: 添加加载/错误/空状态**
 
   加载骨架不影响布局；失败提供重试，不只显示 Toast。
 
-- [ ] **Step 5: 注册 Dashboard 与 Journal 路由**
+- [x] **Step 5: 注册 Dashboard 与 Journal 路由**
 
   在 `packages/features/src/routes.ts` 注册 `/` 和 `/journal/:date`，并由 `apps/desktop/src/routes/router.tsx`、`apps/web/src/routes/router.tsx` 消费同一份定义。测试桌面 HashRouter 与 Web BrowserRouter 都能进入今日日志和历史日期，未知日期显示可恢复错误。
 
-- [ ] **Step 6: 运行**
+- [x] **Step 6: 运行**
 
   Run: `pnpm --filter @dailyflow/features test && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build`
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
   Run: `git add packages/features apps/web apps/desktop && git commit -m "feat: add dashboard and journal experience"`
 

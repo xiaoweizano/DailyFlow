@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router-dom";
 import { AppServicesProvider } from "./app-services-provider.js";
 import { AppShell } from "./app-shell.js";
 import type { AppRouteOptions } from "./app-modules.js";
+import { DashboardPage } from "./dashboard/dashboard-page.js";
 import { JournalPage } from "./journal/journal-page.js";
 import { ModulePage, NotFoundPage } from "./module-page.js";
 
@@ -33,7 +34,7 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
       children: [
         {
           index: true,
-          element: createElement(ModulePage, { moduleId: "dashboard" }),
+          element: createElement(DashboardPage),
         },
         {
           path: "journal/:date",
