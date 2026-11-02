@@ -566,27 +566,27 @@ docs/
 - Create: `packages/editor/test/attachment-node.test.ts`
 - Create: `apps/desktop/src-tauri/tests/attachment_store.rs`
 
-- [ ] **Step 1: 写附件失败测试**
+- [x] **Step 1: 写附件失败测试**
 
   覆盖 hash 去重、路径穿越拒绝、删除 owner 后 orphan 标记、MIME 白名单、Web Blob 事务失败回滚。
 
-- [ ] **Step 2: 实现桌面附件服务**
+- [x] **Step 2: 实现桌面附件服务**
 
   Rust 写入应用数据目录的临时文件，校验 hash 后 rename；数据库中只保存逻辑相对路径。
 
-- [ ] **Step 3: 实现 Web 附件服务**
+- [x] **Step 3: 实现 Web 附件服务**
 
   Blob 与 metadata 在同一 Dexie transaction 中写入；`objectURL` 在组件卸载时 revoke。
 
-- [ ] **Step 4: 接入编辑器**
+- [x] **Step 4: 接入编辑器**
 
   附件节点只使用 attachment ID；上传失败显示占位和重试，不写入正式 link。
 
-- [ ] **Step 5: 运行**
+- [x] **Step 5: 运行**
 
   Run: `pnpm test && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add . && git commit -m "feat: add attachment storage across platforms"`
 
