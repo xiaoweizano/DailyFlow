@@ -86,10 +86,7 @@ describe("Dexie search index maintenance", () => {
     await expect(database.meta.get("searchIndexState")).resolves.toMatchObject({ value: "ready" });
     expect((await search.query({ text: "release", limit: 20 })).items).toHaveLength(2);
     expect(
-      await database.searchTermPostings
-        .where("docId")
-        .equals(CONTRACT_IDS.knowledge)
-        .count(),
+      await database.searchTermPostings.where("docId").equals(CONTRACT_IDS.knowledge).count(),
     ).toBe(0);
   });
 });

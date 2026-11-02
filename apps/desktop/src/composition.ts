@@ -1,3 +1,6 @@
-import { createDesktopServices, type DesktopServices } from "@dailyflow/infrastructure/desktop";
+import { createAppRuntimeServices, type AppRuntimeServices } from "@dailyflow/features";
+import { createDesktopServices } from "@dailyflow/infrastructure/desktop";
 
-export const desktopServices: DesktopServices = createDesktopServices();
+const storageServices = createDesktopServices();
+
+export const desktopServices: AppRuntimeServices = createAppRuntimeServices(storageServices);

@@ -9,7 +9,6 @@ import {
   setJournalContentHash,
   type Clock,
   type ContentHash,
-  type ContentDocument,
   type EntityId,
   type IdGenerator,
   type Journal,
@@ -22,6 +21,7 @@ import {
 
 import type {
   ContentProjector,
+  ContentProjectorInput,
   ProjectedContent,
   SaveJournalSnapshot,
   SavedJournalSnapshot,
@@ -69,8 +69,7 @@ export class SequenceIds implements IdGenerator {
 }
 
 export class FakeProjector implements ContentProjector {
-  readonly inputs: Array<{ readonly content: ContentDocument; readonly tags: readonly string[] }> =
-    [];
+  readonly inputs: ContentProjectorInput[] = [];
   result: ProjectedContent = {
     contentMarkdown: "Deploy notes",
     contentPlainText: "Deploy notes",
@@ -80,10 +79,7 @@ export class FakeProjector implements ContentProjector {
     searchDocuments: [],
   };
 
-  async project(input: {
-    readonly content: ContentDocument;
-    readonly tags: readonly string[];
-  }): Promise<ProjectedContent> {
+  async project(input: ContentProjectorInput): Promise<ProjectedContent> {
     this.inputs.push(input);
     return this.result;
   }

@@ -1,3 +1,6 @@
-import { createWebServices, type WebServices } from "@dailyflow/infrastructure/web";
+import { createAppRuntimeServices, type AppRuntimeServices } from "@dailyflow/features";
+import { createWebServices } from "@dailyflow/infrastructure/web";
 
-export const webServices: WebServices = createWebServices();
+const storageServices = createWebServices();
+
+export const webServices: AppRuntimeServices = createAppRuntimeServices(storageServices);

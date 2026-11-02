@@ -51,6 +51,13 @@ describe("saveJournal", () => {
     expect(journals.savedSnapshots).toHaveLength(1);
     expect(projector.inputs).toHaveLength(1);
     expect(projector.inputs[0]?.tags).toEqual(["Work", "work"]);
+    expect(projector.inputs[0]?.searchContext).toMatchObject({
+      ownerEntityId: JOURNAL_ID,
+      entityType: "journal",
+      title: "Deploy notes",
+      localDate: JOURNAL_DATE,
+      updatedAt: NOW_TIMESTAMP,
+    });
     expect(journals.savedSnapshots[0]).toMatchObject({
       journalId: JOURNAL_ID,
       contentHash: PROJECTED_HASH,

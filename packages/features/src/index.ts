@@ -3,6 +3,10 @@ export { type AppRuntimeServices } from "./app-services-context.js";
 export { useAppServices } from "./app-services-hooks.js";
 export { AppServicesProvider, type AppServicesProviderProps } from "./app-services-provider.js";
 export {
+  createAppRuntimeServices,
+  type CreateAppRuntimeServicesOptions,
+} from "./app-runtime-services.js";
+export {
   appModules,
   mainNavigation,
   routePaths,
@@ -12,3 +16,11 @@ export {
 } from "./app-modules.js";
 export { ModulePage, NotFoundPage } from "./module-page.js";
 export { createAppRoutes } from "./routes.js";
+export {
+  createSaveLifecycle,
+  type SaveFlushHandler,
+  type SaveLifecycle,
+} from "./lifecycle/save-lifecycle.js";
+export { HistoryPanel, type HistoryPanelProps } from "./journal/history-panel.js";
+export { JournalEditor, type JournalEditorProps } from "./journal/journal-editor.js";
+export { JournalPage, type JournalPageProps } from "./journal/journal-page.js";

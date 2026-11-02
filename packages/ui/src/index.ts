@@ -9,6 +9,11 @@ export {
   DialogTitle,
   DialogTrigger,
 } from "./components/dialog.js";
+export {
+  HistoryList,
+  type HistoryListItem,
+  type HistoryListProps,
+} from "./components/history-list.js";
 export { IconButton, type IconButtonProps } from "./components/icon-button.js";
 export { Input, type InputProps } from "./components/input.js";
 export { SaveStatus, type SaveState } from "./components/save-status.js";

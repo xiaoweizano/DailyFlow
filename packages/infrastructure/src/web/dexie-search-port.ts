@@ -13,17 +13,10 @@ import { parseUtcTimestamp, type Clock, type EntityId } from "@dailyflow/domain"
 
 import { decodeCursor, encodeCursor, resolvePageSize } from "../memory/pagination-cursor.js";
 import type { DailyFlowDb } from "./db.js";
-import type {
-  SearchDocumentRow,
-  SearchPostingField,
-  SearchTermPostingRow,
-} from "./schema.js";
+import type { SearchDocumentRow, SearchPostingField, SearchTermPostingRow } from "./schema.js";
 
 export interface DexieSearchIndexWriter {
-  replaceDocuments(
-    ownerEntityId: EntityId,
-    documents: readonly SearchDocument[],
-  ): Promise<void>;
+  replaceDocuments(ownerEntityId: EntityId, documents: readonly SearchDocument[]): Promise<void>;
   removeEntity(ownerEntityId: EntityId): Promise<void>;
 }
 
@@ -110,10 +103,7 @@ function collectPostings(document: SearchDocumentRow): SearchTermPostingRow[] {
   }));
 }
 
-function toSearchDocumentRow(
-  ownerEntityId: EntityId,
-  document: SearchDocument,
-): SearchDocumentRow {
+function toSearchDocumentRow(ownerEntityId: EntityId, document: SearchDocument): SearchDocumentRow {
   return {
     id: document.id,
     ownerEntityId,
@@ -165,10 +155,7 @@ export async function replaceSearchDocumentsInTransaction(
     }
   }
 
-  const oldRows = await database.searchDocs
-    .where("ownerEntityId")
-    .equals(ownerEntityId)
-    .toArray();
+  const oldRows = await database.searchDocs.where("ownerEntityId").equals(ownerEntityId).toArray();
   const oldDocumentIds = oldRows.map((row) => row.id);
   if (oldDocumentIds.length > 0) {
     await database.searchTermPostings.where("docId").anyOf(oldDocumentIds).delete();
@@ -292,7 +279,8 @@ export class DexieSearchPort implements SearchPort, DexieSearchIndexWriter {
     await this.dependencies.database.transaction(
       "rw",
       [this.dependencies.database.searchDocs, this.dependencies.database.searchTermPostings],
-      async () => replaceSearchDocumentsInTransaction(this.dependencies.database, ownerEntityId, documents),
+      async () =>
+        replaceSearchDocumentsInTransaction(this.dependencies.database, ownerEntityId, documents),
     );
   }
 

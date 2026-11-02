@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router-dom";
 import { AppServicesProvider } from "./app-services-provider.js";
 import { AppShell } from "./app-shell.js";
 import type { AppRouteOptions } from "./app-modules.js";
+import { JournalPage } from "./journal/journal-page.js";
 import { ModulePage, NotFoundPage } from "./module-page.js";
 
 export {
@@ -36,7 +37,7 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "journal/:date",
-          element: createElement(ModulePage, { moduleId: "journal" }),
+          element: createElement(JournalPage),
         },
         {
           path: "timeline",

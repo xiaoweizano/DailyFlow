@@ -525,31 +525,31 @@ docs/
 - Create: `packages/features/test/save-coordinator.test.ts`
 - Create: `packages/features/test/journal-page.test.tsx`
 
-- [ ] **Step 1: 写保存协调器失败测试**
+- [x] **Step 1: 写保存协调器失败测试**
 
   覆盖 800ms 防抖、单飞保存、保存中再次变更、成功清除 dirty、冲突保留草稿、失败保留编辑内容。
 
-- [ ] **Step 2: 集成 Tiptap**
+- [x] **Step 2: 集成 Tiptap**
 
   Editor 实例保存在组件生命周期；Zustand 只保存保存状态、revision、错误和 UI 面板状态。
 
-- [ ] **Step 3: 接入 `SaveJournal`**
+- [x] **Step 3: 接入 `SaveJournal`**
 
   保存前生成 JSON、Markdown、纯文本和结构化投影，再调用 Application 用例。
 
-- [ ] **Step 4: 实现历史恢复**
+- [x] **Step 4: 实现历史恢复**
 
   历史列表分页读取；恢复生成新 revision；当前正文不删除。
 
-- [ ] **Step 5: 实现关闭/隐藏保存**
+- [x] **Step 5: 实现关闭/隐藏保存**
 
   桌面接入 `onCloseRequested`；Web 接入 `visibilitychange`、`pagehide` 和页面卸载提示。
 
-- [ ] **Step 6: 运行**
+- [x] **Step 6: 运行**
 
   Run: `pnpm --filter @dailyflow/features test && pnpm --filter @dailyflow/web build`
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
   Run: `git add packages/features packages/ui && git commit -m "feat: add journal editor and autosave"`
 

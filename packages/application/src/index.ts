@@ -18,6 +18,7 @@ export type {
   JournalVersionSummary,
   ProjectedContent,
   RestoreJournalVersionInput,
+  SearchProjectionContext,
   SavedJournalSnapshot,
   SaveJournalSnapshot,
   StructuredBlockProjection,

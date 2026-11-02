@@ -106,9 +106,17 @@ export async function saveJournal(
 
     const content = createContentDocument(input.editorSchemaVersion, input.contentJson);
     const tags = projectTags(input.tags);
+    const savedAt = nowUtc(dependencies.clock);
     const projected = await dependencies.projector.project({
       content,
       tags: tags.projectorTags,
+      searchContext: {
+        ownerEntityId: input.journalId,
+        entityType: "journal",
+        title: input.title,
+        localDate: input.journalDate,
+        updatedAt: savedAt,
+      },
     });
 
     if (
@@ -147,7 +155,7 @@ export async function saveJournal(
       tags: tags.normalizedTags,
       structuredBlocks: projected.structuredBlocks,
       searchDocuments: projected.searchDocuments,
-      savedAt: nowUtc(dependencies.clock),
+      savedAt,
     };
 
     return ok(await dependencies.journals.saveSnapshot(snapshot));

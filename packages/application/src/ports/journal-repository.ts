@@ -12,6 +12,7 @@ import type {
 
 import type { Page, PageRequest } from "./pagination.js";
 import type { SearchDocument } from "./search-port.js";
+import type { SearchEntityType } from "./search-port.js";
 
 export type JournalSaveCheckpoint = "autosave" | "explicit" | "restore" | "import";
 
@@ -110,6 +111,15 @@ export interface JournalRepository {
 export interface ContentProjectorInput {
   readonly content: ContentDocument;
   readonly tags: readonly string[];
+  readonly searchContext?: SearchProjectionContext;
+}
+
+export interface SearchProjectionContext {
+  readonly ownerEntityId: EntityId;
+  readonly entityType: Exclude<SearchEntityType, "structured_block">;
+  readonly title: string;
+  readonly localDate: LocalDate | null;
+  readonly updatedAt: UtcTimestamp;
 }
 
 export interface ProjectedContent {

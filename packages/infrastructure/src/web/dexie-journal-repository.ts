@@ -40,12 +40,7 @@ import {
   removeSearchDocumentsInTransaction,
   type DexieSearchIndexWriter,
 } from "./dexie-search-port.js";
-import type {
-  JournalRow,
-  JournalVersionRow,
-  StructuredBlockRow,
-  TagRow,
-} from "./schema.js";
+import type { JournalRow, JournalVersionRow, StructuredBlockRow, TagRow } from "./schema.js";
 
 interface JournalCursor {
   readonly journalDate: string;
@@ -134,10 +129,7 @@ function toStructuredBlockRows(
   }));
 }
 
-function toContentDocument(
-  contentJson: string,
-  editorSchemaVersion: number,
-): ContentDocument {
+function toContentDocument(contentJson: string, editorSchemaVersion: number): ContentDocument {
   return createContentDocument(editorSchemaVersion, parseJson<JsonObject>(contentJson));
 }
 
@@ -245,19 +237,15 @@ async function replaceTags(
     }
     normalizedNames.add(parsed.normalized);
 
-    const existing = await database.tags
-      .where("nameNormalized")
-      .equals(parsed.normalized)
-      .first();
-    const tag: TagRow =
-      existing ?? {
-        id: parseEntityId(ids.nextId()),
-        name: parsed.value,
-        nameNormalized: parsed.normalized,
-        color: null,
-        createdAt: savedAt,
-        updatedAt: savedAt,
-      };
+    const existing = await database.tags.where("nameNormalized").equals(parsed.normalized).first();
+    const tag: TagRow = existing ?? {
+      id: parseEntityId(ids.nextId()),
+      name: parsed.value,
+      nameNormalized: parsed.normalized,
+      color: null,
+      createdAt: savedAt,
+      updatedAt: savedAt,
+    };
     if (existing === undefined) {
       await database.tags.put(tag);
     }
@@ -330,9 +318,7 @@ export class DexieJournalRepository implements JournalRepository {
     const row = await this.database.journals
       .where("journalDate")
       .equals(date)
-      .filter(
-        (candidate) => candidate.deletedAt === null && candidate.status === "active",
-      )
+      .filter((candidate) => candidate.deletedAt === null && candidate.status === "active")
       .first();
     return row === undefined ? null : toJournal(this.database, row);
   }
@@ -424,13 +410,7 @@ export class DexieJournalRepository implements JournalRepository {
           input.structuredBlocks,
           input.savedAt,
         );
-        await replaceTags(
-          this.database,
-          input.journalId,
-          input.tags,
-          input.savedAt,
-          this.ids,
-        );
+        await replaceTags(this.database, input.journalId, input.tags, input.savedAt, this.ids);
         await replaceSearchDocumentsInTransaction(
           this.database,
           input.journalId,
@@ -439,12 +419,7 @@ export class DexieJournalRepository implements JournalRepository {
 
         if (versionCreated) {
           await this.database.journalVersions.put(
-            createVersionRow(
-              input,
-              revision,
-              parseEntityId(this.ids.nextId()),
-              input.checkpoint,
-            ),
+            createVersionRow(input, revision, parseEntityId(this.ids.nextId()), input.checkpoint),
           );
         }
 
@@ -460,13 +435,12 @@ export class DexieJournalRepository implements JournalRepository {
     );
   }
 
-  async listVersions(
-    journalId: EntityId,
-    page: PageRequest,
-  ): Promise<Page<JournalVersionSummary>> {
+  async listVersions(journalId: EntityId, page: PageRequest): Promise<Page<JournalVersionSummary>> {
     const limit = resolvePageSize(page.limit);
     const cursor = page.cursor === undefined ? null : decodeCursor<VersionCursor>(page.cursor);
-    const rows = (await this.database.journalVersions.where("journalId").equals(journalId).toArray())
+    const rows = (
+      await this.database.journalVersions.where("journalId").equals(journalId).toArray()
+    )
       .filter((row) => cursor === null || row.revision < cursor.revision)
       .sort((left, right) => right.revision - left.revision);
     const selected = rows.slice(0, limit + 1);
@@ -525,8 +499,9 @@ export class DexieJournalRepository implements JournalRepository {
         }
 
         const tags = parseJson<string[]>(target.tagsJson);
-        const structuredBlocks =
-          parseJson<StructuredBlockProjection[]>(target.structuredBlocksJson);
+        const structuredBlocks = parseJson<StructuredBlockProjection[]>(
+          target.structuredBlocksJson,
+        );
         const searchDocuments = parseJson<SearchDocument[]>(target.searchDocumentsJson);
         const revision = current.revision + 1;
         const restored: JournalRow = {
@@ -562,18 +537,8 @@ export class DexieJournalRepository implements JournalRepository {
           structuredBlocks,
           input.restoredAt,
         );
-        await replaceTags(
-          this.database,
-          input.journalId,
-          tags,
-          input.restoredAt,
-          this.ids,
-        );
-        await replaceSearchDocumentsInTransaction(
-          this.database,
-          input.journalId,
-          searchDocuments,
-        );
+        await replaceTags(this.database, input.journalId, tags, input.restoredAt, this.ids);
+        await replaceSearchDocumentsInTransaction(this.database, input.journalId, searchDocuments);
         await this.database.journalVersions.put(restoredVersion);
 
         return {
@@ -591,11 +556,7 @@ export class DexieJournalRepository implements JournalRepository {
   async softDelete(journalId: EntityId, expectedRevision: number): Promise<void> {
     await this.database.transaction(
       "rw",
-      [
-        this.database.journals,
-        this.database.searchDocs,
-        this.database.searchTermPostings,
-      ],
+      [this.database.journals, this.database.searchDocs, this.database.searchTermPostings],
       async () => {
         const current = await this.database.journals.get(journalId);
         if (current === undefined || current.deletedAt !== null) {
