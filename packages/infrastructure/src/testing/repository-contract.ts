@@ -15,8 +15,12 @@ import {
   type Task,
 } from "@dailyflow/domain";
 import type {
+  JournalSaveState,
   JournalRepository,
+  JournalVersionSummary,
   KnowledgeRepository,
+  SavedJournalSnapshot,
+  SaveJournalSnapshot,
   SearchDocument,
   SearchPort,
   TaskRepository,
@@ -85,6 +89,37 @@ export interface TaskRepositoryHarness {
 export interface SearchPortHarness {
   readonly search: SearchPort & SearchIndexWriter;
   readonly clock: MutableClock;
+}
+
+export interface JournalParityFixture {
+  readonly initialSnapshot: SaveJournalSnapshot;
+  readonly updateSnapshot: SaveJournalSnapshot;
+  readonly expected: {
+    readonly initialSave: SavedJournalSnapshot;
+    readonly updateSave: SavedJournalSnapshot;
+    readonly saveStateAfterUpdate: JournalSaveState;
+    readonly versions: readonly JournalVersionSummary[];
+    readonly blockSearch: {
+      readonly text: string;
+      readonly expected: readonly {
+        readonly entityType: SearchDocument["entityType"];
+        readonly entityId: EntityId;
+        readonly localDate: LocalDate;
+      }[];
+    };
+    readonly conflict: {
+      readonly expectedRevision: number;
+      readonly actualRevision: number;
+      readonly code: "CONFLICT";
+    };
+    readonly softDeleteAt: string;
+  };
+  readonly enums: {
+    readonly checkpoint: readonly string[];
+    readonly changeSource: readonly string[];
+    readonly searchEntityType: readonly string[];
+    readonly storageErrorCode: readonly string[];
+  };
 }
 
 function contentDocument(text: string) {
@@ -444,6 +479,69 @@ export function describeJournalRepositoryContract(
       expect((await search.query({ text: "no block", limit: 20 })).items[0]?.entityType).toBe(
         "journal",
       );
+    });
+  });
+}
+
+export function describeJournalRepositoryParityContract(
+  name: string,
+  createHarness: () => JournalRepositoryHarness,
+  fixture: JournalParityFixture,
+): void {
+  describe(name, () => {
+    it("produces the shared Chinese journal, history, search, conflict, and delete semantics", async () => {
+      const { journals, search, clock } = createHarness();
+
+      const initialSave = await journals.saveSnapshot(fixture.initialSnapshot);
+      expect(initialSave).toEqual(fixture.expected.initialSave);
+
+      const blockHits = await search.query({
+        text: fixture.expected.blockSearch.text,
+        entityTypes: ["structured_block"],
+        limit: 20,
+      });
+      expect(
+        blockHits.items.map(({ entityType, entityId, localDate }) => ({
+          entityType,
+          entityId,
+          localDate,
+        })),
+      ).toEqual(fixture.expected.blockSearch.expected);
+
+      const updateSave = await journals.saveSnapshot(fixture.updateSnapshot);
+      expect(updateSave).toEqual(fixture.expected.updateSave);
+      expect(await journals.getSaveState(fixture.initialSnapshot.journalId)).toEqual(
+        fixture.expected.saveStateAfterUpdate,
+      );
+
+      const versions = await journals.listVersions(fixture.initialSnapshot.journalId, {
+        limit: 20,
+      });
+      expect(versions.items).toEqual(fixture.expected.versions);
+
+      const conflict = await captureError(() => journals.saveSnapshot(fixture.updateSnapshot));
+      expectConflict(
+        conflict,
+        fixture.expected.conflict.expectedRevision,
+        fixture.expected.conflict.actualRevision,
+      );
+
+      clock.set(fixture.expected.softDeleteAt);
+      await journals.softDelete(
+        fixture.initialSnapshot.journalId,
+        fixture.expected.updateSave.revision,
+      );
+
+      expect(await journals.getById(fixture.initialSnapshot.journalId)).toBeNull();
+      expect(
+        (
+          await search.query({
+            text: fixture.expected.blockSearch.text,
+            entityTypes: ["structured_block"],
+            limit: 20,
+          })
+        ).items,
+      ).toHaveLength(0);
     });
   });
 }

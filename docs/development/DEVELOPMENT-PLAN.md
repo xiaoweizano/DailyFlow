@@ -446,25 +446,25 @@ docs/
 - Modify: `packages/infrastructure/test/journal-contract.test.ts`
 - Modify: `package.json`
 
-- [ ] **Step 1: 建立固定 fixtures**
+- [x] **Step 1: 建立固定 fixtures**
 
   包含中文日志、结构化块、标签、历史版本、软删除和空标题。
 
-- [ ] **Step 2: 在 TypeScript 和 Rust 测试中读取同一 fixtures**
+- [x] **Step 2: 在 TypeScript 和 Rust 测试中读取同一 fixtures**
 
   断言字段名、枚举、revision、日期、错误码一致。
 
-- [ ] **Step 3: 添加 CI 校验脚本**
+- [x] **Step 3: 添加 CI 校验脚本**
 
   `scripts/check-dto-fixtures.mjs` 比对 JSON 样例与 typed contract 导出的字段集合。
 
-- [ ] **Step 4: 运行**
+- [x] **Step 4: 运行**
 
   Run: `pnpm test && pnpm typecheck && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`
 
   Expected: SQLite、Dexie、内存 adapter 对同一业务输入产生等价结果。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
   Run: `git add . && git commit -m "test: enforce cross-platform repository contracts"`
 

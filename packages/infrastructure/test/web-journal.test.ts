@@ -17,8 +17,10 @@ import {
   MutableClock,
   SequenceIdGenerator,
   describeJournalRepositoryContract,
+  describeJournalRepositoryParityContract,
   makeJournalSnapshot,
 } from "../src/testing/repository-contract.js";
+import { parityContractFixture } from "./parity-fixtures.js";
 
 const openDatabases: DailyFlowDb[] = [];
 let databaseSequence = 0;
@@ -52,6 +54,12 @@ afterEach(async () => {
 });
 
 describeJournalRepositoryContract("Dexie JournalRepository contract", createHarness);
+
+describeJournalRepositoryParityContract(
+  "Dexie JournalRepository shared fixture contract",
+  createHarness,
+  parityContractFixture,
+);
 
 describe("Dexie schema and transaction boundaries", () => {
   it("creates the documented stores and initializes the data schema version", async () => {
@@ -124,9 +132,13 @@ describe("Dexie schema and transaction boundaries", () => {
 
     await expect(database.journals.count()).resolves.toBe(1);
     await expect(database.journalVersions.count()).resolves.toBe(1);
-    await expect(database.structuredBlocks.where("journalId").equals(CONTRACT_IDS.journal).count()).resolves.toBe(1);
+    await expect(
+      database.structuredBlocks.where("journalId").equals(CONTRACT_IDS.journal).count(),
+    ).resolves.toBe(1);
     await expect(database.tags.count()).resolves.toBe(2);
-    await expect(database.journalTags.where("journalId").equals(CONTRACT_IDS.journal).count()).resolves.toBe(2);
+    await expect(
+      database.journalTags.where("journalId").equals(CONTRACT_IDS.journal).count(),
+    ).resolves.toBe(2);
     await expect(database.searchDocs.count()).resolves.toBe(2);
     await expect(
       database.searchTermPostings.where("docId").equals(CONTRACT_IDS.journal).count(),

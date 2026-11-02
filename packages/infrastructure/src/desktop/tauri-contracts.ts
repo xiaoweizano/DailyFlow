@@ -239,7 +239,7 @@ export const SearchResultPageDtoSchema = pageDtoSchema(SearchHitDtoSchema).exten
   indexState: z.enum(["ready", "stale"]),
 });
 
-const StorageErrorDtoSchema = z.object({
+export const StorageErrorDtoSchema = z.object({
   code: z.enum([
     "MIGRATION_FAILED",
     "CONFLICT",

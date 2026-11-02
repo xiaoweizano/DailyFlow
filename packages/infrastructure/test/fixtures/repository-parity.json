@@ -1,0 +1,281 @@
+{
+  "schemaVersion": 1,
+  "initialSnapshot": {
+    "journalId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+    "journalDate": "2026-10-30",
+    "timezone": "Asia/Shanghai",
+    "title": "数据库迁移复盘",
+    "contentJson": {
+      "type": "doc",
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "数据库连接池耗尽，最终通过调整连接池上限恢复。"
+            }
+          ]
+        }
+      ]
+    },
+    "editorSchemaVersion": 1,
+    "contentMarkdown": "## 问题\n\n数据库连接池耗尽。\n\n## 解决方案\n\n调整连接池上限。",
+    "contentPlainText": "数据库连接池耗尽。调整连接池上限。",
+    "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "projectionVersion": 1,
+    "excerpt": "数据库连接池耗尽。调整连接池上限。",
+    "expectedRevision": null,
+    "checkpoint": "explicit",
+    "tags": ["工作", "数据库"],
+    "structuredBlocks": [
+      {
+        "id": "0198e2f4-7e33-7c70-a8b2-18c1520f9c27",
+        "blockType": "issue",
+        "schemaVersion": 1,
+        "data": {
+          "symptom": "数据库连接池耗尽",
+          "solution": "调整连接池上限"
+        },
+        "orderKey": "00000001",
+        "renderedText": "数据库连接池耗尽 → 调整连接池上限"
+      }
+    ],
+    "searchDocuments": [
+      {
+        "id": "0198e2f4-7e33-7c70-a8b2-18c1520f9c28",
+        "entityType": "journal",
+        "entityId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+        "title": "数据库迁移复盘",
+        "bodyText": "数据库连接池耗尽。调整连接池上限。",
+        "structuredText": "数据库连接池耗尽 → 调整连接池上限",
+        "tagsText": "工作 数据库",
+        "normalizedText": "数据库迁移复盘 数据库连接池耗尽 调整连接池上限 工作 数据库",
+        "tokenizedText": "数据库迁移复盘 数据库连接池耗尽 调整连接池上限 工作 数据库",
+        "localDate": "2026-10-30",
+        "updatedAt": "2026-10-30T03:20:11.123Z",
+        "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "indexVersion": 1
+      },
+      {
+        "id": "0198e2f4-7e33-7c70-a8b2-18c1520f9c29",
+        "entityType": "structured_block",
+        "entityId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c27",
+        "title": "数据库连接池耗尽",
+        "bodyText": "调整连接池上限。",
+        "structuredText": "症状：数据库连接池耗尽；方案：调整连接池上限",
+        "tagsText": "工作 数据库",
+        "normalizedText": "数据库连接池耗尽 调整连接池上限 工作 数据库",
+        "tokenizedText": "数据库连接池耗尽 调整连接池上限 工作 数据库",
+        "localDate": "2026-10-30",
+        "updatedAt": "2026-10-30T03:20:11.123Z",
+        "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "indexVersion": 1
+      }
+    ],
+    "savedAt": "2026-10-30T03:20:11.123Z"
+  },
+  "updateSnapshot": {
+    "journalId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+    "journalDate": "2026-10-30",
+    "timezone": "Asia/Shanghai",
+    "title": "",
+    "contentJson": {
+      "type": "doc",
+      "content": []
+    },
+    "editorSchemaVersion": 1,
+    "contentMarkdown": "",
+    "contentPlainText": "",
+    "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "projectionVersion": 1,
+    "excerpt": "",
+    "expectedRevision": 1,
+    "checkpoint": "explicit",
+    "tags": ["工作"],
+    "structuredBlocks": [],
+    "searchDocuments": [
+      {
+        "id": "0198e2f4-7e33-7c70-a8b2-18c1520f9c28",
+        "entityType": "journal",
+        "entityId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+        "title": "",
+        "bodyText": "",
+        "structuredText": "",
+        "tagsText": "工作",
+        "normalizedText": "工作",
+        "tokenizedText": "工作",
+        "localDate": "2026-10-30",
+        "updatedAt": "2026-10-30T04:00:00.000Z",
+        "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "indexVersion": 1
+      }
+    ],
+    "savedAt": "2026-10-30T04:00:00.000Z"
+  },
+  "expected": {
+    "initialSave": {
+      "journalId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+      "revision": 1,
+      "savedAt": "2026-10-30T03:20:11.123Z",
+      "contentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "versionCreated": true,
+      "searchIndexState": "ready"
+    },
+    "updateSave": {
+      "journalId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+      "revision": 2,
+      "savedAt": "2026-10-30T04:00:00.000Z",
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "versionCreated": true,
+      "searchIndexState": "ready"
+    },
+    "saveStateAfterUpdate": {
+      "journalId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+      "journalDate": "2026-10-30",
+      "timezone": "Asia/Shanghai",
+      "revision": 2,
+      "title": "",
+      "contentHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "projectionVersion": 1,
+      "tags": ["工作"],
+      "updatedAt": "2026-10-30T04:00:00.000Z"
+    },
+    "versions": [
+      {
+        "journalId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+        "revision": 2,
+        "title": "",
+        "changeSource": "explicit",
+        "createdAt": "2026-10-30T04:00:00.000Z"
+      },
+      {
+        "journalId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c26",
+        "revision": 1,
+        "title": "数据库迁移复盘",
+        "changeSource": "explicit",
+        "createdAt": "2026-10-30T03:20:11.123Z"
+      }
+    ],
+    "blockSearch": {
+      "text": "连接池耗尽",
+      "expected": [
+        {
+          "entityType": "structured_block",
+          "entityId": "0198e2f4-7e33-7c70-a8b2-18c1520f9c27",
+          "localDate": "2026-10-30"
+        }
+      ]
+    },
+    "conflict": {
+      "expectedRevision": 1,
+      "actualRevision": 2,
+      "code": "CONFLICT"
+    },
+    "softDeleteAt": "2026-10-31T01:00:00.000Z"
+  },
+  "enums": {
+    "checkpoint": ["autosave", "explicit", "restore", "import"],
+    "changeSource": ["autosave", "explicit", "restore", "import", "migration"],
+    "searchEntityType": ["journal", "knowledge_item", "task", "structured_block"],
+    "storageErrorCode": [
+      "MIGRATION_FAILED",
+      "CONFLICT",
+      "NOT_FOUND",
+      "VALIDATION_ERROR",
+      "STORAGE_UNAVAILABLE"
+    ]
+  },
+  "dtoFields": {
+    "structuredBlock": ["id", "blockType", "schemaVersion", "data", "orderKey", "renderedText"],
+    "searchDocument": [
+      "id",
+      "entityType",
+      "entityId",
+      "title",
+      "bodyText",
+      "structuredText",
+      "tagsText",
+      "normalizedText",
+      "tokenizedText",
+      "localDate",
+      "updatedAt",
+      "contentHash",
+      "indexVersion"
+    ],
+    "saveJournalSnapshot": [
+      "journalId",
+      "journalDate",
+      "timezone",
+      "title",
+      "contentJson",
+      "editorSchemaVersion",
+      "contentMarkdown",
+      "contentPlainText",
+      "contentHash",
+      "projectionVersion",
+      "excerpt",
+      "expectedRevision",
+      "checkpoint",
+      "tags",
+      "structuredBlocks",
+      "searchDocuments",
+      "savedAt"
+    ],
+    "savedJournalSnapshot": [
+      "journalId",
+      "revision",
+      "savedAt",
+      "contentHash",
+      "versionCreated",
+      "searchIndexState"
+    ],
+    "journal": [
+      "id",
+      "journalDate",
+      "timezone",
+      "title",
+      "contentJson",
+      "contentMarkdown",
+      "contentPlainText",
+      "editorSchemaVersion",
+      "projectionVersion",
+      "contentHash",
+      "excerpt",
+      "status",
+      "revision",
+      "createdAt",
+      "updatedAt",
+      "deletedAt",
+      "tags",
+      "structuredBlocks"
+    ],
+    "journalSaveState": [
+      "journalId",
+      "journalDate",
+      "timezone",
+      "revision",
+      "title",
+      "contentHash",
+      "projectionVersion",
+      "tags",
+      "updatedAt"
+    ],
+    "journalVersion": [
+      "id",
+      "journalId",
+      "revision",
+      "title",
+      "contentJson",
+      "contentMarkdown",
+      "contentPlainText",
+      "editorSchemaVersion",
+      "projectionVersion",
+      "contentHash",
+      "changeSource",
+      "createdAt"
+    ],
+    "journalVersionSummary": ["journalId", "revision", "title", "changeSource", "createdAt"],
+    "storageError": ["code", "message"]
+  }
+}
