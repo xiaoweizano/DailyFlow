@@ -12,6 +12,12 @@
   },
   "dependencies": {
     "@dailyflow/domain": "workspace:*",
-    "@dailyflow/shared": "workspace:*"
+    "@dailyflow/shared": "workspace:*",
+    "@tiptap/core": "^3.32.2",
+    "@tiptap/extension-link": "^3.32.2",
+    "@tiptap/extension-task-item": "^3.32.2",
+    "@tiptap/extension-task-list": "^3.32.2",
+    "@tiptap/pm": "^3.32.2",
+    "@tiptap/starter-kit": "^3.32.2"
   }
 }

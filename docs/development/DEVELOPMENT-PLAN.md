@@ -484,29 +484,29 @@ docs/
 - Create: `packages/editor/test/roundtrip.test.ts`
 - Create: `packages/editor/test/structured-block.test.ts`
 
-- [ ] **Step 1: 写固定文档失败测试**
+- [x] **Step 1: 写固定文档失败测试**
 
   覆盖标题、列表、引用、代码块、链接、中文、Emoji、结构化块、未知字段和未知节点。
 
-- [ ] **Step 2: 实现 schema**
+- [x] **Step 2: 实现 schema**
 
   节点和 mark 名称固定；附件节点只保存 attachment ID 和展示元数据，不保存路径。
 
-- [ ] **Step 3: 实现 Markdown 与纯文本 projector**
+- [x] **Step 3: 实现 Markdown 与纯文本 projector**
 
   结构化块输出 `dailyflow-structured` 围栏；链接协议使用白名单；未知节点进入不透明容器。
 
-- [ ] **Step 4: 实现投影**
+- [x] **Step 4: 实现投影**
 
   `extractStructuredBlocks` 从 JSON 生成带 `orderKey`、`renderedText` 和 schema 版本的项目；不读写数据库。
 
-- [ ] **Step 5: 运行**
+- [x] **Step 5: 运行**
 
   Run: `pnpm --filter @dailyflow/editor test && pnpm typecheck`
 
   Expected: 支持节点 round-trip 语义稳定，未知字段不丢失。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add packages/editor && git commit -m "feat: implement canonical editor projections"`
 
