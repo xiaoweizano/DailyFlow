@@ -5,7 +5,8 @@ use serde::Serialize;
 
 #[cfg(feature = "desktop-shell")]
 use dailyflow_desktop::{
-    commands::{journal_commands, search_commands},
+    attachments::AttachmentStore,
+    commands::{attachment_commands, journal_commands, search_commands},
     db::Database,
 };
 #[cfg(feature = "desktop-shell")]
@@ -34,8 +35,10 @@ fn app_info() -> AppInfo {
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
-            let database_path = app.path().app_data_dir()?.join("dailyflow.db");
+            let data_directory = app.path().app_data_dir()?;
+            let database_path = data_directory.join("dailyflow.db");
             app.manage(Database::open(database_path)?);
+            app.manage(AttachmentStore::open(data_directory)?);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -49,7 +52,11 @@ fn main() {
             journal_commands::journal_get_version,
             journal_commands::journal_restore_version,
             journal_commands::journal_soft_delete,
-            search_commands::search_query
+            search_commands::search_query,
+            attachment_commands::attachment_put,
+            attachment_commands::attachment_read,
+            attachment_commands::attachment_soft_delete_owner_links,
+            attachment_commands::attachment_remove_orphan
         ])
         .run(tauri::generate_context!())
         .expect("failed to run DailyFlow desktop application");

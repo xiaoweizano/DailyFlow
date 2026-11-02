@@ -1,4 +1,5 @@
 import type {
+  AttachmentOwnerType,
   ChangeSource,
   ContentHash,
   EntityId,
@@ -110,6 +111,31 @@ export interface SearchTermPostingRow {
   readonly docId: EntityId;
   readonly frequency: number;
   readonly field: SearchPostingField;
+}
+
+export interface AttachmentBlobRow {
+  readonly id: EntityId;
+  readonly sha256: ContentHash;
+  readonly byteSize: number;
+  readonly mimeType: string;
+  readonly storageKind: "web-blob";
+  readonly storageKey: string;
+  readonly bytes: Blob;
+  readonly createdAt: UtcTimestamp;
+  readonly orphanedAt: UtcTimestamp | null;
+}
+
+export interface AttachmentLinkRow {
+  readonly id: EntityId;
+  readonly blobId: EntityId;
+  readonly ownerType: AttachmentOwnerType;
+  readonly ownerId: EntityId;
+  readonly displayName: string;
+  readonly altText: string;
+  readonly isInline: boolean;
+  readonly sortOrder: number;
+  readonly createdAt: UtcTimestamp;
+  readonly deletedAt: UtcTimestamp | null;
 }
 
 export type GenericStoreRow = Record<string, unknown>;

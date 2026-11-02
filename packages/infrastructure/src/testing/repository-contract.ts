@@ -58,10 +58,17 @@ export class MutableClock implements Clock {
 
 export class SequenceIdGenerator implements IdGenerator {
   private sequence = 0;
+  private readonly initialIds: readonly string[];
+
+  constructor(initialIds: readonly string[] = []) {
+    initialIds.forEach(parseEntityId);
+    this.initialIds = initialIds;
+  }
 
   nextId(): string {
+    const initialId = this.initialIds[this.sequence];
     this.sequence += 1;
-    return `0198e2f4-7e33-7c70-a8b2-${this.sequence.toString(16).padStart(12, "0")}`;
+    return initialId ?? `0198e2f4-7e33-7c70-a8b2-${this.sequence.toString(16).padStart(12, "0")}`;
   }
 }
 

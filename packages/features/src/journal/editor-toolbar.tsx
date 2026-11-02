@@ -1,3 +1,5 @@
+import { ATTACHMENT_ALLOWED_MIME_TYPES } from "@dailyflow/application";
+import { IconButton } from "@dailyflow/ui";
 import type { Editor } from "@tiptap/react";
 import {
   Bold,
@@ -8,19 +10,27 @@ import {
   List,
   ListChecks,
   ListOrdered,
+  Paperclip,
   Quote,
   Redo2,
   Strikethrough,
   Undo2,
 } from "lucide-react";
-
-import { IconButton } from "@dailyflow/ui";
+import { useRef } from "react";
 
 export interface EditorToolbarProps {
   readonly editor: Editor;
+  readonly attachmentBusy?: boolean;
+  readonly onAttach?: (file: File) => void;
 }
 
-export function EditorToolbar({ editor }: EditorToolbarProps): React.JSX.Element {
+export function EditorToolbar({
+  editor,
+  attachmentBusy = false,
+  onAttach,
+}: EditorToolbarProps): React.JSX.Element {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <div
       role="toolbar"
@@ -111,6 +121,31 @@ export function EditorToolbar({ editor }: EditorToolbarProps): React.JSX.Element
       >
         <Code2 aria-hidden="true" />
       </IconButton>
+      {onAttach === undefined ? null : (
+        <>
+          <IconButton
+            label="添加附件"
+            disabled={attachmentBusy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Paperclip aria-hidden="true" />
+          </IconButton>
+          <input
+            ref={fileInputRef}
+            type="file"
+            aria-label="选择附件"
+            accept={ATTACHMENT_ALLOWED_MIME_TYPES.join(",")}
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.currentTarget.files?.[0];
+              event.currentTarget.value = "";
+              if (file !== undefined) {
+                onAttach(file);
+              }
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

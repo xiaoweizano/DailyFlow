@@ -21,5 +21,6 @@ export interface AttachmentStore {
   put(input: PutAttachmentInput): Promise<StoredAttachment>;
   getObjectUrl(attachmentId: EntityId): Promise<string>;
   read(attachmentId: EntityId): Promise<Uint8Array>;
+  softDeleteOwnerLinks(ownerType: AttachmentRef["ownerType"], ownerId: EntityId): Promise<void>;
   removeOrphan(attachmentId: EntityId): Promise<void>;
 }

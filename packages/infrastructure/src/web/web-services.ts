@@ -5,8 +5,9 @@ import { createUuidV7 } from "@dailyflow/shared";
 import { DailyFlowDb } from "./db.js";
 import { DexieJournalRepository } from "./dexie-journal-repository.js";
 import { DexieSearchPort } from "./dexie-search-port.js";
+import { WebAttachmentStore } from "./web-attachment-store.js";
 
-export type WebServices = Pick<AppServices, "journals" | "search">;
+export type WebServices = Pick<AppServices, "journals" | "attachments" | "search">;
 
 export interface CreateWebServicesOptions {
   readonly database?: DailyFlowDb;
@@ -29,6 +30,11 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
   const search = new DexieSearchPort({ database, clock });
 
   return {
+    attachments: new WebAttachmentStore({
+      database,
+      clock,
+      ids,
+    }),
     journals: new DexieJournalRepository({
       database,
       ids,

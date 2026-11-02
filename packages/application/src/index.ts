@@ -95,3 +95,13 @@ export {
   LocalDateSchema,
   PositiveIntegerSchema,
 } from "./validation.js";
+export {
+  ATTACHMENT_ALLOWED_MIME_TYPES,
+  DEFAULT_ATTACHMENT_POLICY,
+  addAttachment,
+  type AddAttachmentDependencies,
+  type AddAttachmentInput,
+  type AddAttachmentResult,
+  type AttachmentMimeType,
+  type AttachmentPolicy,
+} from "./use-cases/add-attachment.js";

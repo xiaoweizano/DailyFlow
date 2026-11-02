@@ -2,7 +2,7 @@
 
 import "./setup-dom.js";
 
-import type { SavedJournalSnapshot } from "@dailyflow/application";
+import type { SavedJournalSnapshot, StoredAttachment } from "@dailyflow/application";
 import { createJournal, parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
 import { ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
@@ -61,6 +61,33 @@ function createServices() {
     lifecycle: {
       register: vi.fn(() => () => undefined),
       flushAll: vi.fn(async () => true),
+    },
+    attachments: {
+      add: vi.fn(async (input: unknown): Promise<Result<StoredAttachment, AppError>> => {
+        const { displayName } = input as { displayName: string };
+        return ok({
+          attachment: {
+            id: parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c28"),
+            blobId: parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c29"),
+            ownerType: "journal",
+            ownerId: journalId,
+            displayName,
+            altText: "",
+            isInline: true,
+            sortOrder: 0,
+            mimeType: "image/png",
+            byteSize: 11,
+            storageKind: "web-blob",
+            storageKey: "0198e2f4-7e33-7c70-a8b2-18c1520f9c29",
+            sha256: "a".repeat(64) as never,
+            createdAt: parseUtcTimestamp("2026-10-30T03:20:11.123Z"),
+            deletedAt: null,
+          },
+          contentHash: "a".repeat(64) as never,
+          byteSize: 11,
+        });
+      }),
+      read: vi.fn(async () => new TextEncoder().encode("image bytes")),
     },
   };
 }
@@ -130,5 +157,26 @@ describe("JournalPage", () => {
 
     expect((title as HTMLInputElement).value).toBe("发布复盘");
     expect(screen.getByRole("status").textContent).toMatch(/未保存|正在保存|已保存/u);
+  });
+
+  it("stores an uploaded image and inserts only its stable attachment ID", async () => {
+    const services = createServices();
+    const user = userEvent.setup();
+    renderJournalPage(services);
+
+    const file = new File([new TextEncoder().encode("image bytes")], "diagram.png", {
+      type: "image/png",
+    });
+    await user.upload(await screen.findByLabelText("选择附件"), file);
+
+    await waitFor(() => expect(services.attachments.add).toHaveBeenCalledTimes(1));
+    expect(services.attachments.add.mock.calls[0]?.[0]).toMatchObject({
+      ownerType: "journal",
+      ownerId: journalId,
+      displayName: "diagram.png",
+      mimeType: "image/png",
+      isInline: true,
+    });
+    expect(await screen.findByRole("img", { name: "diagram.png" })).toBeTruthy();
   });
 });

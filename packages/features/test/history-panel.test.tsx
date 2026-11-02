@@ -76,6 +76,16 @@ function createServices() {
       register: vi.fn(() => () => undefined),
       flushAll: vi.fn(async () => true),
     },
+    attachments: {
+      add: vi.fn(async () => ({
+        ok: false as const,
+        error: {
+          code: "STORAGE_UNAVAILABLE" as const,
+          retryable: true,
+        },
+      })),
+      read: vi.fn(async () => new Uint8Array()),
+    },
   };
 }
 

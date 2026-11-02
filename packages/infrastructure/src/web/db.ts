@@ -6,6 +6,8 @@ import {
   seedInitialMetadata,
 } from "./migrations/0001-initial.js";
 import type {
+  AttachmentBlobRow,
+  AttachmentLinkRow,
   GenericStoreRow,
   JournalRow,
   JournalTagRow,
@@ -32,8 +34,8 @@ export class DailyFlowDb extends Dexie {
   tags!: Table<TagRow, string>;
   journalTags!: Table<JournalTagRow, [string, string]>;
   knowledgeTags!: Table<KnowledgeTagRow, [string, string]>;
-  attachmentBlobs!: Table<GenericStoreRow, string>;
-  attachmentLinks!: Table<GenericStoreRow, string>;
+  attachmentBlobs!: Table<AttachmentBlobRow, string>;
+  attachmentLinks!: Table<AttachmentLinkRow, string>;
   importSessions!: Table<GenericStoreRow, string>;
   importEntries!: Table<GenericStoreRow, string>;
   reports!: Table<GenericStoreRow, string>;

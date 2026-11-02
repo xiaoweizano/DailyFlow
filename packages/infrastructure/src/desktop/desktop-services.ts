@@ -1,11 +1,12 @@
 import type { AppServices } from "@dailyflow/application";
 import type { Clock } from "@dailyflow/domain";
 
+import { DesktopAttachmentStore } from "./desktop-attachment-store.js";
 import { DesktopJournalRepository } from "./desktop-journal-repository.js";
 import { DesktopSearchPort } from "./desktop-search-port.js";
 import { invokeTauriBridge, TauriCommandClient, type TauriInvoke } from "./tauri-client.js";
 
-export type DesktopServices = Pick<AppServices, "journals" | "search">;
+export type DesktopServices = Pick<AppServices, "journals" | "attachments" | "search">;
 
 export interface CreateDesktopServicesOptions {
   readonly client?: TauriCommandClient;
@@ -22,6 +23,7 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
   const clock = options.clock ?? systemClock;
 
   return {
+    attachments: new DesktopAttachmentStore({ client, clock }),
     journals: new DesktopJournalRepository({ client, clock }),
     search: new DesktopSearchPort({ client }),
   };

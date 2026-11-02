@@ -1,3 +1,4 @@
+pub mod attachment_commands;
 pub mod journal_commands;
 pub mod search_commands;
 

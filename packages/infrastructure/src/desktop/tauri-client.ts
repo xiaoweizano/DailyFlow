@@ -2,6 +2,9 @@ import { PortError } from "@dailyflow/application";
 import { z } from "zod";
 
 import {
+  AttachmentDataDtoSchema,
+  AttachmentPutCommandDtoSchema,
+  AttachmentSoftDeleteOwnerLinksDtoSchema,
   JournalDtoSchema,
   JournalListQueryDtoSchema,
   JournalSaveStateDtoSchema,
@@ -13,8 +16,12 @@ import {
   SaveJournalSnapshotDtoSchema,
   SearchQueryDtoSchema,
   SearchResultPageDtoSchema,
+  StoredAttachmentDtoSchema,
   TAURI_COMMANDS,
   mapTauriError,
+  type AttachmentDataDto,
+  type AttachmentPutCommandDto,
+  type AttachmentSoftDeleteOwnerLinksDto,
   type JournalDto,
   type JournalListQueryDto,
   type JournalSaveStateDto,
@@ -26,6 +33,7 @@ import {
   type SaveJournalSnapshotDto,
   type SearchQueryDto,
   type SearchResultPageDto,
+  type StoredAttachmentDto,
 } from "./tauri-contracts.js";
 
 export type TauriInvoke = (command: string, args?: Record<string, unknown>) => Promise<unknown>;
@@ -151,6 +159,36 @@ export class TauriCommandClient {
       { query },
       SearchResultPageDtoSchema,
       z.object({ query: SearchQueryDtoSchema }),
+    );
+  }
+
+  async putAttachment(input: AttachmentPutCommandDto): Promise<StoredAttachmentDto> {
+    return this.request(
+      TAURI_COMMANDS.attachmentPut,
+      { input },
+      StoredAttachmentDtoSchema,
+      z.object({ input: AttachmentPutCommandDtoSchema }),
+    );
+  }
+
+  async readAttachment(attachmentId: string): Promise<AttachmentDataDto> {
+    return this.request(TAURI_COMMANDS.attachmentRead, { attachmentId }, AttachmentDataDtoSchema);
+  }
+
+  async softDeleteAttachmentOwnerLinks(input: AttachmentSoftDeleteOwnerLinksDto): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.attachmentSoftDeleteOwnerLinks,
+      input,
+      z.union([z.null(), z.undefined()]),
+      AttachmentSoftDeleteOwnerLinksDtoSchema,
+    );
+  }
+
+  async removeOrphanAttachment(attachmentId: string): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.attachmentRemoveOrphan,
+      { attachmentId },
+      z.union([z.null(), z.undefined()]),
     );
   }
 

@@ -25,3 +25,11 @@ if (!document.elementFromPoint) {
   document.elementFromPoint = (): Element | null =>
     document.querySelector(".ProseMirror") ?? document.body;
 }
+
+if (!URL.createObjectURL) {
+  URL.createObjectURL = (): string => "blob:jsdom-object-url";
+}
+
+if (!URL.revokeObjectURL) {
+  URL.revokeObjectURL = (): void => undefined;
+}

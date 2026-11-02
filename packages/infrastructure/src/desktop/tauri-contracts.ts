@@ -23,6 +23,10 @@ export const TAURI_COMMANDS = {
   journalRestoreVersion: "journal_restore_version",
   journalSoftDelete: "journal_soft_delete",
   searchQuery: "search_query",
+  attachmentPut: "attachment_put",
+  attachmentRead: "attachment_read",
+  attachmentSoftDeleteOwnerLinks: "attachment_soft_delete_owner_links",
+  attachmentRemoveOrphan: "attachment_remove_orphan",
 } as const;
 
 export type TauriCommandName = (typeof TAURI_COMMANDS)[keyof typeof TAURI_COMMANDS];
@@ -239,6 +243,59 @@ export const SearchResultPageDtoSchema = pageDtoSchema(SearchHitDtoSchema).exten
   indexState: z.enum(["ready", "stale"]),
 });
 
+export const AttachmentOwnerTypeDtoSchema = z.enum([
+  "journal",
+  "knowledge_item",
+  "structured_block",
+]);
+
+export const AttachmentPutCommandDtoSchema = z.object({
+  ownerType: AttachmentOwnerTypeDtoSchema,
+  ownerId: UuidV7Schema,
+  displayName: z.string().min(1).max(255),
+  mimeType: z.string(),
+  bytesBase64: z.string(),
+  altText: z.string().max(500),
+  isInline: z.boolean(),
+  sortOrder: z.number().int().nonnegative(),
+  createdAt: UtcTimestampSchema,
+});
+
+export const AttachmentRefDtoSchema = z.object({
+  id: UuidV7Schema,
+  blobId: UuidV7Schema,
+  ownerType: AttachmentOwnerTypeDtoSchema,
+  ownerId: UuidV7Schema,
+  displayName: z.string(),
+  altText: z.string(),
+  isInline: z.boolean(),
+  sortOrder: z.number().int().nonnegative(),
+  mimeType: z.string(),
+  byteSize: z.number().int().nonnegative(),
+  storageKind: z.literal("desktop-file"),
+  storageKey: z.string().min(1),
+  sha256: ContentHashSchema,
+  createdAt: UtcTimestampSchema,
+  deletedAt: UtcTimestampSchema.nullable(),
+});
+
+export const StoredAttachmentDtoSchema = z.object({
+  attachment: AttachmentRefDtoSchema,
+  contentHash: ContentHashSchema,
+  byteSize: z.number().int().nonnegative(),
+});
+
+export const AttachmentDataDtoSchema = z.object({
+  mimeType: z.string().min(1),
+  bytesBase64: z.string(),
+});
+
+export const AttachmentSoftDeleteOwnerLinksDtoSchema = z.object({
+  ownerType: AttachmentOwnerTypeDtoSchema,
+  ownerId: UuidV7Schema,
+  deletedAt: UtcTimestampSchema,
+});
+
 export const StorageErrorDtoSchema = z.object({
   code: z.enum([
     "MIGRATION_FAILED",
@@ -322,3 +379,11 @@ export type RestoreJournalVersionDto = z.infer<typeof RestoreJournalVersionDtoSc
 export type SearchQueryDto = z.infer<typeof SearchQueryDtoSchema>;
 export type SearchHitDto = z.infer<typeof SearchHitDtoSchema>;
 export type SearchResultPageDto = z.infer<typeof SearchResultPageDtoSchema>;
+export type AttachmentOwnerTypeDto = z.infer<typeof AttachmentOwnerTypeDtoSchema>;
+export type AttachmentPutCommandDto = z.infer<typeof AttachmentPutCommandDtoSchema>;
+export type AttachmentRefDto = z.infer<typeof AttachmentRefDtoSchema>;
+export type StoredAttachmentDto = z.infer<typeof StoredAttachmentDtoSchema>;
+export type AttachmentDataDto = z.infer<typeof AttachmentDataDtoSchema>;
+export type AttachmentSoftDeleteOwnerLinksDto = z.infer<
+  typeof AttachmentSoftDeleteOwnerLinksDtoSchema
+>;

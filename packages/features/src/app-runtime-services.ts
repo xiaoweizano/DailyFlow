@@ -3,11 +3,15 @@ import type { Clock, IdGenerator } from "@dailyflow/domain";
 import { createUuidV7 } from "@dailyflow/shared";
 
 import type { AppRuntimeServices } from "./app-services-context.js";
+import { createAttachmentRuntimeServices } from "./attachments/attachment-services.js";
 import { EditorContentProjector } from "./journal/content-projector.js";
 import { createJournalRuntimeServices } from "./journal/journal-services.js";
 import { createSaveLifecycle, type SaveLifecycle } from "./lifecycle/save-lifecycle.js";
 
-export interface CreateAppRuntimeServicesOptions extends Pick<AppServices, "journals" | "search"> {
+export interface CreateAppRuntimeServicesOptions extends Pick<
+  AppServices,
+  "journals" | "attachments" | "search"
+> {
   readonly clock?: Clock;
   readonly ids?: IdGenerator;
   readonly lifecycle?: SaveLifecycle;
@@ -28,6 +32,9 @@ export function createAppRuntimeServices(
   const ids = options.ids ?? systemIds;
 
   return {
+    attachments: createAttachmentRuntimeServices({
+      attachments: options.attachments,
+    }),
     journal: createJournalRuntimeServices({
       journals: options.journals,
       projector: new EditorContentProjector(),

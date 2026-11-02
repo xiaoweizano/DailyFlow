@@ -1,14 +1,17 @@
 import type { JournalLookup, SavedJournalSnapshot } from "@dailyflow/application";
 import type { JsonObject } from "@dailyflow/domain";
-import { createEditorExtensions } from "@dailyflow/editor";
+import type { AttachmentAttrs } from "@dailyflow/editor";
 import { Button, Input, SaveStatus, type SaveState } from "@dailyflow/ui";
+import type { AppError } from "@dailyflow/shared";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { History, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { AttachmentUploadPlaceholder } from "./attachment-node-view.js";
 import { EditorToolbar } from "./editor-toolbar.js";
+import { createJournalEditorExtensions } from "./journal-editor-extensions.js";
 import { createJournalEditorStore, type JournalEditorStore } from "./journal-editor-store.js";
 import { HistoryPanel } from "./history-panel.js";
 import { SaveCoordinator, type SaveCoordinatorStatus } from "./save-coordinator.js";
@@ -35,11 +38,35 @@ function parseTags(value: string): readonly string[] {
     .filter(Boolean);
 }
 
+function attachmentErrorMessage(error: AppError): string {
+  switch (error.code) {
+    case "VALIDATION_ERROR":
+      return Object.values(error.fields ?? {})[0] ?? "文件类型或大小不符合要求";
+    case "NOT_FOUND":
+      return "日志尚未保存，暂时无法添加附件";
+    case "CONFLICT":
+      return "日志已在其他位置更新，请先保存当前内容";
+    case "STORAGE_UNAVAILABLE":
+      return "附件存储暂时不可用";
+    case "QUOTA_EXCEEDED":
+      return "存储空间不足";
+    default:
+      return "附件上传失败";
+  }
+}
+
+interface AttachmentUploadFailure {
+  readonly file: File;
+  readonly message: string;
+}
+
 export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React.JSX.Element {
   const services = useAppServices();
   const { journal, isPersisted } = lookup;
   const [title, setTitle] = useState(journal.title);
   const [tagsText, setTagsText] = useState("");
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
+  const [attachmentFailure, setAttachmentFailure] = useState<AttachmentUploadFailure | null>(null);
   const titleRef = useRef(title);
   const tagsTextRef = useRef(tagsText);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
@@ -91,7 +118,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   }
 
   const editor = useEditor({
-    extensions: createEditorExtensions(),
+    extensions: createJournalEditorExtensions(),
     content: journal.content.doc,
     immediatelyRender: false,
     editorProps: {
@@ -107,6 +134,55 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
     },
   });
   editorRef.current = editor;
+
+  async function uploadAttachment(file: File): Promise<void> {
+    if (editor === null) {
+      return;
+    }
+
+    setAttachmentBusy(true);
+    setAttachmentFailure(null);
+    const mimeType = file.type || "application/octet-stream";
+    const isInline = mimeType.startsWith("image/");
+
+    try {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const result = await services.attachments.add({
+        ownerType: "journal",
+        ownerId: journal.id,
+        displayName: file.name,
+        mimeType,
+        bytes,
+        altText: file.name,
+        isInline,
+      });
+
+      if (!result.ok) {
+        setAttachmentFailure({
+          file,
+          message: attachmentErrorMessage(result.error),
+        });
+        return;
+      }
+
+      const attrs: AttachmentAttrs = {
+        attachmentId: result.value.attachment.id,
+        displayName: result.value.attachment.displayName,
+        mimeType: result.value.attachment.mimeType,
+        byteSize: result.value.attachment.byteSize,
+        isInline: result.value.attachment.isInline,
+        altText: result.value.attachment.altText,
+      };
+      editor.chain().focus().insertContent({ type: "attachment", attrs }).run();
+    } catch {
+      setAttachmentFailure({
+        file,
+        message: "无法读取或保存附件",
+      });
+    } finally {
+      setAttachmentBusy(false);
+    }
+  }
 
   useEffect(() => {
     return coordinator.subscribe((state) => {
@@ -221,7 +297,30 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
             <p className="p-6 text-sm text-muted-foreground">正在初始化编辑器</p>
           ) : (
             <>
-              <EditorToolbar editor={editor} />
+              <EditorToolbar
+                editor={editor}
+                attachmentBusy={attachmentBusy}
+                onAttach={(file) => {
+                  void uploadAttachment(file);
+                }}
+              />
+              {attachmentBusy ? (
+                <p role="status" className="mx-3 mt-2 text-xs text-muted-foreground">
+                  正在上传附件
+                </p>
+              ) : null}
+              {attachmentFailure === null ? null : (
+                <div className="mt-2">
+                  <AttachmentUploadPlaceholder
+                    fileName={attachmentFailure.file.name}
+                    errorMessage={attachmentFailure.message}
+                    onRetry={() => {
+                      void uploadAttachment(attachmentFailure.file);
+                    }}
+                    onDismiss={() => setAttachmentFailure(null)}
+                  />
+                </div>
+              )}
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <EditorContent editor={editor} className="min-h-full" />
               </div>
