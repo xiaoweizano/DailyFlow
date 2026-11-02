@@ -256,6 +256,19 @@ describe("desktop Tauri contracts", () => {
     });
   });
 
+  it("preserves a failed desktop search index state", async () => {
+    const invoke = createInvoke({
+      items: [],
+      nextCursor: null,
+      indexState: "failed",
+    });
+    const search = new DesktopSearchPort({ client: new TauriCommandClient(invoke) });
+
+    const page = await search.query({ text: "deploy", limit: 20 });
+
+    expect(page.indexState).toBe("failed");
+  });
+
   it("maps invalid request payloads without invoking Tauri", async () => {
     const invoke = createInvoke([]);
     const search = new DesktopSearchPort({ client: new TauriCommandClient(invoke) });
@@ -275,17 +288,21 @@ describe("desktop Tauri contracts", () => {
     });
   });
 
-  it("reports desktop search rebuild as explicitly unavailable", async () => {
-    const search = new DesktopSearchPort({ client: new TauriCommandClient(createInvoke([])) });
+  it("rebuilds desktop search through the Tauri command", async () => {
+    const invoke = createInvoke({
+      indexedCount: 2,
+      completedAt: SAVED_AT,
+    });
+    const search = new DesktopSearchPort({ client: new TauriCommandClient(invoke) });
 
-    const error = await search.rebuild().catch((reason: unknown) => reason);
+    const rebuilt = await search.rebuild(["journal", "knowledge_item"]);
 
-    expect(error).toBeInstanceOf(PortError);
-    expect(error).toMatchObject({
-      code: "STORAGE_UNAVAILABLE",
-      details: {
-        retryable: false,
-      },
+    expect(invoke).toHaveBeenCalledWith("search_rebuild", {
+      scope: ["journal", "knowledge_item"],
+    });
+    expect(rebuilt).toEqual({
+      indexedCount: 2,
+      completedAt: SAVED_AT,
     });
   });
 

@@ -4,6 +4,8 @@ import type {
   ContentHash,
   EntityId,
   JournalStatus,
+  KnowledgeKind,
+  KnowledgeStatus,
   LocalDate,
   StructuredBlockType,
   TaskPriority,
@@ -68,6 +70,24 @@ export interface TaskRow {
   readonly journalId: EntityId | null;
   readonly knowledgeItemId: EntityId | null;
   readonly revision: number;
+  readonly createdAt: UtcTimestamp;
+  readonly updatedAt: UtcTimestamp;
+  readonly deletedAt: UtcTimestamp | null;
+}
+
+export interface KnowledgeItemRow {
+  readonly id: EntityId;
+  readonly kind: KnowledgeKind;
+  readonly status: KnowledgeStatus;
+  readonly title: string;
+  readonly contentJson: string;
+  readonly editorSchemaVersion: number;
+  readonly contentHash: ContentHash | null;
+  readonly projectionVersion: number;
+  readonly summary: string;
+  readonly revision: number;
+  readonly sourceJournalId: EntityId | null;
+  readonly sourceBlockId: EntityId | null;
   readonly createdAt: UtcTimestamp;
   readonly updatedAt: UtcTimestamp;
   readonly deletedAt: UtcTimestamp | null;

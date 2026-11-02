@@ -363,6 +363,90 @@ pub struct TaskListQuery {
     pub limit: Option<i64>,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum KnowledgeKind {
+    Note,
+    Issue,
+    Solution,
+    Decision,
+    Reference,
+}
+
+impl KnowledgeKind {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Note => "note",
+            Self::Issue => "issue",
+            Self::Solution => "solution",
+            Self::Decision => "decision",
+            Self::Reference => "reference",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum KnowledgeStatus {
+    Active,
+    Archived,
+}
+
+impl KnowledgeStatus {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Active => "active",
+            Self::Archived => "archived",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KnowledgeItem {
+    pub id: String,
+    pub kind: KnowledgeKind,
+    pub status: KnowledgeStatus,
+    pub title: String,
+    pub content_json: Value,
+    pub editor_schema_version: i64,
+    pub content_hash: Option<String>,
+    pub projection_version: i64,
+    pub summary: String,
+    pub revision: i64,
+    pub source_journal_id: Option<String>,
+    pub source_block_id: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+    pub deleted_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KnowledgeListQuery {
+    pub kind: Option<KnowledgeKind>,
+    pub status: Option<KnowledgeStatus>,
+    pub from_date: Option<String>,
+    pub to_date: Option<String>,
+    pub cursor: Option<String>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KnowledgeSaveCommand {
+    pub item: KnowledgeItem,
+    pub expected_revision: Option<i64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TimelineCalendarQuery {

@@ -63,9 +63,11 @@ pub async fn attachment_put(
         sort_order: input.sort_order.unwrap_or(0),
         created_at: input.created_at,
     };
-    run_attachment_task(database.inner().clone(), attachments.inner().clone(), move |db, store| {
-        store.put(db, input)
-    })
+    run_attachment_task(
+        database.inner().clone(),
+        attachments.inner().clone(),
+        move |db, store| store.put(db, input),
+    )
     .await
 }
 
@@ -75,14 +77,18 @@ pub async fn attachment_read(
     attachments: State<'_, AttachmentStore>,
     attachment_id: String,
 ) -> Result<AttachmentDataOutput, StorageError> {
-    run_attachment_task(database.inner().clone(), attachments.inner().clone(), move |db, store| {
-        store
-            .read_data(db, &attachment_id)
-            .map(|data| AttachmentDataOutput {
-                mime_type: data.mime_type,
-                bytes_base64: STANDARD.encode(data.bytes),
-            })
-    })
+    run_attachment_task(
+        database.inner().clone(),
+        attachments.inner().clone(),
+        move |db, store| {
+            store
+                .read_data(db, &attachment_id)
+                .map(|data| AttachmentDataOutput {
+                    mime_type: data.mime_type,
+                    bytes_base64: STANDARD.encode(data.bytes),
+                })
+        },
+    )
     .await
 }
 
@@ -94,9 +100,11 @@ pub async fn attachment_soft_delete_owner_links(
     owner_id: String,
     deleted_at: String,
 ) -> Result<(), StorageError> {
-    run_attachment_task(database.inner().clone(), attachments.inner().clone(), move |db, store| {
-        store.soft_delete_owner_links(db, owner_type, &owner_id, &deleted_at)
-    })
+    run_attachment_task(
+        database.inner().clone(),
+        attachments.inner().clone(),
+        move |db, store| store.soft_delete_owner_links(db, owner_type, &owner_id, &deleted_at),
+    )
     .await
 }
 
@@ -106,8 +114,10 @@ pub async fn attachment_remove_orphan(
     attachments: State<'_, AttachmentStore>,
     attachment_id: String,
 ) -> Result<(), StorageError> {
-    run_attachment_task(database.inner().clone(), attachments.inner().clone(), move |db, store| {
-        store.remove_orphan(db, &attachment_id)
-    })
+    run_attachment_task(
+        database.inner().clone(),
+        attachments.inner().clone(),
+        move |db, store| store.remove_orphan(db, &attachment_id),
+    )
     .await
 }

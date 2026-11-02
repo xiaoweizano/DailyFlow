@@ -6,7 +6,10 @@ import { AppShell } from "./app-shell.js";
 import type { AppRouteOptions } from "./app-modules.js";
 import { DashboardPage } from "./dashboard/dashboard-page.js";
 import { JournalPage } from "./journal/journal-page.js";
+import { KnowledgeDetailPage } from "./knowledge/knowledge-detail.js";
+import { KnowledgePage } from "./knowledge/knowledge-page.js";
 import { ModulePage, NotFoundPage } from "./module-page.js";
+import { SearchPage } from "./search/search-page.js";
 import { TasksPage } from "./tasks/tasks-page.js";
 import { TimelinePage } from "./timeline/timeline-page.js";
 
@@ -52,11 +55,11 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "knowledge",
-          element: createElement(ModulePage, { moduleId: "knowledge" }),
+          element: createElement(KnowledgePage),
         },
         {
           path: "knowledge/:id",
-          element: createElement(ModulePage, { moduleId: "knowledge" }),
+          element: createElement(KnowledgeDetailPage),
         },
         {
           path: "tasks",
@@ -64,7 +67,7 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "search",
-          element: createElement(ModulePage, { moduleId: "search" }),
+          element: createElement(SearchPage),
         },
         {
           path: "analytics",

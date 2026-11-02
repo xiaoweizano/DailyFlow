@@ -27,9 +27,14 @@ export const TAURI_COMMANDS = {
   taskSave: "task_save",
   taskComplete: "task_complete",
   taskSoftDelete: "task_soft_delete",
+  knowledgeGetById: "knowledge_get_by_id",
+  knowledgeList: "knowledge_list",
+  knowledgeSave: "knowledge_save",
+  knowledgeSoftDelete: "knowledge_soft_delete",
   timelineGetCalendar: "timeline_get_calendar",
   timelineListEntries: "timeline_list_entries",
   searchQuery: "search_query",
+  searchRebuild: "search_rebuild",
   attachmentPut: "attachment_put",
   attachmentRead: "attachment_read",
   attachmentSoftDeleteOwnerLinks: "attachment_soft_delete_owner_links",
@@ -258,6 +263,55 @@ export const TaskListQueryDtoSchema = z.object({
 
 export const TaskPageDtoSchema = pageDtoSchema(TaskDtoSchema);
 
+export const KnowledgeKindDtoSchema = z.enum([
+  "note",
+  "issue",
+  "solution",
+  "decision",
+  "reference",
+]);
+export const KnowledgeStatusDtoSchema = z.enum(["active", "archived"]);
+
+export const KnowledgeItemDtoSchema = z.object({
+  id: UuidV7Schema,
+  kind: KnowledgeKindDtoSchema,
+  status: KnowledgeStatusDtoSchema,
+  title: z.string().min(1).max(500),
+  contentJson: JsonObjectSchema,
+  editorSchemaVersion: z.number().int().positive(),
+  contentHash: ContentHashSchema.nullable(),
+  projectionVersion: z.number().int().positive(),
+  summary: z.string(),
+  revision: z.number().int().positive(),
+  sourceJournalId: UuidV7Schema.nullable(),
+  sourceBlockId: UuidV7Schema.nullable(),
+  createdAt: UtcTimestampSchema,
+  updatedAt: UtcTimestampSchema,
+  deletedAt: UtcTimestampSchema.nullable(),
+});
+
+export const KnowledgeListQueryDtoSchema = z.object({
+  kind: KnowledgeKindDtoSchema.optional(),
+  status: KnowledgeStatusDtoSchema.optional(),
+  fromDate: LocalDateDtoSchema.optional(),
+  toDate: LocalDateDtoSchema.optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+});
+
+export const KnowledgeSaveCommandDtoSchema = z.object({
+  item: KnowledgeItemDtoSchema,
+  expectedRevision: z.number().int().positive().nullable(),
+});
+
+export const KnowledgeSoftDeleteCommandDtoSchema = z.object({
+  knowledgeItemId: UuidV7Schema,
+  expectedRevision: z.number().int().positive(),
+  deletedAt: UtcTimestampSchema,
+});
+
+export const KnowledgePageDtoSchema = pageDtoSchema(KnowledgeItemDtoSchema);
+
 const TimelineDateRangeShape = {
   fromDate: LocalDateDtoSchema.optional(),
   toDate: LocalDateDtoSchema.optional(),
@@ -350,7 +404,12 @@ export const SearchHitDtoSchema = z.object({
 });
 
 export const SearchResultPageDtoSchema = pageDtoSchema(SearchHitDtoSchema).extend({
-  indexState: z.enum(["ready", "stale"]),
+  indexState: z.enum(["ready", "stale", "failed"]),
+});
+
+export const SearchRebuildResultDtoSchema = z.object({
+  indexedCount: z.number().int().nonnegative(),
+  completedAt: UtcTimestampSchema,
 });
 
 export const AttachmentOwnerTypeDtoSchema = z.enum([
@@ -490,6 +549,10 @@ export type TaskSaveCommandDto = z.infer<typeof TaskSaveCommandDtoSchema>;
 export type TaskCompleteCommandDto = z.infer<typeof TaskCompleteCommandDtoSchema>;
 export type TaskSoftDeleteCommandDto = z.infer<typeof TaskSoftDeleteCommandDtoSchema>;
 export type TaskListQueryDto = z.infer<typeof TaskListQueryDtoSchema>;
+export type KnowledgeItemDto = z.infer<typeof KnowledgeItemDtoSchema>;
+export type KnowledgeListQueryDto = z.infer<typeof KnowledgeListQueryDtoSchema>;
+export type KnowledgeSaveCommandDto = z.infer<typeof KnowledgeSaveCommandDtoSchema>;
+export type KnowledgeSoftDeleteCommandDto = z.infer<typeof KnowledgeSoftDeleteCommandDtoSchema>;
 export type TimelineCalendarQueryDto = z.infer<typeof TimelineCalendarQueryDtoSchema>;
 export type TimelineListQueryDto = z.infer<typeof TimelineListQueryDtoSchema>;
 export type TimelineDaySummaryDto = z.infer<typeof TimelineDaySummaryDtoSchema>;
@@ -497,6 +560,7 @@ export type RestoreJournalVersionDto = z.infer<typeof RestoreJournalVersionDtoSc
 export type SearchQueryDto = z.infer<typeof SearchQueryDtoSchema>;
 export type SearchHitDto = z.infer<typeof SearchHitDtoSchema>;
 export type SearchResultPageDto = z.infer<typeof SearchResultPageDtoSchema>;
+export type SearchRebuildResultDto = z.infer<typeof SearchRebuildResultDtoSchema>;
 export type AttachmentOwnerTypeDto = z.infer<typeof AttachmentOwnerTypeDtoSchema>;
 export type AttachmentPutCommandDto = z.infer<typeof AttachmentPutCommandDtoSchema>;
 export type AttachmentRefDto = z.infer<typeof AttachmentRefDtoSchema>;

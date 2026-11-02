@@ -1,4 +1,4 @@
-import { PortError } from "@dailyflow/application";
+import { PortError, type SearchEntityType } from "@dailyflow/application";
 import { z } from "zod";
 
 import {
@@ -11,11 +11,18 @@ import {
   JournalSummaryPageDtoSchema,
   JournalVersionDtoSchema,
   JournalVersionSummaryPageDtoSchema,
+  KnowledgeItemDtoSchema,
+  KnowledgeListQueryDtoSchema,
+  KnowledgePageDtoSchema,
+  KnowledgeSaveCommandDtoSchema,
+  KnowledgeSoftDeleteCommandDtoSchema,
   RestoreJournalVersionDtoSchema,
   SavedJournalSnapshotDtoSchema,
   SaveJournalSnapshotDtoSchema,
   SearchQueryDtoSchema,
+  SearchRebuildResultDtoSchema,
   SearchResultPageDtoSchema,
+  SearchEntityTypeSchema,
   StoredAttachmentDtoSchema,
   TAURI_COMMANDS,
   TaskCompleteCommandDtoSchema,
@@ -38,10 +45,15 @@ import {
   type JournalSummaryDto,
   type JournalVersionDto,
   type JournalVersionSummaryDto,
+  type KnowledgeItemDto,
+  type KnowledgeListQueryDto,
+  type KnowledgeSaveCommandDto,
+  type KnowledgeSoftDeleteCommandDto,
   type RestoreJournalVersionDto,
   type SavedJournalSnapshotDto,
   type SaveJournalSnapshotDto,
   type SearchQueryDto,
+  type SearchRebuildResultDto,
   type SearchResultPageDto,
   type StoredAttachmentDto,
   type TaskCompleteCommandDto,
@@ -211,6 +223,41 @@ export class TauriCommandClient {
     );
   }
 
+  async getKnowledgeById(knowledgeItemId: string): Promise<KnowledgeItemDto | null> {
+    return this.request(
+      TAURI_COMMANDS.knowledgeGetById,
+      { knowledgeItemId },
+      KnowledgeItemDtoSchema.nullable(),
+    );
+  }
+
+  async listKnowledge(query: KnowledgeListQueryDto): Promise<TauriPage<KnowledgeItemDto>> {
+    return this.request(
+      TAURI_COMMANDS.knowledgeList,
+      { query },
+      KnowledgePageDtoSchema,
+      z.object({ query: KnowledgeListQueryDtoSchema }),
+    );
+  }
+
+  async saveKnowledge(input: KnowledgeSaveCommandDto): Promise<KnowledgeItemDto> {
+    return this.request(
+      TAURI_COMMANDS.knowledgeSave,
+      { input },
+      KnowledgeItemDtoSchema,
+      z.object({ input: KnowledgeSaveCommandDtoSchema }),
+    );
+  }
+
+  async softDeleteKnowledge(input: KnowledgeSoftDeleteCommandDto): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.knowledgeSoftDelete,
+      input,
+      z.union([z.null(), z.undefined()]),
+      KnowledgeSoftDeleteCommandDtoSchema,
+    );
+  }
+
   async getTimelineCalendar(
     query: TimelineCalendarQueryDto,
   ): Promise<readonly TimelineDaySummaryDto[]> {
@@ -239,6 +286,17 @@ export class TauriCommandClient {
       { query },
       SearchResultPageDtoSchema,
       z.object({ query: SearchQueryDtoSchema }),
+    );
+  }
+
+  async rebuildSearch(scope?: readonly SearchEntityType[]): Promise<SearchRebuildResultDto> {
+    return this.request(
+      TAURI_COMMANDS.searchRebuild,
+      scope === undefined ? {} : { scope },
+      SearchRebuildResultDtoSchema,
+      z.object({
+        scope: z.array(SearchEntityTypeSchema).optional(),
+      }),
     );
   }
 

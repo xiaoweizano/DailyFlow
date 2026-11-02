@@ -12,6 +12,7 @@ import type {
   JournalRow,
   JournalTagRow,
   JournalVersionRow,
+  KnowledgeItemRow,
   KnowledgeTagRow,
   MetaRow,
   SearchDocumentRow,
@@ -30,7 +31,7 @@ export class DailyFlowDb extends Dexie {
   journalVersions!: Table<JournalVersionRow, string>;
   structuredBlocks!: Table<StructuredBlockRow, string>;
   tasks!: Table<TaskRow, string>;
-  knowledgeItems!: Table<GenericStoreRow, string>;
+  knowledgeItems!: Table<KnowledgeItemRow, string>;
   knowledgeLinks!: Table<GenericStoreRow, string>;
   tags!: Table<TagRow, string>;
   journalTags!: Table<JournalTagRow, [string, string]>;

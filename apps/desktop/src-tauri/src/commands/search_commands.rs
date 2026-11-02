@@ -1,7 +1,7 @@
 use tauri::State;
 
 use crate::db::{
-    models::{SearchQuery, SearchResultPage},
+    models::{SearchEntityType, SearchQuery, SearchRebuildResult, SearchResultPage},
     search_repository, Database, StorageError,
 };
 
@@ -14,6 +14,17 @@ pub async fn search_query(
 ) -> Result<SearchResultPage, StorageError> {
     run_storage_task(state.inner().clone(), move |connection| {
         search_repository::query(connection, &query)
+    })
+    .await
+}
+
+#[tauri::command(rename_all = "camelCase")]
+pub async fn search_rebuild(
+    state: State<'_, Database>,
+    scope: Option<Vec<SearchEntityType>>,
+) -> Result<SearchRebuildResult, StorageError> {
+    run_storage_task(state.inner().clone(), move |connection| {
+        search_repository::rebuild(connection, scope.as_deref())
     })
     .await
 }

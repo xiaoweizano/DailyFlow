@@ -12,11 +12,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { Input, SaveStatus } from "@dailyflow/ui";
 
 import { appModules, type AppModuleId, type AppRouteOptions } from "./app-modules.js";
+import { SearchCommand } from "./search/search-command.js";
 
 export type AppShellProps = AppRouteOptions;
 
@@ -63,6 +65,35 @@ export function AppShell({ platform, storageLabel, version }: AppShellProps): Re
   const currentModule = resolveCurrentModule(location.pathname);
   const isSettings = location.pathname === "/settings";
   const currentLabel = isSettings ? "设置" : (currentModule?.label ?? "DailyFlow");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent): void {
+      const target = event.target;
+      const isEditable =
+        target instanceof HTMLElement &&
+        (target.matches("input, textarea, select") ||
+          target.isContentEditable ||
+          target.closest("[contenteditable='true']") !== null);
+
+      if (
+        event.defaultPrevented ||
+        event.key !== "/" ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        isEditable
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      setSearchOpen(true);
+    }
+
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, []);
 
   function handleSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -236,6 +267,8 @@ export function AppShell({ platform, storageLabel, version }: AppShellProps): Re
           <span>本地优先</span>
         </div>
       </footer>
+
+      <SearchCommand open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 }

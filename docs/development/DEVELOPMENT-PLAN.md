@@ -697,27 +697,27 @@ docs/
 - Create: `packages/features/test/knowledge.test.tsx`
 - Create: `packages/features/test/search.test.tsx`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
   覆盖从日志块提升、来源保留、知识类型筛选、搜索过滤、索引 stale 状态和软删除排除。
 
-- [ ] **Step 2: 实现知识仓储与页面**
+- [x] **Step 2: 实现知识仓储与页面**
 
   列表与详情状态明确；问题/方案字段可选；来源链接可跳转原日志。
 
-- [ ] **Step 3: 实现搜索**
+- [x] **Step 3: 实现搜索**
 
   命令浮层与完整页共用搜索用例；键盘上下/Enter/Escape；结果高亮和索引状态。
 
-- [ ] **Step 4: 注册 Knowledge 与 Search 路由**
+- [x] **Step 4: 注册 Knowledge 与 Search 路由**
 
   在共享路由表注册 `/knowledge`、`/knowledge/:id`、`/search`，两个组合根同时接入。桌面端打开搜索结果后能定位日志/知识；索引 `stale` 或 `failed` 时页面仍可访问并显示重建入口。
 
-- [ ] **Step 5: 运行**
+- [x] **Step 5: 运行**
 
   Run: `pnpm test && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build`
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add packages/features packages/application packages/infrastructure apps/web apps/desktop && git commit -m "feat: add knowledge base and global search"`
 

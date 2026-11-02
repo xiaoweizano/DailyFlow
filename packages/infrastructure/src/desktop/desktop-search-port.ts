@@ -1,5 +1,4 @@
 import {
-  PortError,
   type SearchPort,
   type SearchQuery,
   type SearchRebuildResult,
@@ -47,10 +46,7 @@ export class DesktopSearchPort implements SearchPort {
     };
   }
 
-  async rebuild(): Promise<SearchRebuildResult> {
-    throw new PortError("STORAGE_UNAVAILABLE", {
-      message: "Desktop search index rebuild is not available in this release",
-      retryable: false,
-    });
+  async rebuild(scope?: Parameters<SearchPort["rebuild"]>[0]): Promise<SearchRebuildResult> {
+    return this.client.rebuildSearch(scope);
   }
 }

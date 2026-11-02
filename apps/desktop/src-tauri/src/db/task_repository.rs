@@ -5,11 +5,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::{
-    decode_cursor, encode_cursor, resolve_page_size,
+    decode_cursor, encode_cursor,
     models::{
         Page, Task, TaskCompleteCommand, TaskListQuery, TaskPriority, TaskSaveCommand, TaskStatus,
     },
-    StorageError,
+    resolve_page_size, StorageError,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -313,9 +313,10 @@ pub fn save(connection: &mut Connection, command: &TaskSaveCommand) -> Result<Ta
     let revision = existing
         .as_ref()
         .map_or(1, |(revision, _, _)| revision.saturating_add(1));
-    let created_at = existing
-        .as_ref()
-        .map_or_else(|| command.task.created_at.clone(), |(_, created_at, _)| created_at.clone());
+    let created_at = existing.as_ref().map_or_else(
+        || command.task.created_at.clone(),
+        |(_, created_at, _)| created_at.clone(),
+    );
     let description_json = command
         .task
         .description_json

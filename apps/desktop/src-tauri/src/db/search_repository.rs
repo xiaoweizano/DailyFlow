@@ -173,10 +173,9 @@ fn read_index_state(connection: &Connection) -> Result<String, StorageError> {
         return Ok("stale".to_owned());
     };
     let state = serde_json::from_str::<String>(&value).unwrap_or_else(|_| "stale".to_owned());
-    if state == "ready" {
-        Ok(state)
-    } else {
-        Ok("stale".to_owned())
+    match state.as_str() {
+        "ready" | "stale" | "failed" => Ok(state),
+        _ => Ok("stale".to_owned()),
     }
 }
 
@@ -337,5 +336,87 @@ pub fn query(
             .collect(),
         next_cursor,
         index_state,
+    })
+}
+
+pub fn rebuild(
+    connection: &mut Connection,
+    scope: Option<&[SearchEntityType]>,
+) -> Result<SearchRebuildResult, StorageError> {
+    let transaction = connection.transaction()?;
+    let entity_types = scope.map(|values| {
+        values
+            .iter()
+            .map(|entity_type| entity_type.as_str().to_owned())
+            .collect::<Vec<_>>()
+    });
+    let scope_clause = entity_types
+        .as_ref()
+        .filter(|values| !values.is_empty())
+        .map_or_else(String::new, |values| {
+            format!(
+                " WHERE entity_type IN ({})",
+                std::iter::repeat("?")
+                    .take(values.len())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )
+        });
+
+    let count_sql = format!("SELECT COUNT(*) FROM search_documents{}", scope_clause);
+    let indexed_count = match &entity_types {
+        Some(values) if !values.is_empty() => {
+            transaction.query_row(&count_sql, params_from_iter(values.iter()), |row| {
+                row.get::<_, i64>(0)
+            })?
+        }
+        _ => transaction.query_row(&count_sql, [], |row| row.get::<_, i64>(0))?,
+    };
+
+    let delete_sql = format!("DELETE FROM search_fts{}", scope_clause);
+    match &entity_types {
+        Some(values) if !values.is_empty() => {
+            transaction.execute(&delete_sql, params_from_iter(values.iter()))?;
+        }
+        _ => {
+            transaction.execute(&delete_sql, [])?;
+        }
+    }
+
+    let insert_sql = format!(
+        "INSERT INTO search_fts (
+           entity_type, entity_id, title, body_text, structured_text, tokenized_text, tags_text
+         )
+         SELECT entity_type, entity_id, title, body_text, structured_text,
+                tokenized_text, tags_text
+         FROM search_documents{}",
+        scope_clause
+    );
+    match &entity_types {
+        Some(values) if !values.is_empty() => {
+            transaction.execute(&insert_sql, params_from_iter(values.iter()))?;
+        }
+        _ => {
+            transaction.execute(&insert_sql, [])?;
+        }
+    }
+
+    let completed_at =
+        transaction.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |row| {
+            row.get::<_, String>(0)
+        })?;
+    transaction.execute(
+        "INSERT INTO app_metadata (key, value_json, updated_at)
+         VALUES ('search_index_state', '\"ready\"', ?1)
+         ON CONFLICT(key) DO UPDATE SET
+           value_json = excluded.value_json,
+           updated_at = excluded.updated_at",
+        [&completed_at],
+    )?;
+    transaction.commit()?;
+
+    Ok(SearchRebuildResult {
+        indexed_count,
+        completed_at,
     })
 }

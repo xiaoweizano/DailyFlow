@@ -4,12 +4,16 @@ import { createUuidV7 } from "@dailyflow/shared";
 
 import { DailyFlowDb } from "./db.js";
 import { DexieJournalRepository } from "./dexie-journal-repository.js";
+import { DexieKnowledgeRepository } from "./dexie-knowledge-repository.js";
 import { DexieSearchPort } from "./dexie-search-port.js";
 import { DexieTaskRepository } from "./dexie-task-repository.js";
 import { DexieTimelineQuery } from "./dexie-timeline-query.js";
 import { WebAttachmentStore } from "./web-attachment-store.js";
 
-export type WebServices = Pick<AppServices, "journals" | "tasks" | "attachments" | "search"> & {
+export type WebServices = Pick<
+  AppServices,
+  "journals" | "knowledge" | "tasks" | "attachments" | "search"
+> & {
   readonly timeline: DexieTimelineQuery;
 };
 
@@ -45,6 +49,7 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
       clock,
       search,
     }),
+    knowledge: new DexieKnowledgeRepository({ database, clock }),
     search,
     tasks: new DexieTaskRepository({ database, clock }),
     timeline: new DexieTimelineQuery({ database }),

@@ -89,4 +89,13 @@ describe("Dexie search index maintenance", () => {
       await database.searchTermPostings.where("docId").equals(CONTRACT_IDS.knowledge).count(),
     ).toBe(0);
   });
+
+  it("preserves a failed index state until a rebuild succeeds", async () => {
+    const { database, search } = createHarness();
+    await database.meta.put({ key: "searchIndexState", value: "failed" });
+
+    await expect(search.query({ text: "deploy", limit: 20 })).resolves.toMatchObject({
+      indexState: "failed",
+    });
+  });
 });

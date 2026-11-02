@@ -211,11 +211,7 @@ impl AttachmentStore {
         result
     }
 
-    pub fn read(
-        &self,
-        database: &Database,
-        attachment_id: &str,
-    ) -> Result<Vec<u8>, StorageError> {
+    pub fn read(&self, database: &Database, attachment_id: &str) -> Result<Vec<u8>, StorageError> {
         self.read_data(database, attachment_id)
             .map(|attachment| attachment.bytes)
     }
@@ -320,12 +316,7 @@ impl AttachmentStore {
                      FROM attachment_blobs
                      WHERE id = ?1",
                     [&blob_id],
-                    |row| {
-                        Ok((
-                            row.get::<_, String>(0)?,
-                            row.get::<_, Option<String>>(1)?,
-                        ))
-                    },
+                    |row| Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?)),
                 )
                 .optional()?;
             let Some((storage_key, orphaned_at)) = blob else {
@@ -343,9 +334,7 @@ impl AttachmentStore {
                 |row| row.get(0),
             )?;
             if active_links > 0 {
-                return Err(StorageError::conflict(
-                    "Attachment is still referenced",
-                ));
+                return Err(StorageError::conflict("Attachment is still referenced"));
             }
             transaction.execute("DELETE FROM attachment_blobs WHERE id = ?1", [&blob_id])?;
             transaction.commit()?;
@@ -427,9 +416,9 @@ impl AttachmentStore {
         let relative = Path::new(storage_key);
         let components = relative.components().collect::<Vec<_>>();
         if components.len() != 4
-            || components.iter().any(|component| {
-                !matches!(component, Component::Normal(_))
-            })
+            || components
+                .iter()
+                .any(|component| !matches!(component, Component::Normal(_)))
             || components.first().and_then(|component| match component {
                 Component::Normal(value) => Some(*value),
                 _ => None,
@@ -467,7 +456,11 @@ fn validate_put_input(input: &AttachmentPutInput) -> Result<(), StorageError> {
     if input.sort_order < 0 {
         return Err(StorageError::validation("sortOrder must not be negative"));
     }
-    if input.alt_text.as_ref().is_some_and(|value| value.len() > 500) {
+    if input
+        .alt_text
+        .as_ref()
+        .is_some_and(|value| value.len() > 500)
+    {
         return Err(StorageError::validation(
             "altText must not exceed 500 characters",
         ));
@@ -477,9 +470,7 @@ fn validate_put_input(input: &AttachmentPutInput) -> Result<(), StorageError> {
 
 fn validate_uuid(value: &str, field: &str) -> Result<(), StorageError> {
     if value.len() != 36 || Uuid::parse_str(value).is_err() {
-        return Err(StorageError::validation(format!(
-            "{field} must be a UUID"
-        )));
+        return Err(StorageError::validation(format!("{field} must be a UUID")));
     }
     Ok(())
 }

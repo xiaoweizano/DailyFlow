@@ -37,6 +37,11 @@ function createServices() {
   );
 
   return {
+    knowledge: {
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      get: vi.fn(async () => null),
+      promote: vi.fn(),
+    },
     journal: {
       get: vi.fn(async () => ok({ journal, isPersisted: false })),
       save: vi.fn(async (input: unknown): Promise<Result<SavedJournalSnapshot, AppError>> => {

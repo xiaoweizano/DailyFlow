@@ -382,8 +382,8 @@ export class DexieSearchPort implements SearchPort, DexieSearchIndexWriter {
     return { indexedCount, completedAt };
   }
 
-  private async getIndexState(): Promise<"ready" | "stale"> {
+  private async getIndexState(): Promise<SearchResultPage["indexState"]> {
     const state = await this.dependencies.database.meta.get("searchIndexState");
-    return state?.value === "stale" ? "stale" : "ready";
+    return state?.value === "stale" || state?.value === "failed" ? state.value : "ready";
   }
 }

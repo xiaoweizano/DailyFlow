@@ -47,6 +47,11 @@ function createLookup(date: string): JournalLookup {
 
 function createServices(error?: AppError) {
   return {
+    knowledge: {
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      get: vi.fn(async () => null),
+      promote: vi.fn(),
+    },
     journal: {
       get: vi.fn(async (input: unknown): Promise<Result<JournalLookup, AppError>> => {
         const date = (input as { journalDate: string }).journalDate;

@@ -4,9 +4,9 @@ use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    decode_cursor, encode_cursor, resolve_page_size,
+    decode_cursor, encode_cursor,
     models::{Page, TimelineCalendarQuery, TimelineDaySummary, TimelineListQuery},
-    StorageError,
+    resolve_page_size, StorageError,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -221,8 +221,7 @@ mod tests {
     use super::{get_calendar, list_entries};
 
     const JOURNAL_ID: &str = "0198e2f4-7e33-7c70-a8b2-18c1520f9c26";
-    const CONTENT_HASH: &str =
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const CONTENT_HASH: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     const TASK_ONE_ID: &str = "0198e2f4-7e33-7c70-a8b2-18c1520f9c29";
     const TASK_TWO_ID: &str = "0198e2f4-7e33-7c70-a8b2-18c1520f9c2a";
     const TASK_DONE_ID: &str = "0198e2f4-7e33-7c70-a8b2-18c1520f9c2b";
@@ -254,13 +253,7 @@ mod tests {
                        id, title, description_text, status, priority, due_date,
                        completed_at, revision, created_at, updated_at
                      ) VALUES (?1, ?2, '', ?3, 'normal', '2026-10-30', ?4, 1, ?5, ?5)",
-                    params![
-                        id,
-                        title,
-                        status,
-                        (status == "done").then_some(NOW),
-                        NOW
-                    ],
+                    params![id, title, status, (status == "done").then_some(NOW), NOW],
                 )
                 .expect("seed task");
         }

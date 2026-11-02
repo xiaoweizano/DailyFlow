@@ -85,6 +85,11 @@ function createServices(
   const summaries = options.summaries ?? [];
 
   return {
+    knowledge: {
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      get: vi.fn(async () => null),
+      promote: vi.fn(),
+    },
     journal: {
       get: vi.fn(async (): Promise<Result<JournalLookup, AppError>> =>
         options.getError === undefined ? ok(lookup) : err(options.getError),

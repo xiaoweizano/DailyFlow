@@ -45,7 +45,7 @@ export interface SearchHit {
 export interface SearchResultPage {
   readonly items: readonly SearchHit[];
   readonly nextCursor: string | null;
-  readonly indexState: "ready" | "stale";
+  readonly indexState: "ready" | "stale" | "failed";
 }
 
 export interface SearchRebuildResult {

@@ -1,9 +1,7 @@
 use tauri::State;
 
 use crate::db::{
-    models::{
-        Page, TimelineCalendarQuery, TimelineDaySummary, TimelineListQuery,
-    },
+    models::{Page, TimelineCalendarQuery, TimelineDaySummary, TimelineListQuery},
     timeline_repository, Database, StorageError,
 };
 

@@ -6,12 +6,13 @@ import type { AppRuntimeServices } from "./app-services-context.js";
 import { createAttachmentRuntimeServices } from "./attachments/attachment-services.js";
 import { EditorContentProjector } from "./journal/content-projector.js";
 import { createJournalRuntimeServices } from "./journal/journal-services.js";
+import { createKnowledgeRuntimeServices } from "./knowledge/knowledge-services.js";
 import { createSaveLifecycle, type SaveLifecycle } from "./lifecycle/save-lifecycle.js";
 import { createTaskRuntimeServices } from "./tasks/task-services.js";
 
 export interface CreateAppRuntimeServicesOptions extends Pick<
   AppServices,
-  "journals" | "tasks" | "attachments" | "search"
+  "journals" | "knowledge" | "tasks" | "attachments" | "search"
 > {
   readonly timeline: TimelineQuery;
   readonly clock?: Clock;
@@ -41,6 +42,7 @@ export function createAppRuntimeServices(
 ): AppRuntimeServices {
   const clock = options.clock ?? systemClock;
   const ids = options.ids ?? systemIds;
+  const projector = new EditorContentProjector();
 
   return {
     attachments: createAttachmentRuntimeServices({
@@ -48,7 +50,14 @@ export function createAppRuntimeServices(
     }),
     journal: createJournalRuntimeServices({
       journals: options.journals,
-      projector: new EditorContentProjector(),
+      projector,
+      clock,
+      ids,
+    }),
+    knowledge: createKnowledgeRuntimeServices({
+      journals: options.journals,
+      knowledge: options.knowledge,
+      projector,
       clock,
       ids,
     }),

@@ -33,6 +33,11 @@ const firstPage: readonly JournalVersionSummary[] = [
 
 function createServices() {
   return {
+    knowledge: {
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      get: vi.fn(async () => null),
+      promote: vi.fn(),
+    },
     journal: {
       get: vi.fn(),
       save: vi.fn(),

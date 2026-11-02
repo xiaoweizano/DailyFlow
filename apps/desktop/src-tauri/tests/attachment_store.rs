@@ -1,9 +1,7 @@
 use std::fs;
 
 use dailyflow_desktop::{
-    attachments::{
-        AttachmentOwnerType, AttachmentPutInput, AttachmentStore, StoredAttachment,
-    },
+    attachments::{AttachmentOwnerType, AttachmentPutInput, AttachmentStore, StoredAttachment},
     db::Database,
 };
 use rusqlite::params;
@@ -83,9 +81,13 @@ fn writes_hashed_file_and_deduplicates_blob_content() {
         .database
         .with_connection(|connection| {
             let blobs: i64 =
-                connection.query_row("SELECT COUNT(*) FROM attachment_blobs", [], |row| row.get(0))?;
-            let links: i64 = connection
-                .query_row("SELECT COUNT(*) FROM attachment_links", [], |row| row.get(0))?;
+                connection.query_row("SELECT COUNT(*) FROM attachment_blobs", [], |row| {
+                    row.get(0)
+                })?;
+            let links: i64 =
+                connection.query_row("SELECT COUNT(*) FROM attachment_links", [], |row| {
+                    row.get(0)
+                })?;
             Ok((blobs, links))
         })
         .expect("read counts");

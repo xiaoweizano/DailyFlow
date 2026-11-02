@@ -1,4 +1,5 @@
 pub mod journal_repository;
+pub mod knowledge_repository;
 pub mod migrations;
 pub mod models;
 pub mod search_repository;
