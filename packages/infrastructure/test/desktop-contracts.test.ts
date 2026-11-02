@@ -1,14 +1,20 @@
 import { PortError, type SaveJournalSnapshot } from "@dailyflow/application";
 import {
+  createContentDocument,
   parseContentHash,
   parseEntityId,
   parseLocalDate,
+  parseRevision,
   parseUtcTimestamp,
+  type JsonObject,
+  type Task,
 } from "@dailyflow/domain";
 import { describe, expect, it, vi } from "vitest";
 
 import { DesktopJournalRepository } from "../src/desktop/desktop-journal-repository.js";
 import { DesktopSearchPort } from "../src/desktop/desktop-search-port.js";
+import { DesktopTaskRepository } from "../src/desktop/desktop-task-repository.js";
+import { DesktopTimelineQuery } from "../src/desktop/desktop-timeline-query.js";
 import { TauriCommandClient, type TauriInvoke } from "../src/desktop/tauri-client.js";
 
 const JOURNAL_ID = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c26");
@@ -16,6 +22,36 @@ const CONTENT_HASH = parseContentHash(
   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 );
 const SAVED_AT = parseUtcTimestamp("2026-10-30T03:20:11.123Z");
+
+const taskDto = {
+  id: parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c29"),
+  title: "补齐离线导入测试",
+  descriptionJson: {
+    type: "doc",
+    content: [{ type: "paragraph" }],
+  } as JsonObject,
+  descriptionText: "确认 GBK 和 UTF-8 BOM 都能导入。",
+  status: "in_progress",
+  priority: "high",
+  dueDate: "2026-10-30",
+  completedAt: null,
+  journalId: JOURNAL_ID,
+  knowledgeItemId: null,
+  revision: 2,
+  createdAt: SAVED_AT,
+  updatedAt: SAVED_AT,
+  deletedAt: null,
+} as const;
+
+const timelineDto = {
+  date: "2026-10-30",
+  journalId: JOURNAL_ID,
+  journalCount: 1,
+  taskDueCount: 2,
+  title: "发布复盘",
+  excerpt: "修复了离线导入问题",
+  updatedAt: SAVED_AT,
+} as const;
 
 const journalDto = {
   id: JOURNAL_ID,
@@ -47,6 +83,13 @@ function createInvoke(result: unknown): ReturnType<typeof vi.fn<TauriInvoke>> {
 
 function createJournalRepository(invoke: TauriInvoke): DesktopJournalRepository {
   return new DesktopJournalRepository({
+    client: new TauriCommandClient(invoke),
+    clock: { nowUtc: () => SAVED_AT },
+  });
+}
+
+function createTaskRepository(invoke: TauriInvoke): DesktopTaskRepository {
+  return new DesktopTaskRepository({
     client: new TauriCommandClient(invoke),
     clock: { nowUtc: () => SAVED_AT },
   });
@@ -255,6 +298,207 @@ describe("desktop Tauri contracts", () => {
       journalId: JOURNAL_ID,
       expectedRevision: 1,
       deletedAt: SAVED_AT,
+    });
+  });
+
+  it("maps task DTOs and preserves list filters and pagination", async () => {
+    const invoke = vi
+      .fn<TauriInvoke>()
+      .mockResolvedValueOnce(taskDto)
+      .mockResolvedValueOnce({
+        items: [taskDto],
+        nextCursor: "task-cursor-2",
+      });
+    const tasks = createTaskRepository(invoke);
+
+    const task = await tasks.getById(taskDto.id);
+    const page = await tasks.list({
+      status: ["open", "in_progress"],
+      dueFrom: parseLocalDate("2026-10-01"),
+      dueTo: parseLocalDate("2026-10-31"),
+      cursor: "task-cursor-1",
+      limit: 10,
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(1, "task_get_by_id", {
+      taskId: taskDto.id,
+    });
+    expect(invoke).toHaveBeenNthCalledWith(2, "task_list", {
+      query: {
+        status: ["open", "in_progress"],
+        dueFrom: "2026-10-01",
+        dueTo: "2026-10-31",
+        cursor: "task-cursor-1",
+        limit: 10,
+      },
+    });
+    expect(task).toMatchObject({
+      id: taskDto.id,
+      title: "补齐离线导入测试",
+      descriptionText: "确认 GBK 和 UTF-8 BOM 都能导入。",
+      dueDate: "2026-10-30",
+      journalId: JOURNAL_ID,
+      revision: 2,
+    });
+    expect(page).toMatchObject({
+      items: [{ id: taskDto.id, revision: 2 }],
+      nextCursor: "task-cursor-2",
+    });
+  });
+
+  it("maps task mutations to revision-checked Tauri commands", async () => {
+    const savedTaskDto = {
+      ...taskDto,
+      revision: 3,
+      updatedAt: parseUtcTimestamp("2026-10-30T04:20:11.123Z"),
+    } as const;
+    const doneTaskDto = {
+      ...savedTaskDto,
+      status: "done",
+      completedAt: parseUtcTimestamp("2026-10-30T05:20:11.123Z"),
+      revision: 4,
+    } as const;
+    const invoke = vi
+      .fn<TauriInvoke>()
+      .mockResolvedValueOnce(savedTaskDto)
+      .mockResolvedValueOnce(doneTaskDto)
+      .mockResolvedValueOnce(undefined);
+    const tasks = createTaskRepository(invoke);
+    const currentTask: Task = {
+      id: taskDto.id,
+      title: taskDto.title,
+      description: createContentDocument(1, taskDto.descriptionJson),
+      descriptionText: taskDto.descriptionText,
+      status: "in_progress",
+      priority: taskDto.priority,
+      dueDate: parseLocalDate(taskDto.dueDate),
+      completedAt: null,
+      journalId: taskDto.journalId,
+      knowledgeItemId: taskDto.knowledgeItemId,
+      revision: parseRevision(2),
+      createdAt: taskDto.createdAt,
+      updatedAt: taskDto.updatedAt,
+      deletedAt: taskDto.deletedAt,
+    };
+
+    const saved = await tasks.save(currentTask, 2);
+    const completed = await tasks.complete(
+      taskDto.id,
+      parseUtcTimestamp("2026-10-30T05:20:11.123Z"),
+      3,
+    );
+    await tasks.softDelete(taskDto.id, 4);
+
+    expect(invoke).toHaveBeenNthCalledWith(1, "task_save", {
+      input: expect.objectContaining({
+        task: expect.objectContaining({
+          id: taskDto.id,
+          status: "in_progress",
+          completedAt: null,
+        }),
+        expectedRevision: 2,
+      }),
+    });
+    expect(invoke).toHaveBeenNthCalledWith(2, "task_complete", {
+      input: {
+        taskId: taskDto.id,
+        completedAt: "2026-10-30T05:20:11.123Z",
+        expectedRevision: 3,
+      },
+    });
+    expect(invoke).toHaveBeenNthCalledWith(3, "task_soft_delete", {
+      taskId: taskDto.id,
+      expectedRevision: 4,
+      deletedAt: SAVED_AT,
+    });
+    expect(saved.revision).toBe(3);
+    expect(completed).toMatchObject({
+      status: "done",
+      completedAt: "2026-10-30T05:20:11.123Z",
+      revision: 4,
+    });
+  });
+
+  it("maps timeline calendar and date-cursor list queries", async () => {
+    const invoke = vi
+      .fn<TauriInvoke>()
+      .mockResolvedValueOnce([timelineDto])
+      .mockResolvedValueOnce({
+        items: [timelineDto],
+        nextCursor: "timeline-cursor-2",
+      });
+    const timeline = new DesktopTimelineQuery({
+      client: new TauriCommandClient(invoke),
+    });
+
+    const calendar = await timeline.getCalendar({
+      from: parseLocalDate("2026-10-01"),
+      to: parseLocalDate("2026-10-31"),
+    });
+    const page = await timeline.listEntries({
+      fromDate: parseLocalDate("2026-01-01"),
+      toDate: parseLocalDate("2026-12-31"),
+      cursor: "timeline-cursor-1",
+      limit: 30,
+    });
+
+    expect(invoke).toHaveBeenNthCalledWith(1, "timeline_get_calendar", {
+      query: {
+        from: "2026-10-01",
+        to: "2026-10-31",
+      },
+    });
+    expect(invoke).toHaveBeenNthCalledWith(2, "timeline_list_entries", {
+      query: {
+        fromDate: "2026-01-01",
+        toDate: "2026-12-31",
+        cursor: "timeline-cursor-1",
+        limit: 30,
+      },
+    });
+    expect(calendar).toEqual([
+      expect.objectContaining({
+        date: "2026-10-30",
+        journalId: JOURNAL_ID,
+        journalCount: 1,
+        taskDueCount: 2,
+        updatedAt: SAVED_AT,
+      }),
+    ]);
+    expect(page).toMatchObject({
+      items: [{ date: "2026-10-30", title: "发布复盘" }],
+      nextCursor: "timeline-cursor-2",
+    });
+  });
+
+  it("rejects invalid task responses and timeline requests", async () => {
+    const invoke = createInvoke({ ...taskDto, revision: undefined });
+    const tasks = createTaskRepository(invoke);
+    const timeline = new DesktopTimelineQuery({
+      client: new TauriCommandClient(createInvoke([])),
+    });
+
+    const responseError = await tasks.getById(taskDto.id).catch((reason: unknown) => reason);
+    const requestError = await timeline
+      .getCalendar({
+        from: parseLocalDate("2026-10-31"),
+        to: parseLocalDate("2026-10-01"),
+      })
+      .catch((reason: unknown) => reason);
+
+    expect(responseError).toBeInstanceOf(PortError);
+    expect(responseError).toMatchObject({
+      code: "VALIDATION_ERROR",
+      details: {
+        fields: {
+          revision: expect.any(String),
+        },
+      },
+    });
+    expect(requestError).toBeInstanceOf(PortError);
+    expect(requestError).toMatchObject({
+      code: "VALIDATION_ERROR",
+      message: "Desktop storage request is invalid",
     });
   });
 

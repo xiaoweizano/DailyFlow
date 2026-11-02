@@ -8,12 +8,7 @@ import type {
   SavedJournalSnapshot,
   StoredAttachment,
 } from "@dailyflow/application";
-import {
-  createJournal,
-  parseEntityId,
-  parseRevision,
-  parseUtcTimestamp,
-} from "@dailyflow/domain";
+import { createJournal, parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
 import { err, ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -79,19 +74,20 @@ function createSummary(
   };
 }
 
-function createServices(options: {
-  readonly lookup?: JournalLookup;
-  readonly summaries?: readonly JournalSummary[];
-  readonly getError?: AppError;
-} = {}) {
+function createServices(
+  options: {
+    readonly lookup?: JournalLookup;
+    readonly summaries?: readonly JournalSummary[];
+    readonly getError?: AppError;
+  } = {},
+) {
   const lookup = options.lookup ?? createJournalLookup();
   const summaries = options.summaries ?? [];
 
   return {
     journal: {
-      get: vi.fn(
-        async (): Promise<Result<JournalLookup, AppError>> =>
-          options.getError === undefined ? ok(lookup) : err(options.getError),
+      get: vi.fn(async (): Promise<Result<JournalLookup, AppError>> =>
+        options.getError === undefined ? ok(lookup) : err(options.getError),
       ),
       save: vi.fn(async (): Promise<Result<SavedJournalSnapshot, AppError>> => {
         throw new Error("not used");
@@ -114,6 +110,16 @@ function createServices(options: {
         throw new Error("not used");
       }),
       read: vi.fn(async () => new Uint8Array()),
+    },
+    tasks: {
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      complete: vi.fn(),
+      reopen: vi.fn(),
+      update: vi.fn(),
+    },
+    timeline: {
+      getCalendar: vi.fn(async () => []),
+      listEntries: vi.fn(async () => ({ items: [], nextCursor: null })),
     },
   } satisfies AppRuntimeServices;
 }
@@ -144,10 +150,7 @@ describe("DashboardPage", () => {
   it("shows today's journal and links recent activity to journal dates", async () => {
     const services = createServices({
       lookup: createJournalLookup({ persisted: true, title: "发布复盘" }),
-      summaries: [
-        createSummary("2026-10-29", "导入设计"),
-        createSummary("2026-10-28", "搜索方案"),
-      ],
+      summaries: [createSummary("2026-10-29", "导入设计"), createSummary("2026-10-28", "搜索方案")],
     });
     renderDashboard(services);
 

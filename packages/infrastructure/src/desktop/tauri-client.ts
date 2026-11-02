@@ -18,6 +18,16 @@ import {
   SearchResultPageDtoSchema,
   StoredAttachmentDtoSchema,
   TAURI_COMMANDS,
+  TaskCompleteCommandDtoSchema,
+  TaskDtoSchema,
+  TaskListQueryDtoSchema,
+  TaskPageDtoSchema,
+  TaskSaveCommandDtoSchema,
+  TaskSoftDeleteCommandDtoSchema,
+  TimelineCalendarQueryDtoSchema,
+  TimelineDaySummaryDtoSchema,
+  TimelineDaySummaryPageDtoSchema,
+  TimelineListQueryDtoSchema,
   mapTauriError,
   type AttachmentDataDto,
   type AttachmentPutCommandDto,
@@ -34,6 +44,14 @@ import {
   type SearchQueryDto,
   type SearchResultPageDto,
   type StoredAttachmentDto,
+  type TaskCompleteCommandDto,
+  type TaskDto,
+  type TaskListQueryDto,
+  type TaskSaveCommandDto,
+  type TaskSoftDeleteCommandDto,
+  type TimelineCalendarQueryDto,
+  type TimelineDaySummaryDto,
+  type TimelineListQueryDto,
 } from "./tauri-contracts.js";
 
 export type TauriInvoke = (command: string, args?: Record<string, unknown>) => Promise<unknown>;
@@ -150,6 +168,68 @@ export class TauriCommandClient {
       TAURI_COMMANDS.journalSoftDelete,
       { journalId, expectedRevision, deletedAt },
       z.union([z.null(), z.undefined()]),
+    );
+  }
+
+  async getTaskById(taskId: string): Promise<TaskDto | null> {
+    return this.request(TAURI_COMMANDS.taskGetById, { taskId }, TaskDtoSchema.nullable());
+  }
+
+  async listTasks(query: TaskListQueryDto): Promise<TauriPage<TaskDto>> {
+    return this.request(
+      TAURI_COMMANDS.taskList,
+      { query },
+      TaskPageDtoSchema,
+      z.object({ query: TaskListQueryDtoSchema }),
+    );
+  }
+
+  async saveTask(input: TaskSaveCommandDto): Promise<TaskDto> {
+    return this.request(
+      TAURI_COMMANDS.taskSave,
+      { input },
+      TaskDtoSchema,
+      z.object({ input: TaskSaveCommandDtoSchema }),
+    );
+  }
+
+  async completeTask(input: TaskCompleteCommandDto): Promise<TaskDto> {
+    return this.request(
+      TAURI_COMMANDS.taskComplete,
+      { input },
+      TaskDtoSchema,
+      z.object({ input: TaskCompleteCommandDtoSchema }),
+    );
+  }
+
+  async softDeleteTask(input: TaskSoftDeleteCommandDto): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.taskSoftDelete,
+      input,
+      z.union([z.null(), z.undefined()]),
+      TaskSoftDeleteCommandDtoSchema,
+    );
+  }
+
+  async getTimelineCalendar(
+    query: TimelineCalendarQueryDto,
+  ): Promise<readonly TimelineDaySummaryDto[]> {
+    return this.request(
+      TAURI_COMMANDS.timelineGetCalendar,
+      { query },
+      z.array(TimelineDaySummaryDtoSchema),
+      z.object({ query: TimelineCalendarQueryDtoSchema }),
+    );
+  }
+
+  async listTimelineEntries(
+    query: TimelineListQueryDto,
+  ): Promise<TauriPage<TimelineDaySummaryDto>> {
+    return this.request(
+      TAURI_COMMANDS.timelineListEntries,
+      { query },
+      TimelineDaySummaryPageDtoSchema,
+      z.object({ query: TimelineListQueryDtoSchema }),
     );
   }
 

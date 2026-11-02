@@ -30,7 +30,7 @@ import type {
 } from "../src/ports/journal-repository.js";
 import type { KnowledgeRepository } from "../src/ports/knowledge-repository.js";
 import type { Page } from "../src/ports/pagination.js";
-import type { TaskRepository } from "../src/ports/task-repository.js";
+import type { TaskListQuery, TaskRepository } from "../src/ports/task-repository.js";
 
 export const JOURNAL_ID = "0198e2f4-7e33-7c70-a8b2-18c1520f9c26";
 export const OTHER_JOURNAL_ID = "0198e2f4-7e33-7c70-a8b2-18c1520f9c27";
@@ -186,17 +186,25 @@ export class FakeKnowledgeRepository implements KnowledgeRepository {
 
 export class FakeTaskRepository implements TaskRepository {
   completeError: unknown = null;
+  taskById: Task | null = null;
+  readonly saved: Array<{ task: Task; expectedRevision: number | null }> = [];
   completion: {
     id: EntityId;
     completedAt: UtcTimestamp;
     expectedRevision: number;
   } | null = null;
 
-  async list(): Promise<{ items: readonly Task[]; nextCursor: string | null }> {
+  async list(query: TaskListQuery): Promise<{ items: readonly Task[]; nextCursor: string | null }> {
+    void query;
     return { items: [], nextCursor: null };
   }
 
-  async save(task: Task): Promise<Task> {
+  async getById(id: EntityId): Promise<Task | null> {
+    return this.taskById?.id === id ? this.taskById : null;
+  }
+
+  async save(task: Task, expectedRevision: number | null): Promise<Task> {
+    this.saved.push({ task, expectedRevision });
     return task;
   }
 

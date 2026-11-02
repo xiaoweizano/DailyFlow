@@ -20,7 +20,10 @@ export function TodayJournalPanel({
 
   if (!isPersisted) {
     return (
-      <section aria-labelledby="today-journal-title" className="border border-border bg-surface p-5">
+      <section
+        aria-labelledby="today-journal-title"
+        className="border border-border bg-surface p-5"
+      >
         <div className="flex items-start gap-3">
           <span className="grid size-9 shrink-0 place-items-center border border-border bg-surface-muted text-primary">
             <BookOpenText aria-hidden="true" className="size-4" />
@@ -67,10 +70,7 @@ export function TodayJournalPanel({
         </div>
         <SaveStatus status={status} />
       </div>
-      <h2
-        id="today-journal-title"
-        className="mt-4 text-xl font-semibold leading-7 text-foreground"
-      >
+      <h2 id="today-journal-title" className="mt-4 text-xl font-semibold leading-7 text-foreground">
         {journal.title.trim() || "今天的日志"}
       </h2>
       <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">

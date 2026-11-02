@@ -651,31 +651,31 @@ docs/
 - Create: `packages/features/test/timeline.test.tsx`
 - Create: `packages/application/test/tasks.test.ts`
 
-- [ ] **Step 1: 写日期与状态测试**
+- [x] **Step 1: 写日期与状态测试**
 
   覆盖闰年、月末、跨年、本地日期、逾期判断、完成/重开任务。
 
-- [ ] **Step 2: 实现查询端口**
+- [x] **Step 2: 实现查询端口**
 
   日历返回轻量日期摘要；时间线使用游标分页；不允许加载完整历史正文。
 
-- [ ] **Step 3: 实现 Timeline**
+- [x] **Step 3: 实现 Timeline**
 
   月历、时间线和热力图切换；日期格可键盘访问；热力图有口径和数值提示。
 
-- [ ] **Step 4: 实现 Tasks**
+- [x] **Step 4: 实现 Tasks**
 
   今天、即将到期、全部、已完成视图；行内完成；详情抽屉编辑关联。
 
-- [ ] **Step 5: 注册 Timeline 与 Tasks 路由**
+- [x] **Step 5: 注册 Timeline 与 Tasks 路由**
 
   在共享路由表注册 `/timeline`、`/tasks`，两个组合根同时接入；桌面构建后实际打开两个页面，确认刷新、返回和日期查询参数不会落到空白页。
 
-- [ ] **Step 6: 运行**
+- [x] **Step 6: 运行**
 
   Run: `pnpm test && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build`
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
   Run: `git add packages/features packages/application packages/infrastructure apps/web apps/desktop && git commit -m "feat: add timeline calendar and tasks"`
 

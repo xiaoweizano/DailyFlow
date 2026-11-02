@@ -3,12 +3,7 @@
 import "./setup-dom.js";
 
 import type { JournalLookup, SavedJournalSnapshot, StoredAttachment } from "@dailyflow/application";
-import {
-  createJournal,
-  parseEntityId,
-  parseRevision,
-  parseUtcTimestamp,
-} from "@dailyflow/domain";
+import { createJournal, parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
 import { err, ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -87,6 +82,16 @@ function createServices(error?: AppError) {
         throw new Error("not used");
       }),
       read: vi.fn(async () => new Uint8Array()),
+    },
+    tasks: {
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      complete: vi.fn(),
+      reopen: vi.fn(),
+      update: vi.fn(),
+    },
+    timeline: {
+      getCalendar: vi.fn(async () => []),
+      listEntries: vi.fn(async () => ({ items: [], nextCursor: null })),
     },
   } satisfies AppRuntimeServices;
 }

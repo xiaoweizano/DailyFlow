@@ -37,7 +37,9 @@ function DashboardLoading(): React.JSX.Element {
   );
 }
 
-export function DashboardPage({ today = currentLocalDate() }: DashboardPageProps): React.JSX.Element {
+export function DashboardPage({
+  today = currentLocalDate(),
+}: DashboardPageProps): React.JSX.Element {
   const services = useAppServices();
   const [state, setState] = useState<DashboardState | null>(null);
   const [loading, setLoading] = useState(true);

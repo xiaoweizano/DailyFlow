@@ -55,6 +55,11 @@ export class MemoryTaskRepository implements TaskRepository {
 
   constructor(private readonly dependencies: { readonly clock: Clock }) {}
 
+  async getById(id: EntityId): Promise<Task | null> {
+    const task = this.tasks.get(id);
+    return task === undefined || task.deletedAt !== null ? null : task;
+  }
+
   async list(query: TaskListQuery): Promise<Page<Task>> {
     const limit = resolvePageSize(query.limit);
     const cursor = query.cursor === undefined ? null : decodeCursor<TaskCursor>(query.cursor);

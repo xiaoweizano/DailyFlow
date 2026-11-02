@@ -22,6 +22,13 @@ export const TAURI_COMMANDS = {
   journalGetVersion: "journal_get_version",
   journalRestoreVersion: "journal_restore_version",
   journalSoftDelete: "journal_soft_delete",
+  taskGetById: "task_get_by_id",
+  taskList: "task_list",
+  taskSave: "task_save",
+  taskComplete: "task_complete",
+  taskSoftDelete: "task_soft_delete",
+  timelineGetCalendar: "timeline_get_calendar",
+  timelineListEntries: "timeline_list_entries",
   searchQuery: "search_query",
   attachmentPut: "attachment_put",
   attachmentRead: "attachment_read",
@@ -204,6 +211,109 @@ export const JournalListQueryDtoSchema = z.object({
   limit: z.number().int().min(1).max(100).optional(),
 });
 
+export const TaskStatusDtoSchema = z.enum(["open", "in_progress", "done", "cancelled"]);
+export const TaskPriorityDtoSchema = z.enum(["low", "normal", "high", "urgent"]);
+
+export const TaskDtoSchema = z.object({
+  id: UuidV7Schema,
+  title: z.string().min(1).max(500),
+  descriptionJson: JsonObjectSchema.nullable(),
+  descriptionText: z.string(),
+  status: TaskStatusDtoSchema,
+  priority: TaskPriorityDtoSchema,
+  dueDate: LocalDateDtoSchema.nullable(),
+  completedAt: UtcTimestampSchema.nullable(),
+  journalId: UuidV7Schema.nullable(),
+  knowledgeItemId: UuidV7Schema.nullable(),
+  revision: z.number().int().positive(),
+  createdAt: UtcTimestampSchema,
+  updatedAt: UtcTimestampSchema,
+  deletedAt: UtcTimestampSchema.nullable(),
+});
+
+export const TaskSaveCommandDtoSchema = z.object({
+  task: TaskDtoSchema,
+  expectedRevision: z.number().int().positive().nullable(),
+});
+
+export const TaskCompleteCommandDtoSchema = z.object({
+  taskId: UuidV7Schema,
+  completedAt: UtcTimestampSchema,
+  expectedRevision: z.number().int().positive(),
+});
+
+export const TaskSoftDeleteCommandDtoSchema = z.object({
+  taskId: UuidV7Schema,
+  expectedRevision: z.number().int().positive(),
+  deletedAt: UtcTimestampSchema,
+});
+
+export const TaskListQueryDtoSchema = z.object({
+  status: z.array(TaskStatusDtoSchema).optional(),
+  dueFrom: LocalDateDtoSchema.optional(),
+  dueTo: LocalDateDtoSchema.optional(),
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+});
+
+export const TaskPageDtoSchema = pageDtoSchema(TaskDtoSchema);
+
+const TimelineDateRangeShape = {
+  fromDate: LocalDateDtoSchema.optional(),
+  toDate: LocalDateDtoSchema.optional(),
+};
+
+function validateOptionalDateRange(
+  value: {
+    readonly fromDate?: LocalDate | undefined;
+    readonly toDate?: LocalDate | undefined;
+  },
+  context: z.RefinementCtx,
+): void {
+  if (value.fromDate !== undefined && value.toDate !== undefined && value.fromDate > value.toDate) {
+    context.addIssue({
+      code: "custom",
+      message: "fromDate must be on or before toDate",
+      path: ["fromDate"],
+    });
+  }
+}
+
+export const TimelineCalendarQueryDtoSchema = z
+  .object({
+    from: LocalDateDtoSchema,
+    to: LocalDateDtoSchema,
+  })
+  .superRefine((value, context) => {
+    if (value.from > value.to) {
+      context.addIssue({
+        code: "custom",
+        message: "from must be on or before to",
+        path: ["from"],
+      });
+    }
+  });
+
+export const TimelineListQueryDtoSchema = z
+  .object({
+    ...TimelineDateRangeShape,
+    cursor: z.string().optional(),
+    limit: z.number().int().min(1).max(100).optional(),
+  })
+  .superRefine(validateOptionalDateRange);
+
+export const TimelineDaySummaryDtoSchema = z.object({
+  date: LocalDateDtoSchema,
+  journalId: UuidV7Schema.nullable(),
+  journalCount: z.number().int().nonnegative(),
+  taskDueCount: z.number().int().nonnegative(),
+  title: z.string(),
+  excerpt: z.string(),
+  updatedAt: UtcTimestampSchema.nullable(),
+});
+
+export const TimelineDaySummaryPageDtoSchema = pageDtoSchema(TimelineDaySummaryDtoSchema);
+
 export function pageDtoSchema<S extends z.ZodTypeAny>(itemSchema: S) {
   return z.object({
     items: z.array(itemSchema),
@@ -375,6 +485,14 @@ export type JournalSummaryDto = z.infer<typeof JournalSummaryDtoSchema>;
 export type JournalVersionSummaryDto = z.infer<typeof JournalVersionSummaryDtoSchema>;
 export type JournalVersionDto = z.infer<typeof JournalVersionDtoSchema>;
 export type JournalListQueryDto = z.infer<typeof JournalListQueryDtoSchema>;
+export type TaskDto = z.infer<typeof TaskDtoSchema>;
+export type TaskSaveCommandDto = z.infer<typeof TaskSaveCommandDtoSchema>;
+export type TaskCompleteCommandDto = z.infer<typeof TaskCompleteCommandDtoSchema>;
+export type TaskSoftDeleteCommandDto = z.infer<typeof TaskSoftDeleteCommandDtoSchema>;
+export type TaskListQueryDto = z.infer<typeof TaskListQueryDtoSchema>;
+export type TimelineCalendarQueryDto = z.infer<typeof TimelineCalendarQueryDtoSchema>;
+export type TimelineListQueryDto = z.infer<typeof TimelineListQueryDtoSchema>;
+export type TimelineDaySummaryDto = z.infer<typeof TimelineDaySummaryDtoSchema>;
 export type RestoreJournalVersionDto = z.infer<typeof RestoreJournalVersionDtoSchema>;
 export type SearchQueryDto = z.infer<typeof SearchQueryDtoSchema>;
 export type SearchHitDto = z.infer<typeof SearchHitDtoSchema>;

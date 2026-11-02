@@ -6,6 +6,8 @@ import type {
   JournalStatus,
   LocalDate,
   StructuredBlockType,
+  TaskPriority,
+  TaskStatus,
   UtcTimestamp,
 } from "@dailyflow/domain";
 import type { SearchEntityType } from "@dailyflow/application";
@@ -52,6 +54,23 @@ export interface JournalVersionRow {
   readonly searchDocumentsJson: string;
   readonly changeSource: ChangeSource;
   readonly createdAt: UtcTimestamp;
+}
+
+export interface TaskRow {
+  readonly id: EntityId;
+  readonly title: string;
+  readonly descriptionJson: string | null;
+  readonly descriptionText: string;
+  readonly status: TaskStatus;
+  readonly priority: TaskPriority;
+  readonly dueDate: LocalDate | null;
+  readonly completedAt: UtcTimestamp | null;
+  readonly journalId: EntityId | null;
+  readonly knowledgeItemId: EntityId | null;
+  readonly revision: number;
+  readonly createdAt: UtcTimestamp;
+  readonly updatedAt: UtcTimestamp;
+  readonly deletedAt: UtcTimestamp | null;
 }
 
 export interface StructuredBlockRow {

@@ -87,6 +87,16 @@ function createServices() {
       })),
       read: vi.fn(async () => new Uint8Array()),
     },
+    tasks: {
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      complete: vi.fn(),
+      reopen: vi.fn(),
+      update: vi.fn(),
+    },
+    timeline: {
+      getCalendar: vi.fn(async () => []),
+      listEntries: vi.fn(async () => ({ items: [], nextCursor: null })),
+    },
   };
 }
 

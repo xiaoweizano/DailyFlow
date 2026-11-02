@@ -63,7 +63,5 @@ export function localDatesEndingAt(endDate: string, count: number): readonly str
     throw new RangeError("Date count must be a positive integer.");
   }
 
-  return Array.from({ length: count }, (_, index) =>
-    shiftLocalDate(endDate, index - (count - 1)),
-  );
+  return Array.from({ length: count }, (_, index) => shiftLocalDate(endDate, index - (count - 1)));
 }

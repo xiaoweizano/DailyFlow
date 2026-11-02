@@ -1,5 +1,12 @@
 import type { JournalLookup } from "@dailyflow/application";
-import { AlertCircle, ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  RotateCw,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
@@ -28,9 +35,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadVersion, setReloadVersion] = useState(0);
-  const [dateDraft, setDateDraft] = useState(() =>
-    isLocalDate(journalDate) ? journalDate : "",
-  );
+  const [dateDraft, setDateDraft] = useState(() => (isLocalDate(journalDate) ? journalDate : ""));
 
   useEffect(() => {
     setDateDraft(isLocalDate(journalDate) ? journalDate : "");

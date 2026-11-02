@@ -1,6 +1,8 @@
 pub mod attachment_commands;
 pub mod journal_commands;
 pub mod search_commands;
+pub mod task_commands;
+pub mod timeline_commands;
 
 use rusqlite::Connection;
 

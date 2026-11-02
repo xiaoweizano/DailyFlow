@@ -11,15 +11,9 @@ export {
   createAppRuntimeServices,
   type CreateAppRuntimeServicesOptions,
 } from "./app-runtime-services.js";
-export {
-  ActivityHeatmap,
-  type ActivityHeatmapProps,
-} from "./dashboard/activity-heatmap.js";
+export { ActivityHeatmap, type ActivityHeatmapProps } from "./dashboard/activity-heatmap.js";
 export { DashboardPage, type DashboardPageProps } from "./dashboard/dashboard-page.js";
-export {
-  TodayJournalPanel,
-  type TodayJournalPanelProps,
-} from "./dashboard/today-journal-panel.js";
+export { TodayJournalPanel, type TodayJournalPanelProps } from "./dashboard/today-journal-panel.js";
 export { TodayTasksPanel } from "./dashboard/today-tasks-panel.js";
 export {
   appModules,
@@ -46,3 +40,10 @@ export {
 export { JournalEditor, type JournalEditorProps } from "./journal/journal-editor.js";
 export { JournalList, type JournalListProps } from "./journal/journal-list.js";
 export { JournalPage, type JournalPageProps } from "./journal/journal-page.js";
+export { TasksPage, type TasksPageProps } from "./tasks/tasks-page.js";
+export {
+  ActivityHeatmap as TimelineActivityHeatmap,
+  type ActivityHeatmapProps as TimelineActivityHeatmapProps,
+} from "./timeline/activity-heatmap.js";
+export { MonthCalendar, type MonthCalendarProps } from "./timeline/month-calendar.js";
+export { TimelinePage, type TimelinePageProps } from "./timeline/timeline-page.js";

@@ -9,6 +9,7 @@ export interface TaskListQuery extends PageRequest {
 }
 
 export interface TaskRepository {
+  getById(id: EntityId): Promise<Task | null>;
   list(query: TaskListQuery): Promise<Page<Task>>;
   save(task: Task, expectedRevision: number | null): Promise<Task>;
   complete(id: EntityId, completedAt: UtcTimestamp, expectedRevision: number): Promise<Task>;

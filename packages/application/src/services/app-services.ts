@@ -17,8 +17,10 @@ import type { TaskRepository } from "../ports/task-repository.js";
 import { completeTask } from "../use-cases/complete-task.js";
 import { getJournal, type JournalLookup } from "../use-cases/get-journal.js";
 import { promoteToKnowledge } from "../use-cases/promote-to-knowledge.js";
+import { reopenTask } from "../use-cases/reopen-task.js";
 import { restoreJournalVersion } from "../use-cases/restore-journal-version.js";
 import { saveJournal } from "../use-cases/save-journal.js";
+import { updateTask } from "../use-cases/update-task.js";
 
 export interface ApplicationDependencies {
   readonly journals: JournalRepository;
@@ -41,6 +43,8 @@ export interface ApplicationUseCases {
   ) => Promise<Result<SavedJournalSnapshot, AppError>>;
   readonly promoteToKnowledge: (input: unknown) => Promise<Result<KnowledgeItem, AppError>>;
   readonly completeTask: (input: unknown) => Promise<Result<Task, AppError>>;
+  readonly reopenTask: (input: unknown) => Promise<Result<Task, AppError>>;
+  readonly updateTask: (input: unknown) => Promise<Result<Task, AppError>>;
 }
 
 export interface AppServices extends ApplicationDependencies {
@@ -90,6 +94,22 @@ export function createAppServices(dependencies: ApplicationDependencies): AppSer
         ),
       completeTask: (input) =>
         completeTask(
+          {
+            tasks: dependencies.tasks,
+            clock: dependencies.clock,
+          },
+          input,
+        ),
+      reopenTask: (input) =>
+        reopenTask(
+          {
+            tasks: dependencies.tasks,
+            clock: dependencies.clock,
+          },
+          input,
+        ),
+      updateTask: (input) =>
+        updateTask(
           {
             tasks: dependencies.tasks,
             clock: dependencies.clock,

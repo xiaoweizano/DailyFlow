@@ -270,3 +270,123 @@ pub struct SearchRebuildResult {
     pub indexed_count: i64,
     pub completed_at: String,
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TaskStatus {
+    Open,
+    InProgress,
+    Done,
+    Cancelled,
+}
+
+impl TaskStatus {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Open => "open",
+            Self::InProgress => "in_progress",
+            Self::Done => "done",
+            Self::Cancelled => "cancelled",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TaskPriority {
+    Low,
+    Normal,
+    High,
+    Urgent,
+}
+
+impl TaskPriority {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Low => "low",
+            Self::Normal => "normal",
+            Self::High => "high",
+            Self::Urgent => "urgent",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Task {
+    pub id: String,
+    pub title: String,
+    pub description_json: Option<Value>,
+    pub description_text: String,
+    pub status: TaskStatus,
+    pub priority: TaskPriority,
+    pub due_date: Option<String>,
+    pub completed_at: Option<String>,
+    pub journal_id: Option<String>,
+    pub knowledge_item_id: Option<String>,
+    pub revision: i64,
+    pub created_at: String,
+    pub updated_at: String,
+    pub deleted_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TaskSaveCommand {
+    pub task: Task,
+    pub expected_revision: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TaskCompleteCommand {
+    pub task_id: String,
+    pub completed_at: String,
+    pub expected_revision: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TaskListQuery {
+    pub status: Option<Vec<TaskStatus>>,
+    pub due_from: Option<String>,
+    pub due_to: Option<String>,
+    pub cursor: Option<String>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TimelineCalendarQuery {
+    pub from: String,
+    pub to: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TimelineListQuery {
+    pub from_date: Option<String>,
+    pub to_date: Option<String>,
+    pub cursor: Option<String>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TimelineDaySummary {
+    pub date: String,
+    pub journal_id: Option<String>,
+    pub journal_count: i64,
+    pub task_due_count: i64,
+    pub title: String,
+    pub excerpt: String,
+    pub updated_at: Option<String>,
+}

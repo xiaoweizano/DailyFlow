@@ -7,6 +7,8 @@ import type { AppRouteOptions } from "./app-modules.js";
 import { DashboardPage } from "./dashboard/dashboard-page.js";
 import { JournalPage } from "./journal/journal-page.js";
 import { ModulePage, NotFoundPage } from "./module-page.js";
+import { TasksPage } from "./tasks/tasks-page.js";
+import { TimelinePage } from "./timeline/timeline-page.js";
 
 export {
   appModules,
@@ -42,11 +44,11 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "timeline",
-          element: createElement(ModulePage, { moduleId: "timeline" }),
+          element: createElement(TimelinePage),
         },
         {
           path: "timeline/:date",
-          element: createElement(ModulePage, { moduleId: "timeline" }),
+          element: createElement(TimelinePage),
         },
         {
           path: "knowledge",
@@ -58,7 +60,7 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "tasks",
-          element: createElement(ModulePage, { moduleId: "tasks" }),
+          element: createElement(TasksPage),
         },
         {
           path: "search",

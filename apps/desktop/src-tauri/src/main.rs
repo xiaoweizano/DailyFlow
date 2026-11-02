@@ -6,7 +6,10 @@ use serde::Serialize;
 #[cfg(feature = "desktop-shell")]
 use dailyflow_desktop::{
     attachments::AttachmentStore,
-    commands::{attachment_commands, journal_commands, search_commands},
+    commands::{
+        attachment_commands, journal_commands, search_commands, task_commands,
+        timeline_commands,
+    },
     db::Database,
 };
 #[cfg(feature = "desktop-shell")]
@@ -52,6 +55,13 @@ fn main() {
             journal_commands::journal_get_version,
             journal_commands::journal_restore_version,
             journal_commands::journal_soft_delete,
+            task_commands::task_get_by_id,
+            task_commands::task_list,
+            task_commands::task_save,
+            task_commands::task_complete,
+            task_commands::task_soft_delete,
+            timeline_commands::timeline_get_calendar,
+            timeline_commands::timeline_list_entries,
             search_commands::search_query,
             attachment_commands::attachment_put,
             attachment_commands::attachment_read,

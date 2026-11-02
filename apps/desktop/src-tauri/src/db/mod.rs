@@ -2,6 +2,8 @@ pub mod journal_repository;
 pub mod migrations;
 pub mod models;
 pub mod search_repository;
+pub mod task_repository;
+pub mod timeline_repository;
 
 use std::{
     fmt, fs,

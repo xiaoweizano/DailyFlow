@@ -18,6 +18,7 @@ import type {
   SearchTermPostingRow,
   StructuredBlockRow,
   TagRow,
+  TaskRow,
 } from "./schema.js";
 
 export const WEB_DATABASE_NAME = "dailyflow-web";
@@ -28,7 +29,7 @@ export class DailyFlowDb extends Dexie {
   journals!: Table<JournalRow, string>;
   journalVersions!: Table<JournalVersionRow, string>;
   structuredBlocks!: Table<StructuredBlockRow, string>;
-  tasks!: Table<GenericStoreRow, string>;
+  tasks!: Table<TaskRow, string>;
   knowledgeItems!: Table<GenericStoreRow, string>;
   knowledgeLinks!: Table<GenericStoreRow, string>;
   tags!: Table<TagRow, string>;

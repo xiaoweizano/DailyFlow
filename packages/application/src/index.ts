@@ -30,6 +30,13 @@ export type {
 } from "./ports/knowledge-repository.js";
 export type { TaskListQuery, TaskRepository } from "./ports/task-repository.js";
 export type {
+  TimelineCalendarQuery,
+  TimelineDaySummary,
+  TimelineListQuery,
+  TimelineQuery,
+} from "./queries/timeline-query.js";
+export { buildTaskListQuery, isTaskOverdue, type TaskListView } from "./queries/task-list-query.js";
+export type {
   AttachmentStore,
   PutAttachmentInput,
   StoredAttachment,
@@ -68,6 +75,16 @@ export {
   completeTask,
   type CompleteTaskDependencies,
 } from "./use-cases/complete-task.js";
+export {
+  ReopenTaskInputSchema,
+  reopenTask,
+  type ReopenTaskDependencies,
+} from "./use-cases/reopen-task.js";
+export {
+  UpdateTaskInputSchema,
+  updateTask,
+  type UpdateTaskDependencies,
+} from "./use-cases/update-task.js";
 export {
   GetJournalInputSchema,
   getJournal,

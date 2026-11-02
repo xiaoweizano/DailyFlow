@@ -1,5 +1,5 @@
-import type { AppServices } from "@dailyflow/application";
-import type { Clock, IdGenerator } from "@dailyflow/domain";
+import type { AppServices, TimelineQuery } from "@dailyflow/application";
+import type { Clock, IdGenerator, LocalDate } from "@dailyflow/domain";
 import { createUuidV7 } from "@dailyflow/shared";
 
 import type { AppRuntimeServices } from "./app-services-context.js";
@@ -7,14 +7,17 @@ import { createAttachmentRuntimeServices } from "./attachments/attachment-servic
 import { EditorContentProjector } from "./journal/content-projector.js";
 import { createJournalRuntimeServices } from "./journal/journal-services.js";
 import { createSaveLifecycle, type SaveLifecycle } from "./lifecycle/save-lifecycle.js";
+import { createTaskRuntimeServices } from "./tasks/task-services.js";
 
 export interface CreateAppRuntimeServicesOptions extends Pick<
   AppServices,
-  "journals" | "attachments" | "search"
+  "journals" | "tasks" | "attachments" | "search"
 > {
+  readonly timeline: TimelineQuery;
   readonly clock?: Clock;
   readonly ids?: IdGenerator;
   readonly lifecycle?: SaveLifecycle;
+  readonly today?: () => LocalDate;
 }
 
 const systemClock: Clock = {
@@ -24,6 +27,14 @@ const systemClock: Clock = {
 const systemIds: IdGenerator = {
   nextId: createUuidV7,
 };
+
+function systemLocalDate(): LocalDate {
+  const now = new Date();
+  const year = String(now.getFullYear()).padStart(4, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}` as LocalDate;
+}
 
 export function createAppRuntimeServices(
   options: CreateAppRuntimeServicesOptions,
@@ -43,5 +54,11 @@ export function createAppRuntimeServices(
     }),
     search: options.search,
     lifecycle: options.lifecycle ?? createSaveLifecycle(),
+    tasks: createTaskRuntimeServices({
+      tasks: options.tasks,
+      clock,
+      today: options.today ?? systemLocalDate,
+    }),
+    timeline: options.timeline,
   };
 }
