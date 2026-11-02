@@ -10,6 +10,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/coverage/**",
       "**/.turbo/**",
+      "**/.codex-tmp/**",
       "**/playwright-report/**",
       "**/test-results/**",
       "apps/desktop/src-tauri/target/**",

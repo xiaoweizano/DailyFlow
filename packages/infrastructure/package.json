@@ -16,6 +16,10 @@
     "@dailyflow/application": "workspace:*",
     "@dailyflow/domain": "workspace:*",
     "@dailyflow/shared": "workspace:*",
+    "dexie": "^4.4.7",
     "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.4"
   }
 }

@@ -9,7 +9,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@dailyflow/application": "workspace:*",
+    "@dailyflow/domain": "workspace:*",
     "@dailyflow/features": "workspace:*",
+    "@dailyflow/infrastructure": "workspace:*",
     "@dailyflow/ui": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

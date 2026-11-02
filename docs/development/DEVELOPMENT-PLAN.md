@@ -83,25 +83,25 @@ docs/
 - Create: `packages/sync-contracts/package.json`
 - Create: `packages/ai/package.json`
 
-- [ ] **Step 1: 创建 workspace 与最小包清单**
+- [x] **Step 1: 创建 workspace 与最小包清单**
 
   根 `package.json` 包含 `dev:web`、`dev:desktop`、`build`、`test`、`typecheck`、`lint`、`format:check`、`e2e` 脚本，并设置 `packageManager` 与 `engines`。
 
-- [ ] **Step 2: 配置 TypeScript project references 或 workspace imports**
+- [x] **Step 2: 配置 TypeScript project references 或 workspace imports**
 
   所有包使用 `@dailyflow/*` 名称，`tsconfig.base.json` 开启 `strict`、`noUncheckedIndexedAccess`、`exactOptionalPropertyTypes`、`moduleResolution: "Bundler"`。
 
-- [ ] **Step 3: 配置 Turborepo 任务依赖**
+- [x] **Step 3: 配置 Turborepo 任务依赖**
 
   `build` 依赖 `^build`；`test` 依赖 `^build`；`typecheck` 依赖 `^typecheck`；声明 `outputs` 和缓存输入。
 
-- [ ] **Step 4: 验证依赖图**
+- [x] **Step 4: 验证依赖图**
 
   Run: `pnpm install && pnpm typecheck`
 
   Expected: 所有空包通过类型检查，无循环 workspace 依赖。
 
-- [ ] **Step 5: 初始化 Git 并提交**
+- [x] **Step 5: 初始化 Git 并提交**
 
   Run: `git init && git add . && git commit -m "chore: initialize dailyflow workspace"`
 
@@ -122,31 +122,31 @@ docs/
 - Create: `packages/shared/test/search-text.test.ts`
 - Create: `.dependency-cruiser.cjs`
 
-- [ ] **Step 1: 写共享工具失败测试**
+- [x] **Step 1: 写共享工具失败测试**
 
   覆盖合法/非法 `LocalDate`、UTC 时间与本地日期转换、NFKC 大小写归一化、中文 bigram 生成、稳定 JSON 哈希。
 
-- [ ] **Step 2: 运行测试确认失败**
+- [x] **Step 2: 运行测试确认失败**
 
   Run: `pnpm --filter @dailyflow/shared test`
 
   Expected: FAIL，原因是对应函数尚不存在。
 
-- [ ] **Step 3: 实现纯函数**
+- [x] **Step 3: 实现纯函数**
 
   `date.ts` 不依赖浏览器本地时区隐式切日；`id.ts` 生成 UUIDv7 并支持注入时钟；`hash.ts` 使用 Web Crypto 或共享抽象。
 
-- [ ] **Step 4: 配置 ESLint、Prettier 与依赖巡航**
+- [x] **Step 4: 配置 ESLint、Prettier 与依赖巡航**
 
   禁止 `domain` import React/Tauri/Dexie；禁止 `features` 直接 import desktop/web adapter；禁止 app 组合根外的代码选择具体存储；禁止循环依赖。
 
-- [ ] **Step 5: 验证**
+- [x] **Step 5: 验证**
 
   Run: `pnpm --filter @dailyflow/shared test && pnpm lint && pnpm typecheck`
 
   Expected: 全部通过。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add . && git commit -m "chore: add shared utilities and quality gates"`
 
@@ -178,29 +178,29 @@ docs/
 - Create: `apps/desktop/src-tauri/src/main.rs`
 - Create: `apps/desktop/src-tauri/tauri.conf.json`
 
-- [ ] **Step 1: 配置 Tailwind 语义 token**
+- [x] **Step 1: 配置 Tailwind 语义 token**
 
   按 `UI-DESIGN.md` 建立背景、表面、边框、主色、状态色和字体 token；不加入渐变或装饰光斑。
 
-- [ ] **Step 2: 封装 shadcn 基础组件**
+- [x] **Step 2: 封装 shadcn 基础组件**
 
   使用 Lucide 图标，Icon Button 带可访问名称和 tooltip；控件固定尺寸，不因 hover 改变布局。
 
-- [ ] **Step 3: 构建共享应用外壳**
+- [x] **Step 3: 构建共享应用外壳**
 
   `packages/features` 提供相同侧栏、TopBar、页面 outlet 和状态栏；`packages/features/src/routes.ts` 导出路径、页面组件和导航元数据。`apps/web` 使用 `BrowserRouter`，`apps/desktop` 使用 `HashRouter`，两者消费同一份共享路由定义，只适配平台 URL 与历史行为。
 
-- [ ] **Step 4: 创建最小 Tauri 2 壳**
+- [x] **Step 4: 创建最小 Tauri 2 壳**
 
   配置 CSP、窗口最小尺寸、identifier，并实现一个无业务数据的 `app_info` command。
 
-- [ ] **Step 5: 验证构建**
+- [x] **Step 5: 验证构建**
 
   Run: `pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build`
 
   Expected: Web 静态产物和桌面前端构建成功；在安装 Tauri 环境中 `pnpm dev:desktop` 能启动空壳。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add . && git commit -m "feat: add shared app shell and platform entries"`
 
@@ -221,25 +221,25 @@ docs/
 - Create: `packages/domain/test/task.test.ts`
 - Create: `packages/domain/test/structured-block.test.ts`
 
-- [ ] **Step 1: 写领域规则失败测试**
+- [x] **Step 1: 写领域规则失败测试**
 
   覆盖空标题可保存、任务标题非空、完成状态与 `completedAt` 一致、结构化块 ID 稳定、日期不可静默转换、revision 非负。
 
-- [ ] **Step 2: 定义值对象**
+- [x] **Step 2: 定义值对象**
 
   包括 `EntityId`、`LocalDate`、`Revision`、`ContentHash`、`TagName`。不把数据库行或 DTO 直接当领域实体。
 
-- [ ] **Step 3: 定义聚合与工厂**
+- [x] **Step 3: 定义聚合与工厂**
 
   工厂接收 `IdGenerator` 和 `Clock` 抽象，方便确定性测试；领域层不 import Node `crypto`、浏览器或 Tauri。
 
-- [ ] **Step 4: 运行**
+- [x] **Step 4: 运行**
 
   Run: `pnpm --filter @dailyflow/domain test && pnpm typecheck`
 
   Expected: 全部领域测试通过，依赖巡航无平台 import。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
   Run: `git add packages/domain && git commit -m "feat: define dailyflow domain models"`
 
@@ -264,27 +264,27 @@ docs/
 - Create: `packages/application/test/save-journal.test.ts`
 - Create: `packages/application/test/promote-to-knowledge.test.ts`
 
-- [ ] **Step 1: 写用例失败测试**
+- [x] **Step 1: 写用例失败测试**
 
   使用内存 fake 覆盖首次保存、revision 冲突、无变更不递增、保存失败保留输入、提升知识保留来源。
 
-- [ ] **Step 2: 定义 Zod 输入 schema**
+- [x] **Step 2: 定义 Zod 输入 schema**
 
   所有外部输入先校验：日期格式、内容 JSON、标题长度、标签规范化、`expectedRevision` 可空、checkpoint 枚举。
 
-- [ ] **Step 3: 实现用例**
+- [x] **Step 3: 实现用例**
 
   `saveJournal` 只调用 `ContentProjector` 接口和 Repository；不 import 编辑器或具体数据库。
 
-- [ ] **Step 4: 定义 `AppServices`**
+- [x] **Step 4: 定义 `AppServices`**
 
   页面只能通过该接口取得用例/查询能力，不能根据平台 branch 自行实例化数据库。
 
-- [ ] **Step 5: 运行**
+- [x] **Step 5: 运行**
 
   Run: `pnpm --filter @dailyflow/application test && pnpm typecheck`
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add packages/application && git commit -m "feat: add application ports and journal use cases"`
 
@@ -300,21 +300,21 @@ docs/
 - Create: `packages/infrastructure/test/journal-contract.test.ts`
 - Create: `packages/infrastructure/test/search-contract.test.ts`
 
-- [ ] **Step 1: 写可复用 Repository 契约**
+- [x] **Step 1: 写可复用 Repository 契约**
 
   契约包含创建、读取、保存、revision 冲突、软删除、分页、搜索更新和日期唯一性。
 
-- [ ] **Step 2: 实现内存 adapter**
+- [x] **Step 2: 实现内存 adapter**
 
   内存实现仅用于测试与应用层联调，不作为生产 fallback。
 
-- [ ] **Step 3: 验证相同契约**
+- [x] **Step 3: 验证相同契约**
 
   Run: `pnpm --filter @dailyflow/infrastructure test`
 
   Expected: 内存 repository 全部契约通过，测试可在后续 SQLite/Dexie 上复用。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
   Run: `git add packages/infrastructure && git commit -m "test: add repository contracts and memory adapters"`
 
@@ -334,29 +334,29 @@ docs/
 - Create: `apps/desktop/src-tauri/tests/migrations.rs`
 - Create: `apps/desktop/src-tauri/tests/journal_transaction.rs`
 
-- [ ] **Step 1: 写迁移与事务失败测试**
+- [x] **Step 1: 写迁移与事务失败测试**
 
   使用临时 SQLite 文件，验证全新数据库迁移、重复运行幂等、checksum 不匹配失败、保存失败回滚正文和 FTS。
 
-- [ ] **Step 2: 实现连接初始化**
+- [x] **Step 2: 实现连接初始化**
 
   启用 foreign keys、WAL、busy timeout；迁移在事务内执行并记录 `schema_migrations`。
 
-- [ ] **Step 3: 实现日志原子保存**
+- [x] **Step 3: 实现日志原子保存**
 
   `journal_save_snapshot` 校验 payload、检查 expected revision、写 journal/version/structured blocks/search，再提交。
 
-- [ ] **Step 4: 实现查询与恢复命令**
+- [x] **Step 4: 实现查询与恢复命令**
 
   返回稳定 camelCase DTO；Rust 内部字段可 snake_case，但命令契约固定。
 
-- [ ] **Step 5: 运行**
+- [x] **Step 5: 运行**
 
   Run: `cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml`
 
   Expected: 迁移、事务和查询测试通过。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add apps/desktop/src-tauri && git commit -m "feat: add sqlite migrations and journal persistence"`
 
@@ -373,27 +373,27 @@ docs/
 - Create: `packages/infrastructure/test/desktop-contracts.test.ts`
 - Modify: `apps/desktop/src/app.tsx`
 
-- [ ] **Step 1: 定义命令名与 Zod contract**
+- [x] **Step 1: 定义命令名与 Zod contract**
 
   contract 与 Rust fixture 字段一一对应；禁止页面直接 import `tauri-client.ts`。
 
-- [ ] **Step 2: 写 mock invoke 失败测试**
+- [x] **Step 2: 写 mock invoke 失败测试**
 
   覆盖字段缺失、Rust 错误码映射、保存成功 revision 映射、分页 cursor 映射。
 
-- [ ] **Step 3: 实现 adapter**
+- [x] **Step 3: 实现 adapter**
 
   只在 adapter 内调用 `invoke`，把持久化 DTO 映射为 Application 类型；不把 Tauri API 暴露给 Domain。
 
-- [ ] **Step 4: 桌面组合根注入**
+- [x] **Step 4: 桌面组合根注入**
 
   `apps/desktop/src/composition.ts` 创建 `DesktopServices` 并交给共享页面。
 
-- [ ] **Step 5: 运行**
+- [x] **Step 5: 运行**
 
   Run: `pnpm --filter @dailyflow/infrastructure test && pnpm typecheck && pnpm --filter @dailyflow/desktop build`
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add packages/infrastructure apps/desktop && git commit -m "feat: connect desktop repositories through tauri commands"`
 
@@ -412,27 +412,27 @@ docs/
 - Create: `packages/infrastructure/test/web-search.test.ts`
 - Modify: `apps/web/src/app.tsx`
 
-- [ ] **Step 1: 写 fake-indexeddb 失败测试**
+- [x] **Step 1: 写 fake-indexeddb 失败测试**
 
   覆盖 schema 创建、日志事务、revision 冲突、版本记录、搜索 posting、索引重建。
 
-- [ ] **Step 2: 声明 Dexie stores**
+- [x] **Step 2: 声明 Dexie stores**
 
   使用 `DATABASE-DESIGN.md` 的 store 清单，统一 camelCase；所有日期字段使用字符串。
 
-- [ ] **Step 3: 实现事务保存**
+- [x] **Step 3: 实现事务保存**
 
   `db.transaction` 跨 journal、version、structured block、search、tag stores；任一步抛错整体回滚。
 
-- [ ] **Step 4: 实现 Web 组合根**
+- [x] **Step 4: 实现 Web 组合根**
 
   `apps/web/src/composition.ts` 注入 Dexie adapters；页面不直接 import `db.ts`。
 
-- [ ] **Step 5: 运行**
+- [x] **Step 5: 运行**
 
   Run: `pnpm --filter @dailyflow/infrastructure test && pnpm --filter @dailyflow/web build`
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
   Run: `git add packages/infrastructure apps/web && git commit -m "feat: add indexeddb repositories for web"`
 
