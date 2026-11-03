@@ -738,31 +738,31 @@ docs/
 - Create: `packages/application/test/analytics.test.ts`
 - Create: `packages/features/test/analytics.test.tsx`
 
-- [ ] **Step 1: 写稳定统计测试**
+- [x] **Step 1: 写稳定统计测试**
 
   输入固定日志、任务、知识数据，断言周/月/年计数、时区和日期边界。
 
-- [ ] **Step 2: 实现查询**
+- [x] **Step 2: 实现查询**
 
   不存储重复统计数据；Report 保存用户编辑后的正文和生成时统计快照。
 
-- [ ] **Step 3: 实现页面**
+- [x] **Step 3: 实现页面**
 
   周期切换、上一/下一周期、统计卡、趋势和报告编辑；图表有文本摘要。
 
-- [ ] **Step 4: 验证 AI 非依赖**
+- [x] **Step 4: 验证 AI 非依赖**
 
   未配置 AI 时报告草稿和全部统计可用；AI 按钮默认关闭。
 
-- [ ] **Step 5: 注册 Analytics 路由**
+- [x] **Step 5: 注册 Analytics 路由**
 
   在共享路由表注册 `/analytics` 并接入两个组合根；周期与报告参数保存在查询字符串中，桌面和 Web 刷新后保持当前周期。未配置 AI 时两个构建都能完整打开报告。
 
-- [ ] **Step 6: 运行**
+- [x] **Step 6: 运行**
 
   Run: `pnpm test && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build`
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
   Run: `git add packages/features packages/application packages/infrastructure apps/web apps/desktop && git commit -m "feat: add analytics and report drafts"`
 

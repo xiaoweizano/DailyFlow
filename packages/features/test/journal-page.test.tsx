@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
+import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import { JournalPage } from "../src/journal/journal-page.js";
 
@@ -37,6 +38,7 @@ function createServices() {
   );
 
   return {
+    analytics: createAnalyticsServicesStub(),
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
       get: vi.fn(async () => null),

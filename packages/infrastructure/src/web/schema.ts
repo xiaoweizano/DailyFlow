@@ -7,6 +7,8 @@ import type {
   KnowledgeKind,
   KnowledgeStatus,
   LocalDate,
+  ReportGenerator,
+  ReportPeriodType,
   StructuredBlockType,
   TaskPriority,
   TaskStatus,
@@ -174,6 +176,27 @@ export interface AttachmentLinkRow {
   readonly isInline: boolean;
   readonly sortOrder: number;
   readonly createdAt: UtcTimestamp;
+  readonly deletedAt: UtcTimestamp | null;
+}
+
+export interface ReportRow {
+  readonly id: EntityId;
+  readonly periodType: ReportPeriodType;
+  readonly periodStart: LocalDate;
+  readonly periodEnd: LocalDate;
+  readonly timezone: string;
+  readonly title: string;
+  readonly contentJson: string;
+  readonly editorSchemaVersion: number;
+  readonly contentMarkdown: string;
+  readonly contentPlainText: string;
+  readonly projectionVersion: number;
+  readonly statsJson: string;
+  readonly generatedBy: ReportGenerator;
+  readonly sourceWatermark: UtcTimestamp | null;
+  readonly revision: number;
+  readonly createdAt: UtcTimestamp;
+  readonly updatedAt: UtcTimestamp;
   readonly deletedAt: UtcTimestamp | null;
 }
 

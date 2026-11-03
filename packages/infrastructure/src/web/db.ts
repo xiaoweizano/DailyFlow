@@ -15,6 +15,7 @@ import type {
   KnowledgeItemRow,
   KnowledgeTagRow,
   MetaRow,
+  ReportRow,
   SearchDocumentRow,
   SearchTermPostingRow,
   StructuredBlockRow,
@@ -40,7 +41,7 @@ export class DailyFlowDb extends Dexie {
   attachmentLinks!: Table<AttachmentLinkRow, string>;
   importSessions!: Table<GenericStoreRow, string>;
   importEntries!: Table<GenericStoreRow, string>;
-  reports!: Table<GenericStoreRow, string>;
+  reports!: Table<ReportRow, string>;
   searchDocs!: Table<SearchDocumentRow, string>;
   searchTermPostings!: Table<SearchTermPostingRow, string>;
 

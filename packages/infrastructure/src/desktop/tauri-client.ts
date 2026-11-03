@@ -5,6 +5,8 @@ import {
   AttachmentDataDtoSchema,
   AttachmentPutCommandDtoSchema,
   AttachmentSoftDeleteOwnerLinksDtoSchema,
+  AnalyticsPeriodQueryDtoSchema,
+  AnalyticsSourceDtoSchema,
   JournalDtoSchema,
   JournalListQueryDtoSchema,
   JournalSaveStateDtoSchema,
@@ -16,6 +18,9 @@ import {
   KnowledgePageDtoSchema,
   KnowledgeSaveCommandDtoSchema,
   KnowledgeSoftDeleteCommandDtoSchema,
+  ReportDtoSchema,
+  ReportPeriodQueryDtoSchema,
+  ReportSaveCommandDtoSchema,
   RestoreJournalVersionDtoSchema,
   SavedJournalSnapshotDtoSchema,
   SaveJournalSnapshotDtoSchema,
@@ -39,6 +44,8 @@ import {
   type AttachmentDataDto,
   type AttachmentPutCommandDto,
   type AttachmentSoftDeleteOwnerLinksDto,
+  type AnalyticsPeriodQueryDto,
+  type AnalyticsSourceDto,
   type JournalDto,
   type JournalListQueryDto,
   type JournalSaveStateDto,
@@ -49,6 +56,9 @@ import {
   type KnowledgeListQueryDto,
   type KnowledgeSaveCommandDto,
   type KnowledgeSoftDeleteCommandDto,
+  type ReportDto,
+  type ReportPeriodQueryDto,
+  type ReportSaveCommandDto,
   type RestoreJournalVersionDto,
   type SavedJournalSnapshotDto,
   type SaveJournalSnapshotDto,
@@ -277,6 +287,33 @@ export class TauriCommandClient {
       { query },
       TimelineDaySummaryPageDtoSchema,
       z.object({ query: TimelineListQueryDtoSchema }),
+    );
+  }
+
+  async getAnalyticsSource(query: AnalyticsPeriodQueryDto): Promise<AnalyticsSourceDto> {
+    return this.request(
+      TAURI_COMMANDS.analyticsGetSource,
+      { query },
+      AnalyticsSourceDtoSchema,
+      z.object({ query: AnalyticsPeriodQueryDtoSchema }),
+    );
+  }
+
+  async getReportByPeriod(query: ReportPeriodQueryDto): Promise<ReportDto | null> {
+    return this.request(
+      TAURI_COMMANDS.reportGetByPeriod,
+      { query },
+      ReportDtoSchema.nullable(),
+      z.object({ query: ReportPeriodQueryDtoSchema }),
+    );
+  }
+
+  async saveReport(input: ReportSaveCommandDto): Promise<ReportDto> {
+    return this.request(
+      TAURI_COMMANDS.reportSave,
+      { input },
+      ReportDtoSchema,
+      z.object({ input: ReportSaveCommandDtoSchema }),
     );
   }
 

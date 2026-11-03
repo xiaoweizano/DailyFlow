@@ -228,6 +228,9 @@ importers:
       '@dailyflow/domain':
         specifier: workspace:*
         version: link:../domain
+      '@dailyflow/editor':
+        specifier: workspace:*
+        version: link:../editor
       '@dailyflow/shared':
         specifier: workspace:*
         version: link:../shared

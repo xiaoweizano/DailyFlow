@@ -24,6 +24,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
+import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { KnowledgeDetailPage } from "../src/knowledge/knowledge-detail.js";
@@ -134,6 +135,7 @@ function createServices(
   knowledge: KnowledgeRuntimeServices = createKnowledgeServices(),
 ): AppRuntimeServices {
   return {
+    analytics: createAnalyticsServicesStub(),
     knowledge,
     journal: {
       get: vi.fn(),

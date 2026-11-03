@@ -4,6 +4,14 @@ export {
   type WebServices,
 } from "./web-services.js";
 export { WebAttachmentStore, type WebAttachmentStoreOptions } from "./web-attachment-store.js";
+export {
+  DexieAnalyticsQuery,
+  type DexieAnalyticsQueryOptions,
+} from "./dexie-analytics-query.js";
+export {
+  DexieReportRepository,
+  type DexieReportRepositoryOptions,
+} from "./dexie-report-repository.js";
 export { DexieTaskRepository, type DexieTaskRepositoryOptions } from "./dexie-task-repository.js";
 export {
   DexieKnowledgeRepository,

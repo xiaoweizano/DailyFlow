@@ -474,3 +474,131 @@ pub struct TimelineDaySummary {
     pub excerpt: String,
     pub updated_at: Option<String>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsPeriodQuery {
+    pub start: String,
+    pub end: String,
+    pub timezone: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsJournalSource {
+    pub id: String,
+    pub journal_date: String,
+    pub title: String,
+    pub content_plain_text: String,
+    pub tags: Vec<String>,
+    pub deleted_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsTaskSource {
+    pub id: String,
+    pub status: TaskStatus,
+    pub completed_at: Option<String>,
+    pub deleted_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsKnowledgeSource {
+    pub id: String,
+    pub kind: KnowledgeKind,
+    pub title: String,
+    pub created_at: String,
+    pub tags: Vec<String>,
+    pub deleted_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalyticsSource {
+    pub journals: Vec<AnalyticsJournalSource>,
+    pub tasks: Vec<AnalyticsTaskSource>,
+    pub knowledge: Vec<AnalyticsKnowledgeSource>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReportPeriodType {
+    Week,
+    Month,
+    Year,
+}
+
+impl ReportPeriodType {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Week => "week",
+            Self::Month => "month",
+            Self::Year => "year",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ReportGenerator {
+    Local,
+    AiAssisted,
+}
+
+impl ReportGenerator {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Local => "local",
+            Self::AiAssisted => "ai_assisted",
+        }
+    }
+
+    pub(crate) fn from_database(value: &str) -> Result<Self, serde_json::Error> {
+        serde_json::from_value(Value::String(value.to_owned()))
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Report {
+    pub id: String,
+    pub period_type: ReportPeriodType,
+    pub period_start: String,
+    pub period_end: String,
+    pub timezone: String,
+    pub title: String,
+    pub content_json: Value,
+    pub editor_schema_version: i64,
+    pub content_markdown: String,
+    pub content_plain_text: String,
+    pub projection_version: i64,
+    pub stats_json: String,
+    pub generated_by: ReportGenerator,
+    pub source_watermark: Option<String>,
+    pub revision: i64,
+    pub created_at: String,
+    pub updated_at: String,
+    pub deleted_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReportPeriodQuery {
+    pub period_type: ReportPeriodType,
+    pub period_start: String,
+    pub period_end: String,
+    pub timezone: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReportSaveCommand {
+    pub report: Report,
+    pub expected_revision: Option<i64>,
+}

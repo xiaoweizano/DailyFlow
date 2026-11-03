@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router-dom";
 import { AppServicesProvider } from "./app-services-provider.js";
 import { AppShell } from "./app-shell.js";
 import type { AppRouteOptions } from "./app-modules.js";
+import { AnalyticsPage } from "./analytics/analytics-page.js";
 import { DashboardPage } from "./dashboard/dashboard-page.js";
 import { JournalPage } from "./journal/journal-page.js";
 import { KnowledgeDetailPage } from "./knowledge/knowledge-detail.js";
@@ -71,11 +72,11 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "analytics",
-          element: createElement(ModulePage, { moduleId: "analytics" }),
+          element: createElement(AnalyticsPage),
         },
         {
           path: "analytics/:periodType/:start",
-          element: createElement(ModulePage, { moduleId: "analytics" }),
+          element: createElement(AnalyticsPage),
         },
         {
           path: "data",

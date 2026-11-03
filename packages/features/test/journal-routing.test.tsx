@@ -16,6 +16,7 @@ import {
 } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { createAppRoutes } from "../src/routes.js";
@@ -47,6 +48,7 @@ function createLookup(date: string): JournalLookup {
 
 function createServices(error?: AppError) {
   return {
+    analytics: createAnalyticsServicesStub(),
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
       get: vi.fn(async () => null),

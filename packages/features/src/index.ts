@@ -8,6 +8,16 @@ export {
   type AttachmentRuntimeServices,
 } from "./attachments/attachment-services.js";
 export {
+  createAnalyticsRuntimeServices,
+  type AnalyticsRuntimeDependencies,
+  type AnalyticsRuntimeServices,
+  type ReportEditorModel,
+  type SaveAnalyticsReportInput,
+} from "./analytics/analytics-services.js";
+export { AnalyticsPage, type AnalyticsPageProps } from "./analytics/analytics-page.js";
+export { ReportEditor, type ReportEditorProps } from "./analytics/report-editor.js";
+export { StatTile, type StatTileProps } from "./analytics/stat-tile.js";
+export {
   createAppRuntimeServices,
   type CreateAppRuntimeServicesOptions,
 } from "./app-runtime-services.js";

@@ -30,11 +30,31 @@ export type {
 } from "./ports/knowledge-repository.js";
 export type { TaskListQuery, TaskRepository } from "./ports/task-repository.js";
 export type {
+  AnalyticsDailyActivity,
+  AnalyticsJournalSource,
+  AnalyticsKnowledgeSource,
+  AnalyticsPeriod,
+  AnalyticsQuery,
+  AnalyticsSource,
+  AnalyticsSummary,
+  AnalyticsTagCount,
+  AnalyticsTaskSource,
+} from "./queries/analytics-query.js";
+export type {
   TimelineCalendarQuery,
   TimelineDaySummary,
   TimelineListQuery,
   TimelineQuery,
 } from "./queries/timeline-query.js";
+export {
+  buildAnalyticsSummary,
+  resolveAnalyticsPeriod,
+  shiftAnalyticsPeriod,
+} from "./queries/analytics-query.js";
+export type {
+  ReportPeriodKey,
+  ReportRepository,
+} from "./ports/report-repository.js";
 export { buildTaskListQuery, isTaskOverdue, type TaskListView } from "./queries/task-list-query.js";
 export type {
   AttachmentStore,
@@ -85,6 +105,15 @@ export {
   updateTask,
   type UpdateTaskDependencies,
 } from "./use-cases/update-task.js";
+export {
+  generateReportDraft,
+  type ReportDraft,
+} from "./use-cases/generate-report-draft.js";
+export {
+  SaveReportDraftInputSchema,
+  saveReportDraft,
+  type SaveReportDraftDependencies,
+} from "./use-cases/save-report-draft.js";
 export {
   GetJournalInputSchema,
   getJournal,

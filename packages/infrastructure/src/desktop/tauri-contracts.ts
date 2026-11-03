@@ -33,6 +33,9 @@ export const TAURI_COMMANDS = {
   knowledgeSoftDelete: "knowledge_soft_delete",
   timelineGetCalendar: "timeline_get_calendar",
   timelineListEntries: "timeline_list_entries",
+  analyticsGetSource: "analytics_get_source",
+  reportGetByPeriod: "report_get_by_period",
+  reportSave: "report_save",
   searchQuery: "search_query",
   searchRebuild: "search_rebuild",
   attachmentPut: "attachment_put",
@@ -368,6 +371,99 @@ export const TimelineDaySummaryDtoSchema = z.object({
 
 export const TimelineDaySummaryPageDtoSchema = pageDtoSchema(TimelineDaySummaryDtoSchema);
 
+export const AnalyticsPeriodQueryDtoSchema = z
+  .object({
+    start: LocalDateDtoSchema,
+    end: LocalDateDtoSchema,
+    timezone: z.string().min(1),
+  })
+  .superRefine((value, context) => {
+    if (value.start > value.end) {
+      context.addIssue({
+        code: "custom",
+        message: "start must be on or before end",
+        path: ["start"],
+      });
+    }
+  });
+
+export const AnalyticsJournalSourceDtoSchema = z.object({
+  id: UuidV7Schema,
+  journalDate: LocalDateDtoSchema,
+  title: z.string(),
+  contentPlainText: z.string(),
+  tags: z.array(z.string()),
+  deletedAt: UtcTimestampSchema.nullable(),
+});
+
+export const AnalyticsTaskSourceDtoSchema = z.object({
+  id: UuidV7Schema,
+  status: TaskStatusDtoSchema,
+  completedAt: UtcTimestampSchema.nullable(),
+  deletedAt: UtcTimestampSchema.nullable(),
+});
+
+export const AnalyticsKnowledgeSourceDtoSchema = z.object({
+  id: UuidV7Schema,
+  kind: KnowledgeKindDtoSchema,
+  title: z.string(),
+  createdAt: UtcTimestampSchema,
+  tags: z.array(z.string()),
+  deletedAt: UtcTimestampSchema.nullable(),
+});
+
+export const AnalyticsSourceDtoSchema = z.object({
+  journals: z.array(AnalyticsJournalSourceDtoSchema),
+  tasks: z.array(AnalyticsTaskSourceDtoSchema),
+  knowledge: z.array(AnalyticsKnowledgeSourceDtoSchema),
+});
+
+export const ReportPeriodQueryDtoSchema = z.object({
+  periodType: z.enum(["week", "month", "year"]),
+  periodStart: LocalDateDtoSchema,
+  periodEnd: LocalDateDtoSchema,
+  timezone: z.string().min(1),
+});
+
+const JsonStringSchema = z.string().refine((value) => {
+  try {
+    JSON.parse(value);
+    return true;
+  } catch {
+    return false;
+  }
+}, "Must be valid JSON.");
+
+export const ReportDtoSchema = z.object({
+  id: UuidV7Schema,
+  periodType: z.enum(["week", "month", "year"]),
+  periodStart: LocalDateDtoSchema,
+  periodEnd: LocalDateDtoSchema,
+  timezone: z.string().min(1),
+  title: z.string().min(1).max(500),
+  contentJson: JsonObjectSchema,
+  editorSchemaVersion: z.number().int().positive(),
+  contentMarkdown: z.string(),
+  contentPlainText: z.string(),
+  projectionVersion: z.number().int().positive(),
+  statsJson: JsonStringSchema,
+  generatedBy: z.enum(["local", "ai_assisted"]),
+  sourceWatermark: UtcTimestampSchema.nullable(),
+  revision: z.number().int().positive(),
+  createdAt: UtcTimestampSchema,
+  updatedAt: UtcTimestampSchema,
+  deletedAt: UtcTimestampSchema.nullable(),
+});
+
+const ReportWriteDtoSchema = ReportDtoSchema.extend({
+  revision: z.number().int().nonnegative(),
+});
+
+export const ReportSaveCommandDtoSchema = z.object({
+  report: ReportWriteDtoSchema,
+  expectedRevision: z.number().int().nonnegative().nullable(),
+});
+
 export function pageDtoSchema<S extends z.ZodTypeAny>(itemSchema: S) {
   return z.object({
     items: z.array(itemSchema),
@@ -556,6 +652,12 @@ export type KnowledgeSoftDeleteCommandDto = z.infer<typeof KnowledgeSoftDeleteCo
 export type TimelineCalendarQueryDto = z.infer<typeof TimelineCalendarQueryDtoSchema>;
 export type TimelineListQueryDto = z.infer<typeof TimelineListQueryDtoSchema>;
 export type TimelineDaySummaryDto = z.infer<typeof TimelineDaySummaryDtoSchema>;
+export type AnalyticsPeriodQueryDto = z.infer<typeof AnalyticsPeriodQueryDtoSchema>;
+export type AnalyticsSourceDto = z.infer<typeof AnalyticsSourceDtoSchema>;
+export type ReportPeriodQueryDto = z.infer<typeof ReportPeriodQueryDtoSchema>;
+export type ReportDto = z.infer<typeof ReportDtoSchema>;
+export type ReportWriteDto = z.infer<typeof ReportWriteDtoSchema>;
+export type ReportSaveCommandDto = z.infer<typeof ReportSaveCommandDtoSchema>;
 export type RestoreJournalVersionDto = z.infer<typeof RestoreJournalVersionDtoSchema>;
 export type SearchQueryDto = z.infer<typeof SearchQueryDtoSchema>;
 export type SearchHitDto = z.infer<typeof SearchHitDtoSchema>;

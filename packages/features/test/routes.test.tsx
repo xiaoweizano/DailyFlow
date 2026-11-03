@@ -3,6 +3,7 @@ import { matchRoutes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { appModules, createAppRoutes, mainNavigation, routePaths } from "../src/index.js";
+import { AnalyticsPage } from "../src/analytics/analytics-page.js";
 import { KnowledgeDetailPage } from "../src/knowledge/knowledge-detail.js";
 import { KnowledgePage } from "../src/knowledge/knowledge-page.js";
 import { SearchPage } from "../src/search/search-page.js";
@@ -39,6 +40,7 @@ describe("shared application routes", () => {
     "/tasks",
     "/search?q=WebView2",
     "/analytics",
+    "/analytics/month/2026-10-01",
     "/data",
     "/settings",
   ])("matches the shared route %s", (path) => {
@@ -59,6 +61,8 @@ describe("shared application routes", () => {
       KnowledgeDetailPage,
     ],
     ["/search?q=WebView2", SearchPage],
+    ["/analytics", AnalyticsPage],
+    ["/analytics/month/2026-10-01", AnalyticsPage],
   ])("mounts the implemented page for %s", (path, page) => {
     const matches = matchRoutes(routes, path);
     const element = matches?.at(-1)?.route.element;

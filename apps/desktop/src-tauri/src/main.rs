@@ -7,8 +7,8 @@ use serde::Serialize;
 use dailyflow_desktop::{
     attachments::AttachmentStore,
     commands::{
-        attachment_commands, journal_commands, knowledge_commands, search_commands, task_commands,
-        timeline_commands,
+        analytics_commands, attachment_commands, journal_commands, knowledge_commands,
+        report_commands, search_commands, task_commands, timeline_commands,
     },
     db::Database,
 };
@@ -66,6 +66,9 @@ fn main() {
             task_commands::task_soft_delete,
             timeline_commands::timeline_get_calendar,
             timeline_commands::timeline_list_entries,
+            analytics_commands::analytics_get_source,
+            report_commands::report_get_by_period,
+            report_commands::report_save,
             search_commands::search_query,
             search_commands::search_rebuild,
             attachment_commands::attachment_put,

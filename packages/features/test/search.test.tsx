@@ -14,6 +14,7 @@ import React from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
+import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { SearchCommand } from "../src/search/search-command.js";
@@ -38,6 +39,7 @@ function createServices(
   },
 ): AppRuntimeServices {
   return {
+    analytics: createAnalyticsServicesStub(),
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
       get: vi.fn(async () => null),

@@ -3,6 +3,7 @@ import type { Clock, IdGenerator, LocalDate } from "@dailyflow/domain";
 import { createUuidV7 } from "@dailyflow/shared";
 
 import type { AppRuntimeServices } from "./app-services-context.js";
+import { createAnalyticsRuntimeServices } from "./analytics/analytics-services.js";
 import { createAttachmentRuntimeServices } from "./attachments/attachment-services.js";
 import { EditorContentProjector } from "./journal/content-projector.js";
 import { createJournalRuntimeServices } from "./journal/journal-services.js";
@@ -12,7 +13,7 @@ import { createTaskRuntimeServices } from "./tasks/task-services.js";
 
 export interface CreateAppRuntimeServicesOptions extends Pick<
   AppServices,
-  "journals" | "knowledge" | "tasks" | "attachments" | "search"
+  "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > {
   readonly timeline: TimelineQuery;
   readonly clock?: Clock;
@@ -45,6 +46,12 @@ export function createAppRuntimeServices(
   const projector = new EditorContentProjector();
 
   return {
+    analytics: createAnalyticsRuntimeServices({
+      analytics: options.analytics,
+      reports: options.reports,
+      clock,
+      ids,
+    }),
     attachments: createAttachmentRuntimeServices({
       attachments: options.attachments,
     }),

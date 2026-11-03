@@ -2,16 +2,18 @@ import type { AppServices, TimelineQuery } from "@dailyflow/application";
 import type { Clock } from "@dailyflow/domain";
 
 import { DesktopAttachmentStore } from "./desktop-attachment-store.js";
+import { DesktopAnalyticsQuery } from "./desktop-analytics-query.js";
 import { DesktopJournalRepository } from "./desktop-journal-repository.js";
 import { DesktopKnowledgeRepository } from "./desktop-knowledge-repository.js";
 import { DesktopSearchPort } from "./desktop-search-port.js";
+import { DesktopReportRepository } from "./desktop-report-repository.js";
 import { DesktopTaskRepository } from "./desktop-task-repository.js";
 import { DesktopTimelineQuery } from "./desktop-timeline-query.js";
 import { invokeTauriBridge, TauriCommandClient, type TauriInvoke } from "./tauri-client.js";
 
 export type DesktopServices = Pick<
   AppServices,
-  "journals" | "knowledge" | "tasks" | "attachments" | "search"
+  "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > & {
   readonly timeline: TimelineQuery;
 };
@@ -31,9 +33,11 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
   const clock = options.clock ?? systemClock;
 
   return {
+    analytics: new DesktopAnalyticsQuery({ client }),
     attachments: new DesktopAttachmentStore({ client, clock }),
     journals: new DesktopJournalRepository({ client, clock }),
     knowledge: new DesktopKnowledgeRepository({ client, clock }),
+    reports: new DesktopReportRepository({ client, clock }),
     tasks: new DesktopTaskRepository({ client, clock }),
     search: new DesktopSearchPort({ client }),
     timeline: new DesktopTimelineQuery({ client }),

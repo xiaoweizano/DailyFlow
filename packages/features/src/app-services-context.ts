@@ -1,6 +1,7 @@
 import type { SearchPort, TimelineQuery } from "@dailyflow/application";
 import { createContext } from "react";
 
+import type { AnalyticsRuntimeServices } from "./analytics/analytics-services.js";
 import type { AttachmentRuntimeServices } from "./attachments/attachment-services.js";
 import type { JournalRuntimeServices } from "./journal/journal-services.js";
 import type { KnowledgeRuntimeServices } from "./knowledge/knowledge-services.js";
@@ -8,6 +9,7 @@ import type { SaveLifecycle } from "./lifecycle/save-lifecycle.js";
 import type { TaskRuntimeServices } from "./tasks/task-services.js";
 
 export interface AppRuntimeServices {
+  readonly analytics: AnalyticsRuntimeServices;
   readonly journal: JournalRuntimeServices;
   readonly knowledge: KnowledgeRuntimeServices;
   readonly attachments: AttachmentRuntimeServices;
