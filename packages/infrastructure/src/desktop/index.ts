@@ -1,5 +1,15 @@
 export { createDesktopServices, type DesktopServices } from "./desktop-services.js";
 export { DesktopAttachmentStore } from "./desktop-attachment-store.js";
+export {
+  DesktopExportSource,
+  type DesktopExportSourceOptions,
+} from "./desktop-export-source.js";
+export {
+  DesktopExportTarget,
+  type DesktopExportPicker,
+  type DesktopExportPickerOptions,
+  type DesktopExportTargetOptions,
+} from "./desktop-export-target.js";
 export { DesktopAnalyticsQuery } from "./desktop-analytics-query.js";
 export {
   DesktopImportRepository,

@@ -26,3 +26,16 @@ export {
   type DexieKnowledgeRepositoryOptions,
 } from "./dexie-knowledge-repository.js";
 export { DexieTimelineQuery, type DexieTimelineQueryOptions } from "./dexie-timeline-query.js";
+export {
+  WebExportSource,
+  type WebExportSourceOptions,
+} from "./web-export-source.js";
+export {
+  WebExportTarget,
+  type WebArtifactDownload,
+  type WebExportTargetOptions,
+  type WebFileHandle as WebExportFileHandle,
+  type WebFileWritable as WebExportFileWritable,
+  type WebSaveFilePicker,
+  type WebSaveFilePickerOptions,
+} from "./web-export-target.js";

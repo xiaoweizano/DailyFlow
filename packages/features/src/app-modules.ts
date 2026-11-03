@@ -92,5 +92,6 @@ export const routePaths = {
   analyticsPeriod: "/analytics/:periodType/:start",
   data: "/data",
   dataImport: "/data/import",
+  dataExport: "/data/export",
   settings: "/settings",
 } as const;

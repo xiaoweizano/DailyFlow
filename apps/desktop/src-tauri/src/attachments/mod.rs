@@ -216,6 +216,25 @@ impl AttachmentStore {
             .map(|attachment| attachment.bytes)
     }
 
+    pub fn read_blob(&self, database: &Database, blob_id: &str) -> Result<Vec<u8>, StorageError> {
+        validate_uuid(blob_id, "blobId")?;
+        let storage_key = database.with_connection(|connection| {
+            connection
+                .query_row(
+                    "SELECT storage_key FROM attachment_blobs WHERE id = ?1",
+                    [blob_id],
+                    |row| row.get::<_, String>(0),
+                )
+                .optional()
+                .map_err(StorageError::from)
+        })?;
+        let storage_key =
+            storage_key.ok_or_else(|| StorageError::not_found("Attachment blob not found"))?;
+        fs::read(self.resolve_path(&storage_key)?).map_err(|error| {
+            StorageError::storage(format!("failed to read attachment blob content: {error}"))
+        })
+    }
+
     pub fn read_data(
         &self,
         database: &Database,

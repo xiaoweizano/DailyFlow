@@ -1,5 +1,7 @@
 import type {
   AppServices,
+  ExportSource,
+  ExportTarget,
   ImportRepository,
   ImportSource,
   ImportTxtAnalyzer,
@@ -18,6 +20,8 @@ import { DexieTaskRepository } from "./dexie-task-repository.js";
 import { DexieTimelineQuery } from "./dexie-timeline-query.js";
 import { DexieReportRepository } from "./dexie-report-repository.js";
 import { WebAttachmentStore } from "./web-attachment-store.js";
+import { WebExportSource } from "./web-export-source.js";
+import { WebExportTarget } from "./web-export-target.js";
 import { WebImportSource } from "./web-import-source.js";
 import { TxtAnalyzer } from "../shared/import/txt-analyzer.js";
 import { TxtDocumentConverter } from "../shared/import/txt-document-converter.js";
@@ -31,6 +35,10 @@ export type WebServices = Pick<
     readonly converter: TxtDocumentConverterPort;
     readonly repository: ImportRepository;
     readonly source: ImportSource;
+  };
+  readonly exportStorage: {
+    readonly source: ExportSource;
+    readonly target: ExportTarget;
   };
   readonly timeline: DexieTimelineQuery;
 };
@@ -67,6 +75,10 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
       converter: new TxtDocumentConverter(),
       repository: new DexieImportRepository({ database, ids }),
       source: new WebImportSource(),
+    },
+    exportStorage: {
+      source: new WebExportSource({ database }),
+      target: new WebExportTarget(),
     },
     journals: new DexieJournalRepository({
       database,

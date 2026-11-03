@@ -25,6 +25,7 @@ import { AnalyticsPage } from "../src/analytics/analytics-page.js";
 import type { AnalyticsRuntimeServices } from "../src/analytics/analytics-services.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
+import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 
 const NOW = parseUtcTimestamp("2026-10-30T03:20:11.123Z");
@@ -170,6 +171,7 @@ function createServices(
 ): AppRuntimeServices {
   return {
     analytics,
+    exports: createExportServicesStub(),
     imports: createImportServicesStub(),
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),

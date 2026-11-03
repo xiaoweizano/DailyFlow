@@ -50,6 +50,8 @@ export const TAURI_COMMANDS = {
   importBeginCommit: "import_begin_commit",
   importCommitBatch: "import_commit_batch",
   importRecordFailure: "import_record_failure",
+  exportSnapshot: "export_snapshot",
+  exportWriteFile: "export_write_file",
 } as const;
 
 export type TauriCommandName = (typeof TAURI_COMMANDS)[keyof typeof TAURI_COMMANDS];
@@ -722,6 +724,74 @@ export const RecordImportFailureDtoSchema = z
   })
   .strict();
 
+export const ExportAttachmentDtoSchema = z
+  .object({
+    id: UuidV7Schema,
+    blobId: UuidV7Schema,
+    ownerType: AttachmentOwnerTypeDtoSchema,
+    ownerId: UuidV7Schema,
+    displayName: z.string(),
+    altText: z.string(),
+    isInline: z.boolean(),
+    sortOrder: z.number().int().nonnegative(),
+    mimeType: z.string().min(1),
+    byteSize: z.number().int().nonnegative(),
+    sha256: ContentHashSchema,
+    createdAt: UtcTimestampSchema,
+    deletedAt: UtcTimestampSchema.nullable(),
+  })
+  .strict();
+
+export const ExportKnowledgeRecordDtoSchema = z
+  .object({
+    item: KnowledgeItemDtoSchema,
+    tags: z.array(z.string()),
+  })
+  .strict();
+
+export const ExportSnapshotDtoSchema = z
+  .object({
+    journals: z.array(JournalDtoSchema),
+    knowledge: z.array(ExportKnowledgeRecordDtoSchema),
+    tasks: z.array(TaskDtoSchema),
+    attachments: z.array(
+      z
+        .object({
+          attachment: ExportAttachmentDtoSchema,
+          bytesBase64: z.string(),
+        })
+        .strict(),
+    ),
+    imports: z
+      .object({
+        sessions: z.array(ImportSessionDtoSchema),
+        entries: z.array(
+          z
+            .object({
+              sessionId: UuidV7Schema,
+              entry: ImportEntryDtoSchema,
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+  })
+  .strict();
+
+export const ExportWriteFileInputDtoSchema = z
+  .object({
+    targetPath: z.string().min(1),
+    bytesBase64: z.string(),
+    expectedSha256: ContentHashSchema,
+  })
+  .strict();
+
+export const ExportWriteFileResultDtoSchema = z
+  .object({
+    bytesWritten: z.number().int().nonnegative(),
+  })
+  .strict();
+
 export const StorageErrorDtoSchema = z.object({
   code: z.enum([
     "MIGRATION_FAILED",
@@ -843,3 +913,9 @@ export type ImportCommitEntryDto = z.infer<typeof ImportCommitEntryDtoSchema>;
 export type ImportCommitBatchDto = z.infer<typeof ImportCommitBatchDtoSchema>;
 export type ImportCommitSummaryDto = z.infer<typeof ImportCommitSummaryDtoSchema>;
 export type RecordImportFailureDto = z.infer<typeof RecordImportFailureDtoSchema>;
+export type ExportAttachmentDto = z.infer<typeof ExportAttachmentDtoSchema>;
+export type ExportKnowledgeRecordDto = z.infer<typeof ExportKnowledgeRecordDtoSchema>;
+export type ExportImportEntryDto = z.infer<typeof ExportSnapshotDtoSchema>["imports"]["entries"][number];
+export type ExportSnapshotDto = z.infer<typeof ExportSnapshotDtoSchema>;
+export type ExportWriteFileInputDto = z.infer<typeof ExportWriteFileInputDtoSchema>;
+export type ExportWriteFileResultDto = z.infer<typeof ExportWriteFileResultDtoSchema>;

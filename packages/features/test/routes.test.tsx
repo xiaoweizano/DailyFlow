@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { appModules, createAppRoutes, mainNavigation, routePaths } from "../src/index.js";
 import { AnalyticsPage } from "../src/analytics/analytics-page.js";
+import { ExportPage } from "../src/data-management/export-page.js";
 import { ImportPage } from "../src/data-management/import-page.js";
 import { KnowledgeDetailPage } from "../src/knowledge/knowledge-detail.js";
 import { KnowledgePage } from "../src/knowledge/knowledge-page.js";
@@ -44,6 +45,7 @@ describe("shared application routes", () => {
     "/analytics/month/2026-10-01",
     "/data",
     "/data/import",
+    "/data/export",
     "/settings",
   ])("matches the shared route %s", (path) => {
     expect(matchRoutes(routes, path)).not.toBeNull();
@@ -63,6 +65,7 @@ describe("shared application routes", () => {
     ["/analytics", AnalyticsPage],
     ["/analytics/month/2026-10-01", AnalyticsPage],
     ["/data/import", ImportPage],
+    ["/data/export", ExportPage],
   ])("mounts the implemented page for %s", (path, page) => {
     const matches = matchRoutes(routes, path);
     const element = matches?.at(-1)?.route.element;

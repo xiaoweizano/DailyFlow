@@ -1,5 +1,7 @@
 import type {
   AppServices,
+  ExportSource,
+  ExportTarget,
   ImportRepository,
   ImportSource,
   ImportTxtAnalyzer,
@@ -12,6 +14,13 @@ import { TxtAnalyzer } from "../shared/import/txt-analyzer.js";
 import { TxtDocumentConverter } from "../shared/import/txt-document-converter.js";
 import { DesktopAttachmentStore } from "./desktop-attachment-store.js";
 import { DesktopAnalyticsQuery } from "./desktop-analytics-query.js";
+import {
+  DesktopExportSource,
+} from "./desktop-export-source.js";
+import {
+  DesktopExportTarget,
+  type DesktopExportPicker,
+} from "./desktop-export-target.js";
 import { DesktopImportRepository } from "./desktop-import-repository.js";
 import {
   DesktopImportSource,
@@ -35,6 +44,10 @@ export type DesktopServices = Pick<
     readonly repository: ImportRepository;
     readonly source: ImportSource;
   };
+  readonly exportStorage: {
+    readonly source: ExportSource;
+    readonly target: ExportTarget;
+  };
   readonly timeline: TimelineQuery;
 };
 
@@ -43,6 +56,7 @@ export interface CreateDesktopServicesOptions {
   readonly invoke?: TauriInvoke;
   readonly clock?: Clock;
   readonly importPicker?: DesktopDirectoryPicker;
+  readonly exportPicker?: DesktopExportPicker;
 }
 
 const systemClock: Clock = {
@@ -56,6 +70,11 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
     client,
     picker: options.importPicker ?? selectDesktopDirectory,
   });
+  const exportSource = new DesktopExportSource({ client });
+  const exportTarget = new DesktopExportTarget({
+    client,
+    ...(options.exportPicker === undefined ? {} : { picker: options.exportPicker }),
+  });
 
   return {
     analytics: new DesktopAnalyticsQuery({ client }),
@@ -65,6 +84,10 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
       converter: new TxtDocumentConverter(),
       repository: new DesktopImportRepository({ client }),
       source: importSource,
+    },
+    exportStorage: {
+      source: exportSource,
+      target: exportTarget,
     },
     journals: new DesktopJournalRepository({ client, clock }),
     knowledge: new DesktopKnowledgeRepository({ client, clock }),

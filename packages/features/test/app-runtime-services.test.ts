@@ -35,6 +35,10 @@ describe("createAppRuntimeServices", () => {
     const options = {
       analytics: {},
       attachments: {},
+      exportStorage: {
+        source: {},
+        target: {},
+      },
       importStorage: { analyzer, converter, repository, source },
       journals: {},
       knowledge: {},

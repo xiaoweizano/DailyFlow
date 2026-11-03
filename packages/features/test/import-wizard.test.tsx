@@ -21,6 +21,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createExportServicesStub } from "./export-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { ImportPage } from "../src/data-management/import-page.js";
@@ -146,6 +147,7 @@ function createImportService(overrides: Partial<ImportService> = {}): ImportServ
 function createServices(imports: ImportService): AppRuntimeServices {
   return {
     analytics: createAnalyticsServicesStub(),
+    exports: createExportServicesStub(),
     imports,
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),

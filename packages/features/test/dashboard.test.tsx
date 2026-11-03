@@ -16,6 +16,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
@@ -88,6 +89,7 @@ function createServices(
 
   return {
     analytics: createAnalyticsServicesStub(),
+    exports: createExportServicesStub(),
     imports: createImportServicesStub(),
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),

@@ -1,6 +1,8 @@
 import {
   TxtImportService,
   type AppServices,
+  type ExportSource,
+  type ExportTarget,
   type ImportRepository,
   type ImportSource,
   type ImportTxtAnalyzer,
@@ -18,12 +20,17 @@ import { createJournalRuntimeServices } from "./journal/journal-services.js";
 import { createKnowledgeRuntimeServices } from "./knowledge/knowledge-services.js";
 import { createSaveLifecycle, type SaveLifecycle } from "./lifecycle/save-lifecycle.js";
 import { createTaskRuntimeServices } from "./tasks/task-services.js";
+import {
+  createExportRuntimeServices,
+  type ExportRuntimeServices,
+} from "./data-management/export-services.js";
 
 export interface CreateAppRuntimeServicesOptions extends Pick<
   AppServices,
   "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > {
   readonly importStorage: ImportStorageServices;
+  readonly exportStorage: ExportStorageServices;
   readonly timeline: TimelineQuery;
   readonly clock?: Clock;
   readonly ids?: IdGenerator;
@@ -37,6 +44,11 @@ export interface ImportStorageServices {
   readonly repository: ImportRepository;
   readonly analyzer: ImportTxtAnalyzer;
   readonly converter: TxtDocumentConverter;
+}
+
+export interface ExportStorageServices {
+  readonly source: ExportSource;
+  readonly target: ExportTarget;
 }
 
 const systemClock: Clock = {
@@ -76,6 +88,12 @@ export function createAppRuntimeServices(
     attachments: createAttachmentRuntimeServices({
       attachments: options.attachments,
     }),
+    exports: createExportRuntimeServices({
+      source: options.exportStorage.source,
+      target: options.exportStorage.target,
+      projector,
+      clock,
+    }),
     imports: new TxtImportService({
       source: options.importStorage.source,
       repository: options.importStorage.repository,
@@ -109,3 +127,5 @@ export function createAppRuntimeServices(
     timeline: options.timeline,
   };
 }
+
+export type { ExportRuntimeServices };

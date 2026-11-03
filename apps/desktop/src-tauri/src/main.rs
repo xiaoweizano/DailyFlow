@@ -7,8 +7,9 @@ use serde::Serialize;
 use dailyflow_desktop::{
     attachments::AttachmentStore,
     commands::{
-        analytics_commands, attachment_commands, import_commands, journal_commands,
-        knowledge_commands, report_commands, search_commands, task_commands, timeline_commands,
+        analytics_commands, attachment_commands, export_commands, import_commands,
+        journal_commands, knowledge_commands, report_commands, search_commands, task_commands,
+        timeline_commands,
     },
     db::Database,
 };
@@ -76,6 +77,8 @@ fn main() {
             attachment_commands::attachment_read,
             attachment_commands::attachment_soft_delete_owner_links,
             attachment_commands::attachment_remove_orphan,
+            export_commands::export_snapshot,
+            export_commands::export_write_file,
             import_commands::import_create_session,
             import_commands::import_save_preview,
             import_commands::import_find_existing_matches,

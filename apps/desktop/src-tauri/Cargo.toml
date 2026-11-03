@@ -17,11 +17,9 @@ serde_json = "1"
 sha2 = "0.10"
 tauri = { version = "2", features = [], optional = true }
 tauri-plugin-dialog = "2.7.3"
+tempfile = "3"
 unicode-normalization = "0.1"
 uuid = { version = "1.8", features = ["v7"] }
-
-[dev-dependencies]
-tempfile = "3"
 
 [features]
 desktop-shell = ["dep:tauri"]

@@ -8,6 +8,9 @@ import {
   AnalyticsPeriodQueryDtoSchema,
   AnalyticsSourceDtoSchema,
   BeginImportCommitDtoSchema,
+  ExportSnapshotDtoSchema,
+  ExportWriteFileInputDtoSchema,
+  ExportWriteFileResultDtoSchema,
   ImportCommitBatchDtoSchema,
   ImportCommitSummaryDtoSchema,
   ImportEntryDtoSchema,
@@ -56,6 +59,9 @@ import {
   type AnalyticsPeriodQueryDto,
   type AnalyticsSourceDto,
   type BeginImportCommitDto,
+  type ExportSnapshotDto,
+  type ExportWriteFileInputDto,
+  type ExportWriteFileResultDto,
   type ImportCommitBatchDto,
   type ImportCommitSummaryDto,
   type ImportEntryDto,
@@ -451,6 +457,21 @@ export class TauriCommandClient {
       { input },
       z.union([z.null(), z.undefined()]),
       z.object({ input: RecordImportFailureDtoSchema }),
+    );
+  }
+
+  async exportSnapshot(): Promise<ExportSnapshotDto> {
+    return this.request(TAURI_COMMANDS.exportSnapshot, {}, ExportSnapshotDtoSchema);
+  }
+
+  async writeExportFile(
+    input: ExportWriteFileInputDto,
+  ): Promise<ExportWriteFileResultDto> {
+    return this.request(
+      TAURI_COMMANDS.exportWriteFile,
+      { input },
+      ExportWriteFileResultDtoSchema,
+      z.object({ input: ExportWriteFileInputDtoSchema }),
     );
   }
 

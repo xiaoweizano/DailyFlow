@@ -856,37 +856,37 @@ docs/
 - Create: `packages/infrastructure/test/export.test.ts`
 - Create: `apps/desktop/src-tauri/tests/export_files.rs`
 
-- [ ] **Step 1: 写导出快照测试**
+- [x] **Step 1: 写导出快照测试**
 
   使用固定 Journal、Knowledge、Task、附件和原始导入数据，断言 Markdown、NDJSON 字段顺序稳定、日期路径正确、中文标题可读、软删除默认排除。
 
-- [ ] **Step 2: 从权威 JSON 生成 Markdown**
+- [x] **Step 2: 从权威 JSON 生成 Markdown**
 
   导出时重新调用 projector，不信任旧 `content_markdown`。标题文件名按 Windows/macOS 共同非法字符净化，冲突时附加短 ID；附件使用相对路径。完整备份与普通导出必须复用同一转换器。
 
-- [ ] **Step 3: 实现 NDJSON**
+- [x] **Step 3: 实现 NDJSON**
 
   每行一个完整 DTO，包含 `entityType`、`schemaVersion`、稳定 ID 和规范化正文 JSON。字段顺序与换行固定，空值与本地绝对路径不写入。
 
-- [ ] **Step 4: 实现 manifest 与原子输出**
+- [x] **Step 4: 实现 manifest 与原子输出**
 
   输出先写临时目录/临时 ZIP，完成后校验计数和 SHA-256 再原子 rename。取消或写入失败时清理临时目标，不覆盖用户已有同名导出。
 
-- [ ] **Step 5: 接入 UI**
+- [x] **Step 5: 接入 UI**
 
   显示导出范围、包含项、软删除选项和预计大小。桌面使用原生保存对话框；Web 优先保存句柄，回退 Blob 下载并提示浏览器内存限制。
 
-- [ ] **Step 6: 注册导出路由**
+- [x] **Step 6: 注册导出路由**
 
   在共享路由表注册 `/data/export`，`ExportPage` 包装导出面板并接入两个组合根。桌面保存对话框和 Web 下载行为必须通过 `ExportTarget` 注入，UI 不直接读取 `showSaveFilePicker` 或 Tauri 对话框 API。
 
-- [ ] **Step 7: 运行验证**
+- [x] **Step 7: 运行验证**
 
   Run: `pnpm --filter @dailyflow/infrastructure test -- export && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml export_files`
 
   Expected: 同一 fixture 重跑导出内容哈希一致；路径净化和已有文件保护通过。
 
-- [ ] **Step 8: 提交**
+- [x] **Step 8: 提交**
 
   Run: `git add packages apps/desktop apps/web && git commit -m "feat: add deterministic markdown and ndjson export"`
 

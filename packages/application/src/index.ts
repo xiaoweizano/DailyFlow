@@ -109,6 +109,33 @@ export type {
   RestoreOptions,
   RestoreResult,
 } from "./ports/backup-service.js";
+export {
+  EXPORT_SCOPES,
+  type ExportArtifact,
+  type ExportAttachmentRecord,
+  type ExportArchiveOptions,
+  type ExportDataOutcome,
+  type ExportDataResult,
+  type ExportDataset,
+  type ExportEstimate,
+  type ExportFile,
+  type ExportFileManifestEntry,
+  type ExportImportEntryRecord,
+  type ExportImportSnapshot,
+  type ExportJournalRecord,
+  type ExportKnowledgeRecord,
+  type ExportManifest,
+  type ExportOptions,
+  type ExportSaveResult,
+  type ExportScope,
+  type ExportSource,
+  type ExportTarget,
+} from "./ports/export-target.js";
+export {
+  ExportDataInputSchema,
+  exportData,
+  type ExportDataDependencies,
+} from "./use-cases/export-data.js";
 export type {
   SearchDocument,
   SearchEntityType,
