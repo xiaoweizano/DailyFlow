@@ -7,8 +7,8 @@ use serde::Serialize;
 use dailyflow_desktop::{
     attachments::AttachmentStore,
     commands::{
-        analytics_commands, attachment_commands, journal_commands, knowledge_commands,
-        report_commands, search_commands, task_commands, timeline_commands,
+        analytics_commands, attachment_commands, import_commands, journal_commands,
+        knowledge_commands, report_commands, search_commands, task_commands, timeline_commands,
     },
     db::Database,
 };
@@ -37,6 +37,7 @@ fn app_info() -> AppInfo {
 #[cfg(feature = "desktop-shell")]
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let data_directory = app.path().app_data_dir()?;
             let database_path = data_directory.join("dailyflow.db");
@@ -74,7 +75,15 @@ fn main() {
             attachment_commands::attachment_put,
             attachment_commands::attachment_read,
             attachment_commands::attachment_soft_delete_owner_links,
-            attachment_commands::attachment_remove_orphan
+            attachment_commands::attachment_remove_orphan,
+            import_commands::import_create_session,
+            import_commands::import_save_preview,
+            import_commands::import_find_existing_matches,
+            import_commands::import_begin_commit,
+            import_commands::import_commit_batch,
+            import_commands::import_record_failure,
+            import_commands::import_scan_txt,
+            import_commands::import_read_txt
         ])
         .run(tauri::generate_context!())
         .expect("failed to run DailyFlow desktop application");

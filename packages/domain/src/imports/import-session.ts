@@ -35,17 +35,34 @@ export type ImportEntryStatus = (typeof IMPORT_ENTRY_STATUSES)[number];
 export const IMPORT_RAW_CAPTURE_STATUSES = ["captured", "cleaned", "unavailable"] as const;
 export type ImportRawCaptureStatus = (typeof IMPORT_RAW_CAPTURE_STATUSES)[number];
 
+export const IMPORT_ENCODINGS = ["utf8-bom", "utf8", "gb18030", "unknown"] as const;
+export type ImportEncoding = (typeof IMPORT_ENCODINGS)[number];
+
+export const IMPORT_NEWLINE_STYLES = ["lf", "crlf", "mixed", "unknown"] as const;
+export type ImportNewlineStyle = (typeof IMPORT_NEWLINE_STYLES)[number];
+
+export const IMPORT_CONFLICT_KINDS = [
+  "duplicate_path",
+  "duplicate_content",
+  "same_date_conflict",
+  "duplicate_date_in_batch",
+] as const;
+export type ImportConflictKind = (typeof IMPORT_CONFLICT_KINDS)[number];
+
 export interface ImportEntry {
   readonly id: EntityId;
   readonly relativePath: string;
   readonly originalFileName: string;
   readonly detectedDate: LocalDate | null;
-  readonly encoding: string;
+  readonly encoding: ImportEncoding;
+  readonly newlineStyle: ImportNewlineStyle;
   readonly fileSha256: string | null;
   readonly rawSize: number | null;
   readonly rawCaptureStatus: ImportRawCaptureStatus;
   readonly rawBytes: Uint8Array | null;
+  readonly rawCleanedAt: UtcTimestamp | null;
   readonly status: ImportEntryStatus;
+  readonly conflictKind: ImportConflictKind | null;
   readonly errorCode: string | null;
   readonly errorDetail: string | null;
   readonly journalId: EntityId | null;
@@ -95,7 +112,7 @@ export function createImportSession(
     rootLabel: input.rootLabel,
     status: "scanning",
     options: input.options ?? {},
-    revision: parseRevision(0),
+    revision: parseRevision(1),
     scannedCount: 0,
     readyCount: 0,
     importedCount: 0,

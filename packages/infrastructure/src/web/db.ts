@@ -9,6 +9,8 @@ import type {
   AttachmentBlobRow,
   AttachmentLinkRow,
   GenericStoreRow,
+  ImportEntryRow,
+  ImportSessionRow,
   JournalRow,
   JournalTagRow,
   JournalVersionRow,
@@ -39,8 +41,8 @@ export class DailyFlowDb extends Dexie {
   knowledgeTags!: Table<KnowledgeTagRow, [string, string]>;
   attachmentBlobs!: Table<AttachmentBlobRow, string>;
   attachmentLinks!: Table<AttachmentLinkRow, string>;
-  importSessions!: Table<GenericStoreRow, string>;
-  importEntries!: Table<GenericStoreRow, string>;
+  importSessions!: Table<ImportSessionRow, string>;
+  importEntries!: Table<ImportEntryRow, string>;
   reports!: Table<ReportRow, string>;
   searchDocs!: Table<SearchDocumentRow, string>;
   searchTermPostings!: Table<SearchTermPostingRow, string>;

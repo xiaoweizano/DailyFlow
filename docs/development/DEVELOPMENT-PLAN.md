@@ -797,41 +797,41 @@ docs/
 - Create: `apps/desktop/src-tauri/tests/import_transaction.rs`
 - Create: `packages/features/test/import-wizard.test.tsx`
 
-- [ ] **Step 1: 写识别与失败测试**
+- [x] **Step 1: 写识别与失败测试**
 
   测试覆盖 `YYYYMMDD`、`YYYY-MM-DD`、月份目录加 `MMDD`/`DD`、非法闰日、无日期、UTF-8 BOM、严格 UTF-8、GBK 中文、CRLF、混合换行、空文件和路径穿越。断言不读取修改时间决定业务日期。
 
-- [ ] **Step 2: 实现纯导入规则**
+- [x] **Step 2: 实现纯导入规则**
 
   `detectImportDate()` 和 `decodeTxt()` 不访问文件系统；日期返回可判别结果，编码只返回 `utf8-bom`、`utf8`、`gb18030` 或 `unknown`。原始 `Uint8Array` 不被解码函数修改。
 
-- [ ] **Step 3: 实现双端扫描端口**
+- [x] **Step 3: 实现双端扫描端口**
 
   桌面 Rust 递归扫描所选根目录，拒绝符号链接逃逸并使用 `/` 生成逻辑相对路径；Web 优先使用 File System Access API，不支持时使用 `<input webkitdirectory>`。两端都用异步或分批接口，禁止一次把所有正文送入 React 状态。
 
-- [ ] **Step 4: 实现预览与冲突**
+- [x] **Step 4: 实现预览与冲突**
 
   `createSession` 只写 `ImportSession` 的 `scanning` 审计记录，`savePreview` 在独立事务中原子写 `ImportEntry` 与统计并推进为 `preview_ready`；对应 SQLite 表为 `import_sessions`/`import_entries`，Web store 为 `importSessions`/`importEntries`。成功读取的条目写 `rawCaptureStatus=captured`、SHA-256 和大小；读取失败写 `unavailable`、空哈希与 `FILE_READ_FAILED`，仍保留路径和可获得的文件元数据。逐文件识别 `duplicate_path`、`duplicate_content`、`same_date_conflict` 和 `duplicate_date_in_batch`；预览返回计数、编码、摘录、原始大小、可读错误和用户可执行动作。
 
-- [ ] **Step 5: 实现原子提交**
+- [x] **Step 5: 实现原子提交**
 
   预览会话与条目先以独立审计事务保存。正式提交开始时，先用短审计事务校验 `expectedSessionRevision` 并进入 `committing`；正式事务再校验状态与 revision，先写 Journal 及历史版本，再写 StructuredBlock、标签、搜索文档和 ImportEntry 的 `journalId/status`，`journals` 不反向引用 ImportEntry。任一正式写入失败时整批回滚正式数据，再由独立审计事务保存 `failed`/`rolled_back`、`errorSummary` 和逐项错误，不能写入部分 Journal。`captured` 条目以 BLOB/Blob 保存原始字节，`cleaned` 只保留哈希、大小和清理时间，`unavailable` 不写字节或伪造哈希。
 
-- [ ] **Step 6: 实现六步向导**
+- [x] **Step 6: 实现六步向导**
 
   页面内完成选择目录、扫描、预览处理、策略确认、提交和结果。逐项错误可展开查看；取消扫描或提交后不留下正式日志。完成后显示扫描、创建、更新、跳过、冲突、异常和原始字节统计。
 
-- [ ] **Step 7: 注册导入路由**
+- [x] **Step 7: 注册导入路由**
 
   在共享路由表注册 `/data/import`，`ImportPage` 包装向导并接入两个组合根。Web 的文件选择与桌面目录选择分别由已注入的 `ImportSource` 决定，页面不能分支调用 Tauri 或浏览器 API。
 
-- [ ] **Step 8: 运行验证**
+- [x] **Step 8: 运行验证**
 
   Run: `pnpm --filter @dailyflow/application test && pnpm --filter @dailyflow/infrastructure test && pnpm --filter @dailyflow/features test -- import-wizard && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml import_transaction`
 
   Expected: 编码、日期和冲突测试通过；故障注入下正式表零新增；第二次同目录导入全部按策略跳过。
 
-- [ ] **Step 9: 提交**
+- [x] **Step 9: 提交**
 
   Run: `git add packages apps/desktop apps/web && git commit -m "feat: add transactional txt import workflow"`
 

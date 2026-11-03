@@ -116,7 +116,7 @@ function toSavedSnapshot(dto: SavedJournalSnapshotDto): SavedJournalSnapshot {
   };
 }
 
-function toSaveSnapshotDto(input: SaveJournalSnapshot): SaveJournalSnapshotDto {
+export function toSaveSnapshotDto(input: SaveJournalSnapshot): SaveJournalSnapshotDto {
   return {
     journalId: input.journalId,
     journalDate: input.journalDate,

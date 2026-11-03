@@ -695,17 +695,16 @@ fn write_search_documents(
     Ok(())
 }
 
-pub fn save_snapshot(
-    connection: &mut Connection,
+pub(crate) fn save_snapshot_in_transaction(
+    transaction: &Transaction<'_>,
     input: &SaveJournalSnapshot,
 ) -> Result<SavedJournalSnapshot, StorageError> {
     validate_snapshot(input)?;
 
-    let transaction = connection.transaction()?;
-    let current = current_journal(&transaction, &input.journal_id)?;
+    let current = current_journal(transaction, &input.journal_id)?;
     let revision =
         ensure_expected_revision(current.as_ref(), input.expected_revision, &input.journal_id)?;
-    ensure_date_is_available(&transaction, &input.journal_id, &input.journal_date)?;
+    ensure_date_is_available(transaction, &input.journal_id, &input.journal_date)?;
 
     let old_block_ids = {
         let mut statement = transaction.prepare(
@@ -781,19 +780,14 @@ pub fn save_snapshot(
     }
 
     write_structured_blocks(
-        &transaction,
+        transaction,
         &input.journal_id,
         &input.structured_blocks,
         &input.saved_at,
     )?;
-    write_tags(
-        &transaction,
-        &input.journal_id,
-        &input.tags,
-        &input.saved_at,
-    )?;
+    write_tags(transaction, &input.journal_id, &input.tags, &input.saved_at)?;
     write_search_documents(
-        &transaction,
+        transaction,
         &input.journal_id,
         &old_block_ids,
         &input.search_documents,
@@ -825,8 +819,6 @@ pub fn save_snapshot(
         )?;
     }
 
-    transaction.commit()?;
-
     Ok(SavedJournalSnapshot {
         journal_id: input.journal_id.clone(),
         revision,
@@ -835,6 +827,16 @@ pub fn save_snapshot(
         version_created,
         search_index_state: "ready".to_owned(),
     })
+}
+
+pub fn save_snapshot(
+    connection: &mut Connection,
+    input: &SaveJournalSnapshot,
+) -> Result<SavedJournalSnapshot, StorageError> {
+    let transaction = connection.transaction()?;
+    let result = save_snapshot_in_transaction(&transaction, input)?;
+    transaction.commit()?;
+    Ok(result)
 }
 
 pub fn list_versions(

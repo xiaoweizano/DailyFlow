@@ -5,6 +5,14 @@ export {
 } from "./web-services.js";
 export { WebAttachmentStore, type WebAttachmentStoreOptions } from "./web-attachment-store.js";
 export {
+  WebImportSource,
+  type WebDirectoryHandle,
+  type WebDirectoryPicker,
+  type WebFallbackFilePicker,
+  type WebFileHandle,
+  type WebImportSourceOptions,
+} from "./web-import-source.js";
+export {
   DexieAnalyticsQuery,
   type DexieAnalyticsQueryOptions,
 } from "./dexie-analytics-query.js";

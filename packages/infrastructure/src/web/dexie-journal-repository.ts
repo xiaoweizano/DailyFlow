@@ -301,6 +301,82 @@ function createVersionRow(
   };
 }
 
+function assertExpectedJournalRevision(
+  journalId: EntityId,
+  current: JournalRow | undefined,
+  expectedRevision: number | null,
+): void {
+  if (expectedRevision === null) {
+    if (current !== undefined) {
+      throw new PortError("CONFLICT", {
+        message: "Journal already exists",
+        entity: "journal",
+        id: journalId,
+        actualRevision: current.revision,
+      });
+    }
+    return;
+  }
+  if (current === undefined || current.deletedAt !== null) {
+    return notFound("journal", journalId);
+  }
+  if (current.revision !== expectedRevision) {
+    return conflict("journal", journalId, expectedRevision, current.revision);
+  }
+}
+
+export async function saveJournalSnapshotInTransaction(
+  database: DailyFlowDb,
+  input: SaveJournalSnapshot,
+  ids: IdGenerator,
+): Promise<SavedJournalSnapshot> {
+  const current = await database.journals.get(input.journalId);
+  assertExpectedJournalRevision(input.journalId, current, input.expectedRevision);
+
+  const conflictingDate = (
+    await database.journals.where("journalDate").equals(input.journalDate).toArray()
+  ).find((row) => row.deletedAt === null && row.id !== input.journalId);
+  if (conflictingDate !== undefined) {
+    throw new PortError("CONFLICT", {
+      message: "An active journal already exists for this date",
+      entity: "journal",
+      id: input.journalId,
+      actualRevision: conflictingDate.revision,
+    });
+  }
+
+  const revision = (current?.revision ?? 0) + 1;
+  const versionCreated = input.checkpoint !== "autosave";
+  await database.journals.put(toJournalRow(input, current, revision));
+  await replaceStructuredBlocks(
+    database,
+    input.journalId,
+    input.structuredBlocks,
+    input.savedAt,
+  );
+  await replaceTags(database, input.journalId, input.tags, input.savedAt, ids);
+  await replaceSearchDocumentsInTransaction(
+    database,
+    input.journalId,
+    input.searchDocuments,
+  );
+
+  if (versionCreated) {
+    await database.journalVersions.put(
+      createVersionRow(input, revision, parseEntityId(ids.nextId()), input.checkpoint),
+    );
+  }
+
+  return {
+    journalId: input.journalId,
+    revision,
+    savedAt: input.savedAt,
+    contentHash: input.contentHash,
+    versionCreated,
+    searchIndexState: "ready",
+  };
+}
+
 export class DexieJournalRepository implements JournalRepository {
   private readonly database: DailyFlowDb;
   private readonly ids: IdGenerator;
@@ -385,53 +461,7 @@ export class DexieJournalRepository implements JournalRepository {
         this.database.searchDocs,
         this.database.searchTermPostings,
       ],
-      async () => {
-        const current = await this.database.journals.get(input.journalId);
-        this.assertExpectedRevision(input.journalId, current, input.expectedRevision);
-
-        const conflictingDate = (
-          await this.database.journals.where("journalDate").equals(input.journalDate).toArray()
-        ).find((row) => row.deletedAt === null && row.id !== input.journalId);
-        if (conflictingDate !== undefined) {
-          throw new PortError("CONFLICT", {
-            message: "An active journal already exists for this date",
-            entity: "journal",
-            id: input.journalId,
-            actualRevision: conflictingDate.revision,
-          });
-        }
-
-        const revision = (current?.revision ?? 0) + 1;
-        const versionCreated = input.checkpoint !== "autosave";
-        await this.database.journals.put(toJournalRow(input, current, revision));
-        await replaceStructuredBlocks(
-          this.database,
-          input.journalId,
-          input.structuredBlocks,
-          input.savedAt,
-        );
-        await replaceTags(this.database, input.journalId, input.tags, input.savedAt, this.ids);
-        await replaceSearchDocumentsInTransaction(
-          this.database,
-          input.journalId,
-          input.searchDocuments,
-        );
-
-        if (versionCreated) {
-          await this.database.journalVersions.put(
-            createVersionRow(input, revision, parseEntityId(this.ids.nextId()), input.checkpoint),
-          );
-        }
-
-        return {
-          journalId: input.journalId,
-          revision,
-          savedAt: input.savedAt,
-          contentHash: input.contentHash,
-          versionCreated,
-          searchIndexState: "ready",
-        };
-      },
+      async () => saveJournalSnapshotInTransaction(this.database, input, this.ids),
     );
   }
 
@@ -579,27 +609,4 @@ export class DexieJournalRepository implements JournalRepository {
     );
   }
 
-  private assertExpectedRevision(
-    journalId: EntityId,
-    current: JournalRow | undefined,
-    expectedRevision: number | null,
-  ): void {
-    if (expectedRevision === null) {
-      if (current !== undefined) {
-        throw new PortError("CONFLICT", {
-          message: "Journal already exists",
-          entity: "journal",
-          id: journalId,
-          actualRevision: current.revision,
-        });
-      }
-      return;
-    }
-    if (current === undefined || current.deletedAt !== null) {
-      return notFound("journal", journalId);
-    }
-    if (current.revision !== expectedRevision) {
-      return conflict("journal", journalId, expectedRevision, current.revision);
-    }
-  }
 }

@@ -17,6 +17,7 @@
     "@dailyflow/domain": "workspace:*",
     "@dailyflow/editor": "workspace:*",
     "@dailyflow/shared": "workspace:*",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
     "dexie": "^4.4.7",
     "zod": "^3.24.0"
   },

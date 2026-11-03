@@ -1,8 +1,15 @@
-import type { AppServices } from "@dailyflow/application";
+import type {
+  AppServices,
+  ImportRepository,
+  ImportSource,
+  ImportTxtAnalyzer,
+  TxtDocumentConverter as TxtDocumentConverterPort,
+} from "@dailyflow/application";
 import type { Clock, IdGenerator } from "@dailyflow/domain";
 import { createUuidV7 } from "@dailyflow/shared";
 
 import { DailyFlowDb } from "./db.js";
+import { DexieImportRepository } from "./dexie-import-repository.js";
 import { DexieAnalyticsQuery } from "./dexie-analytics-query.js";
 import { DexieJournalRepository } from "./dexie-journal-repository.js";
 import { DexieKnowledgeRepository } from "./dexie-knowledge-repository.js";
@@ -11,11 +18,20 @@ import { DexieTaskRepository } from "./dexie-task-repository.js";
 import { DexieTimelineQuery } from "./dexie-timeline-query.js";
 import { DexieReportRepository } from "./dexie-report-repository.js";
 import { WebAttachmentStore } from "./web-attachment-store.js";
+import { WebImportSource } from "./web-import-source.js";
+import { TxtAnalyzer } from "../shared/import/txt-analyzer.js";
+import { TxtDocumentConverter } from "../shared/import/txt-document-converter.js";
 
 export type WebServices = Pick<
   AppServices,
   "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > & {
+  readonly importStorage: {
+    readonly analyzer: ImportTxtAnalyzer;
+    readonly converter: TxtDocumentConverterPort;
+    readonly repository: ImportRepository;
+    readonly source: ImportSource;
+  };
   readonly timeline: DexieTimelineQuery;
 };
 
@@ -46,6 +62,12 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
       clock,
       ids,
     }),
+    importStorage: {
+      analyzer: new TxtAnalyzer(),
+      converter: new TxtDocumentConverter(),
+      repository: new DexieImportRepository({ database, ids }),
+      source: new WebImportSource(),
+    },
     journals: new DexieJournalRepository({
       database,
       ids,

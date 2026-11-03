@@ -1,4 +1,5 @@
 pub mod analytics_repository;
+pub mod import_repository;
 pub mod journal_repository;
 pub mod knowledge_repository;
 pub mod migrations;

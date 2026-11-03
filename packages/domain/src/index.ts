@@ -83,17 +83,29 @@ export {
   type CreateAttachmentRefInput,
 } from "./attachments/attachment.js";
 export {
+  IMPORT_CONFLICT_KINDS,
+  IMPORT_ENCODINGS,
   IMPORT_ENTRY_STATUSES,
+  IMPORT_NEWLINE_STYLES,
   IMPORT_RAW_CAPTURE_STATUSES,
   IMPORT_SESSION_STATUSES,
   createImportSession,
   type CreateImportSessionInput,
+  type ImportConflictKind,
+  type ImportEncoding,
   type ImportEntry,
   type ImportEntryStatus,
+  type ImportNewlineStyle,
   type ImportRawCaptureStatus,
   type ImportSession,
   type ImportSessionStatus,
 } from "./imports/import-session.js";
+export {
+  detectImportDate,
+  normalizeImportRelativePath,
+  type ImportDateDetection,
+  type ImportDateSource,
+} from "./imports/import-rules.js";
 export {
   REPORT_GENERATORS,
   REPORT_PERIOD_TYPES,

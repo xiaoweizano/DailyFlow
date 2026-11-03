@@ -135,6 +135,107 @@ pub struct SavedJournalSnapshot {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ImportSessionInput {
+    pub id: String,
+    pub root_label: String,
+    pub status: String,
+    pub options: Value,
+    pub revision: i64,
+    pub scanned_count: i64,
+    pub ready_count: i64,
+    pub imported_count: i64,
+    pub skipped_count: i64,
+    pub conflict_count: i64,
+    pub invalid_count: i64,
+    pub entries: Vec<ImportEntryInput>,
+    pub created_at: String,
+    pub completed_at: Option<String>,
+    pub error_summary: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportEntryInput {
+    pub id: String,
+    pub relative_path: String,
+    pub original_file_name: String,
+    pub detected_date: Option<String>,
+    pub encoding: String,
+    pub newline_style: String,
+    pub file_sha256: Option<String>,
+    pub raw_size: Option<i64>,
+    pub raw_capture_status: String,
+    pub raw_bytes_base64: Option<String>,
+    pub raw_cleaned_at: Option<String>,
+    pub status: String,
+    pub conflict_kind: Option<String>,
+    pub error_code: Option<String>,
+    pub error_detail: Option<String>,
+    pub journal_id: Option<String>,
+    pub previous_journal_revision: Option<i64>,
+    pub created_at: String,
+    pub committed_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportExistingMatch {
+    pub relative_path: Option<String>,
+    pub detected_date: Option<String>,
+    pub file_sha256: Option<String>,
+    pub journal_id: Option<String>,
+    pub journal_revision: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BeginImportCommitInput {
+    pub session_id: String,
+    pub expected_revision: i64,
+    pub started_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportCommitEntryInput {
+    pub entry_id: String,
+    pub journal_id: String,
+    pub previous_journal_revision: Option<i64>,
+    pub snapshot: SaveJournalSnapshot,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportCommitBatchInput {
+    pub session_id: String,
+    pub expected_revision: i64,
+    pub committed_at: String,
+    pub entries: Vec<ImportCommitEntryInput>,
+    pub skipped_entry_ids: Vec<String>,
+    pub failed_entry_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportCommitSummary {
+    pub session_id: String,
+    pub imported_count: i64,
+    pub skipped_count: i64,
+    pub failed_count: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RecordImportFailureInput {
+    pub session_id: String,
+    pub expected_revision: i64,
+    pub failed_at: String,
+    pub error_summary: String,
+    pub failed_entry_ids: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RestoreJournalVersionInput {
     pub journal_id: String,
     pub version_revision: i64,

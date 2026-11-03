@@ -7,6 +7,12 @@ import type {
   KnowledgeKind,
   KnowledgeStatus,
   LocalDate,
+  ImportConflictKind,
+  ImportEncoding,
+  ImportEntryStatus,
+  ImportNewlineStyle,
+  ImportRawCaptureStatus,
+  ImportSessionStatus,
   ReportGenerator,
   ReportPeriodType,
   StructuredBlockType,
@@ -177,6 +183,46 @@ export interface AttachmentLinkRow {
   readonly sortOrder: number;
   readonly createdAt: UtcTimestamp;
   readonly deletedAt: UtcTimestamp | null;
+}
+
+export interface ImportSessionRow {
+  readonly id: EntityId;
+  readonly rootLabel: string;
+  readonly status: ImportSessionStatus;
+  readonly optionsJson: string;
+  readonly revision: number;
+  readonly scannedCount: number;
+  readonly readyCount: number;
+  readonly importedCount: number;
+  readonly skippedCount: number;
+  readonly conflictCount: number;
+  readonly invalidCount: number;
+  readonly createdAt: UtcTimestamp;
+  readonly completedAt: UtcTimestamp | null;
+  readonly errorSummary: string | null;
+}
+
+export interface ImportEntryRow {
+  readonly id: EntityId;
+  readonly sessionId: EntityId;
+  readonly relativePath: string;
+  readonly originalFileName: string;
+  readonly detectedDate: LocalDate | null;
+  readonly encoding: ImportEncoding;
+  readonly newlineStyle: ImportNewlineStyle;
+  readonly fileSha256: string | null;
+  readonly rawSize: number | null;
+  readonly rawCaptureStatus: ImportRawCaptureStatus;
+  readonly rawBytes: Uint8Array | null;
+  readonly rawCleanedAt: UtcTimestamp | null;
+  readonly status: ImportEntryStatus;
+  readonly conflictKind: ImportConflictKind | null;
+  readonly errorCode: string | null;
+  readonly errorDetail: string | null;
+  readonly journalId: EntityId | null;
+  readonly previousJournalRevision: number | null;
+  readonly createdAt: UtcTimestamp;
+  readonly committedAt: UtcTimestamp | null;
 }
 
 export interface ReportRow {

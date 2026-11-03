@@ -1,4 +1,8 @@
-import type { SearchPort, TimelineQuery } from "@dailyflow/application";
+import type {
+  ImportService,
+  SearchPort,
+  TimelineQuery,
+} from "@dailyflow/application";
 import { createContext } from "react";
 
 import type { AnalyticsRuntimeServices } from "./analytics/analytics-services.js";
@@ -10,6 +14,7 @@ import type { TaskRuntimeServices } from "./tasks/task-services.js";
 
 export interface AppRuntimeServices {
   readonly analytics: AnalyticsRuntimeServices;
+  readonly imports: ImportService;
   readonly journal: JournalRuntimeServices;
   readonly knowledge: KnowledgeRuntimeServices;
   readonly attachments: AttachmentRuntimeServices;

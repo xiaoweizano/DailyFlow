@@ -7,6 +7,14 @@ import {
   AttachmentSoftDeleteOwnerLinksDtoSchema,
   AnalyticsPeriodQueryDtoSchema,
   AnalyticsSourceDtoSchema,
+  BeginImportCommitDtoSchema,
+  ImportCommitBatchDtoSchema,
+  ImportCommitSummaryDtoSchema,
+  ImportEntryDtoSchema,
+  ImportExistingMatchDtoSchema,
+  ImportScanResultDtoSchema,
+  ImportSessionDtoSchema,
+  ImportTxtFileDtoSchema,
   JournalDtoSchema,
   JournalListQueryDtoSchema,
   JournalSaveStateDtoSchema,
@@ -22,6 +30,7 @@ import {
   ReportPeriodQueryDtoSchema,
   ReportSaveCommandDtoSchema,
   RestoreJournalVersionDtoSchema,
+  RecordImportFailureDtoSchema,
   SavedJournalSnapshotDtoSchema,
   SaveJournalSnapshotDtoSchema,
   SearchQueryDtoSchema,
@@ -46,6 +55,15 @@ import {
   type AttachmentSoftDeleteOwnerLinksDto,
   type AnalyticsPeriodQueryDto,
   type AnalyticsSourceDto,
+  type BeginImportCommitDto,
+  type ImportCommitBatchDto,
+  type ImportCommitSummaryDto,
+  type ImportEntryDto,
+  type ImportExistingMatchDto,
+  type ImportScanResultDto,
+  type ImportSessionDto,
+  type ImportTxtFileDto,
+  type RecordImportFailureDto,
   type JournalDto,
   type JournalListQueryDto,
   type JournalSaveStateDto,
@@ -364,6 +382,75 @@ export class TauriCommandClient {
       TAURI_COMMANDS.attachmentRemoveOrphan,
       { attachmentId },
       z.union([z.null(), z.undefined()]),
+    );
+  }
+
+  async scanTxtImport(rootPath: string): Promise<ImportScanResultDto> {
+    return this.request(TAURI_COMMANDS.importScanTxt, { rootPath }, ImportScanResultDtoSchema);
+  }
+
+  async readTxtImport(rootPath: string, relativePath: string): Promise<ImportTxtFileDto> {
+    return this.request(
+      TAURI_COMMANDS.importReadTxt,
+      { rootPath, relativePath },
+      ImportTxtFileDtoSchema,
+      z.object({ rootPath: z.string().min(1), relativePath: z.string().min(1) }),
+    );
+  }
+
+  async createImportSession(input: ImportSessionDto): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.importCreateSession,
+      { input },
+      z.union([z.null(), z.undefined()]),
+      z.object({ input: ImportSessionDtoSchema }),
+    );
+  }
+
+  async saveImportPreview(input: ImportSessionDto): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.importSavePreview,
+      { input },
+      z.union([z.null(), z.undefined()]),
+      z.object({ input: ImportSessionDtoSchema }),
+    );
+  }
+
+  async findImportExistingMatches(
+    entries: readonly ImportEntryDto[],
+  ): Promise<readonly ImportExistingMatchDto[]> {
+    return this.request(
+      TAURI_COMMANDS.importFindExistingMatches,
+      { entries },
+      z.array(ImportExistingMatchDtoSchema),
+      z.object({ entries: z.array(ImportEntryDtoSchema) }),
+    );
+  }
+
+  async beginImportCommit(input: BeginImportCommitDto): Promise<ImportSessionDto> {
+    return this.request(
+      TAURI_COMMANDS.importBeginCommit,
+      { input },
+      ImportSessionDtoSchema,
+      z.object({ input: BeginImportCommitDtoSchema }),
+    );
+  }
+
+  async commitImportBatch(input: ImportCommitBatchDto): Promise<ImportCommitSummaryDto> {
+    return this.request(
+      TAURI_COMMANDS.importCommitBatch,
+      { input },
+      ImportCommitSummaryDtoSchema,
+      z.object({ input: ImportCommitBatchDtoSchema }),
+    );
+  }
+
+  async recordImportFailure(input: RecordImportFailureDto): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.importRecordFailure,
+      { input },
+      z.union([z.null(), z.undefined()]),
+      z.object({ input: RecordImportFailureDtoSchema }),
     );
   }
 

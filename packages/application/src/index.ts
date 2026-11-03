@@ -1,4 +1,17 @@
 export { mapApplicationError, validationError } from "./errors.js";
+export {
+  createImportSession,
+  detectImportDate,
+  normalizeImportRelativePath,
+  type CreateImportSessionInput,
+  type ImportEntry,
+  type ImportEntryStatus,
+  type ImportRawCaptureStatus,
+  type ImportSession,
+  type ImportSessionStatus,
+  type ImportDateDetection,
+  type ImportDateSource,
+} from "@dailyflow/domain";
 export type {
   AppServices,
   ApplicationDependencies,
@@ -51,10 +64,7 @@ export {
   resolveAnalyticsPeriod,
   shiftAnalyticsPeriod,
 } from "./queries/analytics-query.js";
-export type {
-  ReportPeriodKey,
-  ReportRepository,
-} from "./ports/report-repository.js";
+export type { ReportPeriodKey, ReportRepository } from "./ports/report-repository.js";
 export { buildTaskListQuery, isTaskOverdue, type TaskListView } from "./queries/task-list-query.js";
 export type {
   AttachmentStore,
@@ -65,11 +75,31 @@ export type {
   CommitImportInput,
   ImportCommitResult,
   ImportPreview,
+  ImportPreviewCounts,
   ImportPreviewEntry,
+  ImportConflictPolicy,
   ImportRoot,
+  ImportScanOptions,
   ImportService,
+  ImportSource,
+  ImportTxtAnalysis,
+  ImportTxtAnalyzer,
   RawImportFile,
+  TxtDocumentConverter,
 } from "./ports/import-service.js";
+export type {
+  BeginImportCommitInput,
+  ImportCommitBatchInput,
+  ImportCommitEntry,
+  ImportCommitSummary,
+  ImportExistingMatch,
+  ImportRepository,
+  RecordImportFailureInput,
+} from "./ports/import-repository.js";
+export {
+  TxtImportService,
+  type TxtImportServiceDependencies,
+} from "./imports/txt-import-service.js";
 export type {
   BackupManifest,
   BackupOptions,
@@ -105,10 +135,7 @@ export {
   updateTask,
   type UpdateTaskDependencies,
 } from "./use-cases/update-task.js";
-export {
-  generateReportDraft,
-  type ReportDraft,
-} from "./use-cases/generate-report-draft.js";
+export { generateReportDraft, type ReportDraft } from "./use-cases/generate-report-draft.js";
 export {
   SaveReportDraftInputSchema,
   saveReportDraft,

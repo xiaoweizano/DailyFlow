@@ -1,4 +1,12 @@
-import type { AppServices, TimelineQuery } from "@dailyflow/application";
+import {
+  TxtImportService,
+  type AppServices,
+  type ImportRepository,
+  type ImportSource,
+  type ImportTxtAnalyzer,
+  type TimelineQuery,
+  type TxtDocumentConverter,
+} from "@dailyflow/application";
 import type { Clock, IdGenerator, LocalDate } from "@dailyflow/domain";
 import { createUuidV7 } from "@dailyflow/shared";
 
@@ -15,11 +23,20 @@ export interface CreateAppRuntimeServicesOptions extends Pick<
   AppServices,
   "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > {
+  readonly importStorage: ImportStorageServices;
   readonly timeline: TimelineQuery;
   readonly clock?: Clock;
   readonly ids?: IdGenerator;
   readonly lifecycle?: SaveLifecycle;
   readonly today?: () => LocalDate;
+  readonly timezone?: () => string;
+}
+
+export interface ImportStorageServices {
+  readonly source: ImportSource;
+  readonly repository: ImportRepository;
+  readonly analyzer: ImportTxtAnalyzer;
+  readonly converter: TxtDocumentConverter;
 }
 
 const systemClock: Clock = {
@@ -38,6 +55,10 @@ function systemLocalDate(): LocalDate {
   return `${year}-${month}-${day}` as LocalDate;
 }
 
+function systemTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+}
+
 export function createAppRuntimeServices(
   options: CreateAppRuntimeServicesOptions,
 ): AppRuntimeServices {
@@ -54,6 +75,16 @@ export function createAppRuntimeServices(
     }),
     attachments: createAttachmentRuntimeServices({
       attachments: options.attachments,
+    }),
+    imports: new TxtImportService({
+      source: options.importStorage.source,
+      repository: options.importStorage.repository,
+      analyzer: options.importStorage.analyzer,
+      converter: options.importStorage.converter,
+      projector,
+      clock,
+      ids,
+      timezone: options.timezone ?? systemTimezone,
     }),
     journal: createJournalRuntimeServices({
       journals: options.journals,

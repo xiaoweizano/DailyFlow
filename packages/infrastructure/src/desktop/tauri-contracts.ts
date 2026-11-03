@@ -42,6 +42,14 @@ export const TAURI_COMMANDS = {
   attachmentRead: "attachment_read",
   attachmentSoftDeleteOwnerLinks: "attachment_soft_delete_owner_links",
   attachmentRemoveOrphan: "attachment_remove_orphan",
+  importScanTxt: "import_scan_txt",
+  importReadTxt: "import_read_txt",
+  importCreateSession: "import_create_session",
+  importSavePreview: "import_save_preview",
+  importFindExistingMatches: "import_find_existing_matches",
+  importBeginCommit: "import_begin_commit",
+  importCommitBatch: "import_commit_batch",
+  importRecordFailure: "import_record_failure",
 } as const;
 
 export type TauriCommandName = (typeof TAURI_COMMANDS)[keyof typeof TAURI_COMMANDS];
@@ -561,6 +569,159 @@ export const AttachmentSoftDeleteOwnerLinksDtoSchema = z.object({
   deletedAt: UtcTimestampSchema,
 });
 
+export const ImportScanCandidateDtoSchema = z.object({
+  relativePath: z.string().min(1),
+  fileName: z.string().min(1),
+  byteSize: z.number().int().nonnegative().nullable(),
+  lastModifiedMs: z.number().int().nonnegative().nullable(),
+});
+
+export const ImportScanResultDtoSchema = z.object({
+  rootLabel: z.string().min(1),
+  candidates: z.array(ImportScanCandidateDtoSchema),
+  ignoredEntryCount: z.number().int().nonnegative(),
+});
+
+export const ImportTxtFileDtoSchema = z.object({
+  relativePath: z.string().min(1),
+  fileName: z.string().min(1),
+  bytesBase64: z.string(),
+  byteSize: z.number().int().nonnegative(),
+  lastModifiedMs: z.number().int().nonnegative().nullable(),
+});
+
+const ImportEncodingDtoSchema = z.enum(["utf8-bom", "utf8", "gb18030", "unknown"]);
+const ImportNewlineStyleDtoSchema = z.enum(["lf", "crlf", "mixed", "unknown"]);
+const ImportRawCaptureStatusDtoSchema = z.enum(["captured", "cleaned", "unavailable"]);
+const ImportEntryStatusDtoSchema = z.enum([
+  "ready",
+  "skipped",
+  "conflict",
+  "invalid",
+  "imported",
+  "failed",
+]);
+const ImportConflictKindDtoSchema = z.enum([
+  "duplicate_path",
+  "duplicate_content",
+  "same_date_conflict",
+  "duplicate_date_in_batch",
+]);
+
+export const ImportEntryDtoSchema = z
+  .object({
+    id: UuidV7Schema,
+    relativePath: z.string().min(1),
+    originalFileName: z.string().min(1),
+    detectedDate: LocalDateDtoSchema.nullable(),
+    encoding: ImportEncodingDtoSchema,
+    newlineStyle: ImportNewlineStyleDtoSchema,
+    fileSha256: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/u)
+      .nullable(),
+    rawSize: z.number().int().nonnegative().nullable(),
+    rawCaptureStatus: ImportRawCaptureStatusDtoSchema,
+    rawBytesBase64: z.string().nullable(),
+    rawCleanedAt: UtcTimestampSchema.nullable(),
+    status: ImportEntryStatusDtoSchema,
+    conflictKind: ImportConflictKindDtoSchema.nullable(),
+    errorCode: z.string().nullable(),
+    errorDetail: z.string().nullable(),
+    journalId: UuidV7Schema.nullable(),
+    previousJournalRevision: z.number().int().positive().nullable(),
+    createdAt: UtcTimestampSchema,
+    committedAt: UtcTimestampSchema.nullable(),
+  })
+  .strict();
+
+export const ImportSessionDtoSchema = z
+  .object({
+    id: UuidV7Schema,
+    rootLabel: z.string().min(1),
+    status: z.enum([
+      "scanning",
+      "preview_ready",
+      "committing",
+      "completed",
+      "failed",
+      "rolled_back",
+    ]),
+    options: JsonObjectSchema,
+    revision: z.number().int().positive(),
+    scannedCount: z.number().int().nonnegative(),
+    readyCount: z.number().int().nonnegative(),
+    importedCount: z.number().int().nonnegative(),
+    skippedCount: z.number().int().nonnegative(),
+    conflictCount: z.number().int().nonnegative(),
+    invalidCount: z.number().int().nonnegative(),
+    entries: z.array(ImportEntryDtoSchema),
+    createdAt: UtcTimestampSchema,
+    completedAt: UtcTimestampSchema.nullable(),
+    errorSummary: z.string().nullable(),
+  })
+  .strict();
+
+export const ImportExistingMatchDtoSchema = z
+  .object({
+    relativePath: z.string().min(1).nullable(),
+    detectedDate: LocalDateDtoSchema.nullable(),
+    fileSha256: z
+      .string()
+      .regex(/^[0-9a-f]{64}$/u)
+      .nullable(),
+    journalId: UuidV7Schema.nullable(),
+    journalRevision: z.number().int().positive().nullable(),
+  })
+  .strict();
+
+export const BeginImportCommitDtoSchema = z
+  .object({
+    sessionId: UuidV7Schema,
+    expectedRevision: z.number().int().positive(),
+    startedAt: UtcTimestampSchema,
+  })
+  .strict();
+
+export const ImportCommitEntryDtoSchema = z
+  .object({
+    entryId: UuidV7Schema,
+    journalId: UuidV7Schema,
+    previousJournalRevision: z.number().int().positive().nullable(),
+    snapshot: SaveJournalSnapshotDtoSchema,
+  })
+  .strict();
+
+export const ImportCommitBatchDtoSchema = z
+  .object({
+    sessionId: UuidV7Schema,
+    expectedRevision: z.number().int().positive(),
+    committedAt: UtcTimestampSchema,
+    entries: z.array(ImportCommitEntryDtoSchema),
+    skippedEntryIds: z.array(UuidV7Schema),
+    failedEntryIds: z.array(UuidV7Schema),
+  })
+  .strict();
+
+export const ImportCommitSummaryDtoSchema = z
+  .object({
+    sessionId: UuidV7Schema,
+    importedCount: z.number().int().nonnegative(),
+    skippedCount: z.number().int().nonnegative(),
+    failedCount: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const RecordImportFailureDtoSchema = z
+  .object({
+    sessionId: UuidV7Schema,
+    expectedRevision: z.number().int().positive(),
+    failedAt: UtcTimestampSchema,
+    errorSummary: z.string().min(1),
+    failedEntryIds: z.array(UuidV7Schema),
+  })
+  .strict();
+
 export const StorageErrorDtoSchema = z.object({
   code: z.enum([
     "MIGRATION_FAILED",
@@ -671,3 +832,14 @@ export type AttachmentDataDto = z.infer<typeof AttachmentDataDtoSchema>;
 export type AttachmentSoftDeleteOwnerLinksDto = z.infer<
   typeof AttachmentSoftDeleteOwnerLinksDtoSchema
 >;
+export type ImportScanCandidateDto = z.infer<typeof ImportScanCandidateDtoSchema>;
+export type ImportScanResultDto = z.infer<typeof ImportScanResultDtoSchema>;
+export type ImportTxtFileDto = z.infer<typeof ImportTxtFileDtoSchema>;
+export type ImportEntryDto = z.infer<typeof ImportEntryDtoSchema>;
+export type ImportSessionDto = z.infer<typeof ImportSessionDtoSchema>;
+export type ImportExistingMatchDto = z.infer<typeof ImportExistingMatchDtoSchema>;
+export type BeginImportCommitDto = z.infer<typeof BeginImportCommitDtoSchema>;
+export type ImportCommitEntryDto = z.infer<typeof ImportCommitEntryDtoSchema>;
+export type ImportCommitBatchDto = z.infer<typeof ImportCommitBatchDtoSchema>;
+export type ImportCommitSummaryDto = z.infer<typeof ImportCommitSummaryDtoSchema>;
+export type RecordImportFailureDto = z.infer<typeof RecordImportFailureDtoSchema>;
