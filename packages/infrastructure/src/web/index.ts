@@ -25,6 +25,10 @@ export {
 } from "./web-import-source.js";
 export { DexieAnalyticsQuery, type DexieAnalyticsQueryOptions } from "./dexie-analytics-query.js";
 export {
+  DexieDataManagementPort,
+  type DexieDataManagementPortOptions,
+} from "./dexie-data-management-port.js";
+export {
   DexieReportRepository,
   type DexieReportRepositoryOptions,
 } from "./dexie-report-repository.js";

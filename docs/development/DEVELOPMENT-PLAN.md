@@ -970,33 +970,33 @@ docs/
 - Create: `packages/features/test/data-management.test.tsx`
 - Create: `apps/desktop/src-tauri/tests/data_health.rs`
 
-- [ ] **Step 1: 写健康检查测试**
+- [x] **Step 1: 写健康检查测试**
 
   构造重复有效日期、失效外键、孤立附件、搜索文档计数不一致、投影版本过旧和最后备份为空，断言检查返回可操作项且不自动删除正文。
 
-- [ ] **Step 2: 查询存储概览**
+- [x] **Step 2: 查询存储概览**
 
   显示存储类型、应用数据目录的逻辑位置、数据库/Schema 版本、占用空间、附件数、导入原始字节数、搜索状态和最后备份时间。Web 额外显示 `persist()` 状态及配额估算，不暴露绝对路径。
 
-- [ ] **Step 3: 实现索引重建**
+- [x] **Step 3: 实现索引重建**
 
   按稳定 ID 分批从权威 JSON 生成 `SearchDocument`，写入 `searchTermPostings`/FTS，支持进度、取消和失败保留旧索引。完成后比较实体计数再原子标记 `ready`。
 
-- [ ] **Step 4: 汇总 Data Management**
+- [x] **Step 4: 汇总 Data Management**
 
   同页提供导入、导出、备份恢复和健康检查入口。危险操作使用明确影响说明和二次确认；索引重建、原始字节清理与恢复不在同一操作中静默执行。
 
-- [ ] **Step 5: 注册 Data Management 路由**
+- [x] **Step 5: 注册 Data Management 路由**
 
   在共享路由表注册 `/data`，并保留 `/data/import`、`/data/export`、`/data/backup` 子入口；两个组合根同时接入。桌面和 Web 都能从 `/data` 进入所有子页面，索引重建进度和取消结果持续可见。
 
-- [ ] **Step 6: 运行验证**
+- [x] **Step 6: 运行验证**
 
   Run: `pnpm --filter @dailyflow/features test -- data-management && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml data_health`
 
   Expected: 每个异常都有原因和建议；取消重建后正文可读；恢复健康和重建索引后状态回到 `ready`。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
   Run: `git add packages apps/desktop apps/web && git commit -m "feat: add data management health and index maintenance"`
 

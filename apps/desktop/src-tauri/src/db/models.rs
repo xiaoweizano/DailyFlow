@@ -370,6 +370,15 @@ pub struct SearchResultPage {
 pub struct SearchRebuildResult {
     pub indexed_count: i64,
     pub completed_at: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchRebuildProgress {
+    pub phase: String,
+    pub processed_count: usize,
+    pub total_count: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

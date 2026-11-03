@@ -6,6 +6,7 @@ import { AppShell } from "./app-shell.js";
 import type { AppRouteOptions } from "./app-modules.js";
 import { AnalyticsPage } from "./analytics/analytics-page.js";
 import { BackupPage } from "./data-management/backup-page.js";
+import { DataManagementPage } from "./data-management/data-management-page.js";
 import { ExportPage } from "./data-management/export-page.js";
 import { ImportPage } from "./data-management/import-page.js";
 import { DashboardPage } from "./dashboard/dashboard-page.js";
@@ -83,7 +84,7 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "data",
-          element: createElement(ModulePage, { moduleId: "data" }),
+          element: createElement(DataManagementPage),
         },
         {
           path: "data/import",

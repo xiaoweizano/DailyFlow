@@ -1,4 +1,11 @@
-import type { ImportService, SearchPort, TimelineQuery } from "@dailyflow/application";
+import type {
+  DataHealthReport,
+  ImportService,
+  SearchPort,
+  SearchRebuildOptions,
+  SearchRebuildResult,
+  TimelineQuery,
+} from "@dailyflow/application";
 import { createContext } from "react";
 
 import type { AnalyticsRuntimeServices } from "./analytics/analytics-services.js";
@@ -22,6 +29,12 @@ export interface AppRuntimeServices {
   readonly lifecycle: SaveLifecycle;
   readonly tasks: TaskRuntimeServices;
   readonly timeline: TimelineQuery;
+  readonly dataManagement?: DataManagementRuntimeServices;
+}
+
+export interface DataManagementRuntimeServices {
+  inspect(): Promise<DataHealthReport>;
+  rebuildSearchIndex(options?: SearchRebuildOptions): Promise<SearchRebuildResult>;
 }
 
 export const AppServicesContext = createContext<AppRuntimeServices | null>(null);

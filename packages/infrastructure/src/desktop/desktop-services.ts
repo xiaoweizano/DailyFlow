@@ -3,6 +3,7 @@ import type {
   BackupService,
   BackupSource,
   BackupTarget,
+  DataManagementPort,
   ExportSource,
   ExportTarget,
   ImportRepository,
@@ -23,13 +24,14 @@ import {
   type DesktopBackupPicker as DesktopBackupSourcePicker,
 } from "./desktop-backup-source.js";
 import { DesktopBackupTarget, type DesktopBackupTargetPicker } from "./desktop-backup-target.js";
+import { DesktopDataManagementPort } from "./desktop-data-management-port.js";
 import { DesktopExportSource } from "./desktop-export-source.js";
 import { DesktopExportTarget, type DesktopExportPicker } from "./desktop-export-target.js";
 import { DesktopImportRepository } from "./desktop-import-repository.js";
 import { DesktopImportSource, type DesktopDirectoryPicker } from "./desktop-import-source.js";
 import { DesktopJournalRepository } from "./desktop-journal-repository.js";
 import { DesktopKnowledgeRepository } from "./desktop-knowledge-repository.js";
-import { DesktopSearchPort } from "./desktop-search-port.js";
+import { DesktopSearchPort, type TauriListen } from "./desktop-search-port.js";
 import { DesktopReportRepository } from "./desktop-report-repository.js";
 import { DesktopTaskRepository } from "./desktop-task-repository.js";
 import { DesktopTimelineQuery } from "./desktop-timeline-query.js";
@@ -55,6 +57,7 @@ export type DesktopServices = Pick<
     readonly target: ExportTarget;
   };
   readonly timeline: TimelineQuery;
+  readonly dataManagement: DataManagementPort;
 };
 
 export interface CreateDesktopServicesOptions {
@@ -65,6 +68,7 @@ export interface CreateDesktopServicesOptions {
   readonly exportPicker?: DesktopExportPicker;
   readonly backupSourcePicker?: DesktopBackupSourcePicker;
   readonly backupTargetPicker?: DesktopBackupTargetPicker;
+  readonly searchProgressListener?: TauriListen;
 }
 
 const systemClock: Clock = {
@@ -95,6 +99,7 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
   return {
     analytics: new DesktopAnalyticsQuery({ client }),
     attachments: new DesktopAttachmentStore({ client, clock }),
+    dataManagement: new DesktopDataManagementPort({ client }),
     backupStorage: {
       service: new DesktopBackupService({ client, clock }),
       source: backupSource,
@@ -114,7 +119,12 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
     knowledge: new DesktopKnowledgeRepository({ client, clock }),
     reports: new DesktopReportRepository({ client, clock }),
     tasks: new DesktopTaskRepository({ client, clock }),
-    search: new DesktopSearchPort({ client }),
+    search: new DesktopSearchPort({
+      client,
+      ...(options.searchProgressListener === undefined
+        ? {}
+        : { listen: options.searchProgressListener }),
+    }),
     timeline: new DesktopTimelineQuery({ client }),
   };
 }

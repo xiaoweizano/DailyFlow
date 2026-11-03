@@ -170,10 +170,33 @@ export type {
   SearchHit,
   SearchPort,
   SearchQuery,
+  SearchRebuildOptions,
+  SearchRebuildProgress,
   SearchRebuildResult,
   SearchResultPage,
 } from "./ports/search-port.js";
 export { SEARCH_ENTITY_TYPES } from "./ports/search-port.js";
+export type {
+  DataHealthFacts,
+  DataHealthSnapshot,
+  DataManagementPort,
+  DataStorageSummary,
+  StorageKind,
+} from "./ports/data-management-port.js";
+export {
+  buildDataHealthReport,
+  checkDataHealth,
+  type CheckDataHealthDependencies,
+  type DataHealthIssue,
+  type DataHealthIssueCode,
+  type DataHealthReport,
+  type DataHealthSeverity,
+  type DataHealthStatus,
+} from "./use-cases/check-data-health.js";
+export {
+  rebuildSearchIndex,
+  type RebuildSearchIndexDependencies,
+} from "./use-cases/rebuild-search-index.js";
 export type { Clock } from "./ports/clock.js";
 export {
   CompleteTaskInputSchema,

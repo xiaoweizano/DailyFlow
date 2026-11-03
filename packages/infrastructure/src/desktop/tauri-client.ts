@@ -14,6 +14,7 @@ import {
   BackupWriteFileInputDtoSchema,
   BackupWriteFileResultDtoSchema,
   BeginImportCommitDtoSchema,
+  DataHealthSnapshotDtoSchema,
   ExportSnapshotDtoSchema,
   ExportWriteFileInputDtoSchema,
   ExportWriteFileResultDtoSchema,
@@ -71,6 +72,7 @@ import {
   type BackupWriteFileInputDto,
   type BackupWriteFileResultDto,
   type BeginImportCommitDto,
+  type DataHealthSnapshotDto,
   type ExportSnapshotDto,
   type ExportWriteFileInputDto,
   type ExportWriteFileResultDto,
@@ -362,15 +364,32 @@ export class TauriCommandClient {
     );
   }
 
-  async rebuildSearch(scope?: readonly SearchEntityType[]): Promise<SearchRebuildResultDto> {
+  async rebuildSearch(
+    requestId: string,
+    scope?: readonly SearchEntityType[],
+  ): Promise<SearchRebuildResultDto> {
     return this.request(
       TAURI_COMMANDS.searchRebuild,
-      scope === undefined ? {} : { scope },
+      scope === undefined ? { requestId } : { requestId, scope },
       SearchRebuildResultDtoSchema,
       z.object({
+        requestId: z.string().min(1),
         scope: z.array(SearchEntityTypeSchema).optional(),
       }),
     );
+  }
+
+  async cancelSearchRebuild(requestId: string): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.searchCancelRebuild,
+      { requestId },
+      z.union([z.null(), z.undefined()]),
+      z.object({ requestId: z.string().min(1) }),
+    );
+  }
+
+  async inspectDataHealth(): Promise<DataHealthSnapshotDto> {
+    return this.request(TAURI_COMMANDS.dataHealthInspect, {}, DataHealthSnapshotDtoSchema);
   }
 
   async putAttachment(input: AttachmentPutCommandDto): Promise<StoredAttachmentDto> {

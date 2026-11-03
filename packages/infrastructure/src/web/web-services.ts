@@ -16,6 +16,7 @@ import { createUuidV7 } from "@dailyflow/shared";
 import { DailyFlowDb } from "./db.js";
 import { DexieImportRepository } from "./dexie-import-repository.js";
 import { DexieAnalyticsQuery } from "./dexie-analytics-query.js";
+import { DexieDataManagementPort } from "./dexie-data-management-port.js";
 import { DexieJournalRepository } from "./dexie-journal-repository.js";
 import { DexieKnowledgeRepository } from "./dexie-knowledge-repository.js";
 import { DexieSearchPort } from "./dexie-search-port.js";
@@ -36,6 +37,7 @@ export type WebServices = Pick<
   AppServices,
   "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > & {
+  readonly dataManagement: DexieDataManagementPort;
   readonly backupStorage: {
     readonly service: BackupService;
     readonly source: BackupSource;
@@ -87,6 +89,7 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
       clock,
       ids,
     }),
+    dataManagement: new DexieDataManagementPort({ database }),
     backupStorage: {
       service: backupService,
       source: new WebBackupSource(),

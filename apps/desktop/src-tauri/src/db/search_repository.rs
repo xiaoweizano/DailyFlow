@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use rusqlite::{params_from_iter, types::Value as SqlValue, Connection, OptionalExtension};
+use rusqlite::{params, params_from_iter, types::Value as SqlValue, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use unicode_normalization::UnicodeNormalization;
 
@@ -23,6 +23,10 @@ struct RankedSearchRow {
     updated_at: String,
     rank: f64,
 }
+
+const EMPTY_CONTENT_HASH: &str = "0000000000000000000000000000000000000000000000000000000000000000";
+const SEARCH_INDEX_VERSION: i64 = 1;
+const REBUILD_BATCH_SIZE: usize = 250;
 
 fn is_cjk(character: char) -> bool {
     matches!(
@@ -342,7 +346,36 @@ pub fn query(
 pub fn rebuild(
     connection: &mut Connection,
     scope: Option<&[SearchEntityType]>,
+    is_cancelled: impl Fn() -> bool,
 ) -> Result<SearchRebuildResult, StorageError> {
+    rebuild_with_progress(connection, scope, is_cancelled, |_| {})
+}
+
+pub fn rebuild_with_progress(
+    connection: &mut Connection,
+    scope: Option<&[SearchEntityType]>,
+    is_cancelled: impl Fn() -> bool,
+    mut on_progress: impl FnMut(SearchRebuildProgress),
+) -> Result<SearchRebuildResult, StorageError> {
+    let scope = scope.filter(|values| !values.is_empty());
+    if is_cancelled() {
+        return Ok(cancelled_rebuild_result(connection)?);
+    }
+
+    let documents = load_authoritative_documents(connection, scope, &is_cancelled)?;
+    let total_count = documents.len();
+    on_progress(SearchRebuildProgress {
+        phase: "reading".to_owned(),
+        processed_count: 0,
+        total_count,
+    });
+    for batch in documents.chunks(REBUILD_BATCH_SIZE) {
+        if is_cancelled() {
+            return Ok(cancelled_rebuild_result(connection)?);
+        }
+        std::hint::black_box(batch);
+    }
+
     let transaction = connection.transaction()?;
     let entity_types = scope.map(|values| {
         values
@@ -363,16 +396,6 @@ pub fn rebuild(
             )
         });
 
-    let count_sql = format!("SELECT COUNT(*) FROM search_documents{}", scope_clause);
-    let indexed_count = match &entity_types {
-        Some(values) if !values.is_empty() => {
-            transaction.query_row(&count_sql, params_from_iter(values.iter()), |row| {
-                row.get::<_, i64>(0)
-            })?
-        }
-        _ => transaction.query_row(&count_sql, [], |row| row.get::<_, i64>(0))?,
-    };
-
     let delete_sql = format!("DELETE FROM search_fts{}", scope_clause);
     match &entity_types {
         Some(values) if !values.is_empty() => {
@@ -383,22 +406,89 @@ pub fn rebuild(
         }
     }
 
-    let insert_sql = format!(
-        "INSERT INTO search_fts (
-           entity_type, entity_id, title, body_text, structured_text, tokenized_text, tags_text
-         )
-         SELECT entity_type, entity_id, title, body_text, structured_text,
-                tokenized_text, tags_text
-         FROM search_documents{}",
-        scope_clause
-    );
+    let delete_documents_sql = format!("DELETE FROM search_documents{}", scope_clause);
     match &entity_types {
         Some(values) if !values.is_empty() => {
-            transaction.execute(&insert_sql, params_from_iter(values.iter()))?;
+            transaction.execute(&delete_documents_sql, params_from_iter(values.iter()))?;
         }
         _ => {
-            transaction.execute(&insert_sql, [])?;
+            transaction.execute(&delete_documents_sql, [])?;
         }
+    }
+
+    let mut processed_count = 0;
+    for batch in documents.chunks(REBUILD_BATCH_SIZE) {
+        if is_cancelled() {
+            drop(transaction);
+            return Ok(cancelled_rebuild_result(connection)?);
+        }
+        for document in batch {
+            transaction.execute(
+                "INSERT INTO search_documents (
+                   id, entity_type, entity_id, title, body_text, structured_text,
+                   tags_text, normalized_text, tokenized_text, local_date, updated_at,
+                   content_hash, index_version
+                 ) VALUES (
+                   ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13
+                 )",
+                params![
+                    document.id,
+                    document.entity_type.as_str(),
+                    document.entity_id,
+                    document.title,
+                    document.body_text,
+                    document.structured_text,
+                    document.tags_text,
+                    document.normalized_text,
+                    document.tokenized_text,
+                    document.local_date,
+                    document.updated_at,
+                    document.content_hash,
+                    document.index_version,
+                ],
+            )?;
+            transaction.execute(
+                "INSERT INTO search_fts (
+                   entity_type, entity_id, title, body_text, structured_text,
+                   tokenized_text, tags_text
+                 ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![
+                    document.entity_type.as_str(),
+                    document.entity_id,
+                    document.title,
+                    document.body_text,
+                    document.structured_text,
+                    document.tokenized_text,
+                    document.tags_text,
+                ],
+            )?;
+        }
+        processed_count += batch.len();
+        on_progress(SearchRebuildProgress {
+            phase: "indexing".to_owned(),
+            processed_count,
+            total_count,
+        });
+    }
+
+    on_progress(SearchRebuildProgress {
+        phase: "committing".to_owned(),
+        processed_count: total_count,
+        total_count,
+    });
+    let indexed_count = count_rows_for_scope(
+        &transaction,
+        "search_documents",
+        &entity_types,
+        &scope_clause,
+    )?;
+    let indexed_fts_count =
+        count_rows_for_scope(&transaction, "search_fts", &entity_types, &scope_clause)?;
+    let expected_count = documents.len() as i64;
+    if indexed_count != expected_count || indexed_fts_count != expected_count {
+        return Err(StorageError::storage(format!(
+            "search index verification failed: expected {expected_count}, found {indexed_count} documents and {indexed_fts_count} FTS rows"
+        )));
     }
 
     let completed_at =
@@ -416,7 +506,344 @@ pub fn rebuild(
     transaction.commit()?;
 
     Ok(SearchRebuildResult {
-        indexed_count,
+        indexed_count: expected_count,
         completed_at,
+        status: "completed".to_owned(),
     })
+}
+
+fn cancelled_rebuild_result(connection: &Connection) -> Result<SearchRebuildResult, StorageError> {
+    let completed_at =
+        connection.query_row("SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now')", [], |row| {
+            row.get::<_, String>(0)
+        })?;
+    Ok(SearchRebuildResult {
+        indexed_count: 0,
+        completed_at,
+        status: "cancelled".to_owned(),
+    })
+}
+
+fn count_rows_for_scope(
+    connection: &Connection,
+    table: &str,
+    entity_types: &Option<Vec<String>>,
+    scope_clause: &str,
+) -> Result<i64, StorageError> {
+    let sql = format!("SELECT COUNT(*) FROM {table}{scope_clause}");
+    match entity_types {
+        Some(values) if !values.is_empty() => {
+            Ok(connection.query_row(&sql, params_from_iter(values.iter()), |row| row.get(0))?)
+        }
+        _ => Ok(connection.query_row(&sql, [], |row| row.get(0))?),
+    }
+}
+
+fn load_authoritative_documents(
+    connection: &Connection,
+    scope: Option<&[SearchEntityType]>,
+    is_cancelled: &impl Fn() -> bool,
+) -> Result<Vec<SearchDocumentInput>, StorageError> {
+    let selected = |entity_type| {
+        scope
+            .map(|values| values.contains(&entity_type))
+            .unwrap_or(true)
+    };
+    let include_journals = selected(SearchEntityType::Journal);
+    let include_blocks = selected(SearchEntityType::StructuredBlock);
+    let include_knowledge = selected(SearchEntityType::KnowledgeItem);
+    let include_tasks = selected(SearchEntityType::Task);
+
+    let journal_tags = read_tag_names(connection, "journal_tags", "journal_id")?;
+    let knowledge_tags = read_tag_names(connection, "knowledge_tags", "knowledge_item_id")?;
+    let mut documents = Vec::new();
+
+    if include_journals || include_blocks {
+        let mut statement = connection.prepare(
+            "SELECT id, journal_date, title, content_plain_text, content_hash, updated_at
+             FROM journals
+             WHERE deleted_at IS NULL AND status = 'active'
+             ORDER BY id",
+        )?;
+        let journals = statement
+            .query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?,
+                    row.get::<_, String>(4)?,
+                    row.get::<_, String>(5)?,
+                ))
+            })?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let mut blocks_by_journal = std::collections::HashMap::<String, Vec<String>>::new();
+        let mut blocks = Vec::new();
+        if include_blocks {
+            let mut statement = connection.prepare(
+                "SELECT b.id, b.journal_id, b.block_type, b.rendered_text, b.updated_at
+                 FROM structured_blocks b
+                 JOIN journals j ON j.id = b.journal_id
+                 WHERE b.deleted_at IS NULL
+                   AND j.deleted_at IS NULL
+                   AND j.status = 'active'
+                 ORDER BY b.id",
+            )?;
+            blocks = statement
+                .query_map([], |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, String>(3)?,
+                        row.get::<_, String>(4)?,
+                    ))
+                })?
+                .collect::<Result<Vec<_>, _>>()?;
+        }
+        if include_journals {
+            let mut statement = connection.prepare(
+                "SELECT b.journal_id, b.rendered_text
+                 FROM structured_blocks b
+                 JOIN journals j ON j.id = b.journal_id
+                 WHERE b.deleted_at IS NULL
+                   AND j.deleted_at IS NULL
+                   AND j.status = 'active'
+                 ORDER BY b.journal_id, b.order_key, b.id",
+            )?;
+            let rows = statement
+                .query_map([], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+                })?
+                .collect::<Result<Vec<_>, _>>()?;
+            for (journal_id, rendered_text) in rows {
+                if !rendered_text.trim().is_empty() {
+                    blocks_by_journal
+                        .entry(journal_id)
+                        .or_default()
+                        .push(rendered_text.trim().to_owned());
+                }
+            }
+        }
+
+        for (id, journal_date, title, body_text, content_hash, updated_at) in journals {
+            if is_cancelled() {
+                return Ok(Vec::new());
+            }
+            let tags_text = journal_tags.get(&id).cloned().unwrap_or_default();
+            if include_journals {
+                let structured_text = blocks_by_journal
+                    .get(&id)
+                    .map(|values| values.join("\n"))
+                    .unwrap_or_default();
+                documents.push(build_search_document(
+                    id.clone(),
+                    SearchEntityType::Journal,
+                    id,
+                    fallback_title(&title, &body_text),
+                    body_text,
+                    structured_text,
+                    tags_text.clone(),
+                    Some(journal_date),
+                    updated_at,
+                    content_hash,
+                ));
+            }
+        }
+
+        if include_blocks {
+            let journal_titles = connection
+                .prepare(
+                    "SELECT id, journal_date, title
+                     FROM journals
+                     WHERE deleted_at IS NULL AND status = 'active'",
+                )?
+                .query_map([], |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                    ))
+                })?
+                .collect::<Result<Vec<_>, _>>()?
+                .into_iter()
+                .map(|(id, date, title)| (id, (date, title)))
+                .collect::<std::collections::HashMap<_, _>>();
+            for (id, journal_id, block_type, rendered_text, updated_at) in blocks {
+                if is_cancelled() {
+                    return Ok(Vec::new());
+                }
+                let Some((local_date, journal_title)) = journal_titles.get(&journal_id) else {
+                    continue;
+                };
+                documents.push(build_search_document(
+                    id.clone(),
+                    SearchEntityType::StructuredBlock,
+                    id,
+                    format!(
+                        "{} · {block_type}",
+                        fallback_title(journal_title, &rendered_text)
+                    ),
+                    rendered_text.clone(),
+                    rendered_text,
+                    journal_tags.get(&journal_id).cloned().unwrap_or_default(),
+                    Some(local_date.clone()),
+                    updated_at,
+                    EMPTY_CONTENT_HASH.to_owned(),
+                ));
+            }
+        }
+    }
+
+    if include_knowledge {
+        let mut statement = connection.prepare(
+            "SELECT id, title, content_plain_text, content_hash, updated_at
+             FROM knowledge_items
+             WHERE deleted_at IS NULL AND status = 'active'
+             ORDER BY id",
+        )?;
+        for row in statement.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+            ))
+        })? {
+            if is_cancelled() {
+                return Ok(Vec::new());
+            }
+            let (id, title, body_text, content_hash, updated_at) = row?;
+            documents.push(build_search_document(
+                id.clone(),
+                SearchEntityType::KnowledgeItem,
+                id.clone(),
+                fallback_title(&title, &body_text),
+                body_text,
+                String::new(),
+                knowledge_tags.get(&id).cloned().unwrap_or_default(),
+                updated_at.get(..10).map(ToOwned::to_owned),
+                updated_at,
+                content_hash,
+            ));
+        }
+    }
+
+    if include_tasks {
+        let mut statement = connection.prepare(
+            "SELECT id, title, description_text, due_date, updated_at
+             FROM tasks
+             WHERE deleted_at IS NULL
+             ORDER BY id",
+        )?;
+        for row in statement.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, Option<String>>(3)?,
+                row.get::<_, String>(4)?,
+            ))
+        })? {
+            if is_cancelled() {
+                return Ok(Vec::new());
+            }
+            let (id, title, body_text, local_date, updated_at) = row?;
+            documents.push(build_search_document(
+                id.clone(),
+                SearchEntityType::Task,
+                id,
+                fallback_title(&title, &body_text),
+                body_text,
+                String::new(),
+                String::new(),
+                local_date,
+                updated_at,
+                EMPTY_CONTENT_HASH.to_owned(),
+            ));
+        }
+    }
+
+    documents.sort_by(|left, right| left.id.cmp(&right.id));
+    Ok(documents)
+}
+
+fn read_tag_names(
+    connection: &Connection,
+    link_table: &str,
+    owner_column: &str,
+) -> Result<std::collections::HashMap<String, String>, StorageError> {
+    let sql = format!(
+        "SELECT l.{owner_column}, t.name
+         FROM {link_table} l
+         JOIN tags t ON t.id = l.tag_id
+         ORDER BY l.{owner_column}, t.name COLLATE NOCASE, t.name"
+    );
+    let mut statement = connection.prepare(&sql)?;
+    let rows = statement
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut names = std::collections::HashMap::<String, Vec<String>>::new();
+    for (owner_id, name) in rows {
+        if !name.trim().is_empty() {
+            names
+                .entry(owner_id)
+                .or_default()
+                .push(name.trim().to_owned());
+        }
+    }
+    Ok(names
+        .into_iter()
+        .map(|(owner_id, values)| (owner_id, values.join(" ")))
+        .collect())
+}
+
+fn fallback_title(title: &str, body_text: &str) -> String {
+    let title = title.trim();
+    if !title.is_empty() {
+        return title.to_owned();
+    }
+    body_text
+        .lines()
+        .map(str::trim)
+        .find(|line| !line.is_empty())
+        .map(|line| line.chars().take(120).collect())
+        .unwrap_or_else(|| "无标题日志".to_owned())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn build_search_document(
+    id: String,
+    entity_type: SearchEntityType,
+    entity_id: String,
+    title: String,
+    body_text: String,
+    structured_text: String,
+    tags_text: String,
+    local_date: Option<String>,
+    updated_at: String,
+    content_hash: String,
+) -> SearchDocumentInput {
+    let normalized_text = normalize_search_text(&format!(
+        "{title}\n{body_text}\n{structured_text}\n{tags_text}"
+    ));
+    SearchDocumentInput {
+        id,
+        entity_type,
+        entity_id,
+        title,
+        body_text: body_text.trim().to_owned(),
+        structured_text: structured_text.trim().to_owned(),
+        tags_text,
+        tokenized_text: tokenized_text_for_index("", "", "", "", &normalized_text),
+        normalized_text,
+        local_date,
+        updated_at,
+        content_hash,
+        index_version: SEARCH_INDEX_VERSION,
+    }
 }

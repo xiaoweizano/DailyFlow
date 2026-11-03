@@ -1,6 +1,9 @@
 import {
+  checkDataHealth,
+  rebuildSearchIndex,
   TxtImportService,
   type AppServices,
+  type DataManagementPort,
   type ExportSource,
   type ExportTarget,
   type ImportRepository,
@@ -43,6 +46,7 @@ export interface CreateAppRuntimeServicesOptions extends Pick<
   readonly lifecycle?: SaveLifecycle;
   readonly today?: () => LocalDate;
   readonly timezone?: () => string;
+  readonly dataManagement: DataManagementPort;
 }
 
 export interface ImportStorageServices {
@@ -135,7 +139,16 @@ export function createAppRuntimeServices(
       today: options.today ?? systemLocalDate,
     }),
     timeline: options.timeline,
+    dataManagement: {
+      inspect: () => checkDataHealth({ port: options.dataManagement, clock }),
+      rebuildSearchIndex: (rebuildOptions) =>
+        rebuildSearchIndex({
+          search: options.search,
+          ...rebuildOptions,
+        }),
+    },
   };
 }
 
+export type { DataManagementRuntimeServices } from "./app-services-context.js";
 export type { BackupRuntimeServices, ExportRuntimeServices };

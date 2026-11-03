@@ -85,7 +85,7 @@ describe("EditorContentProjector", () => {
     expect(first.searchDocuments[1]).toMatchObject({
       id: blockId,
       entityType: "structured_block",
-      entityId: journalId,
+      entityId: blockId,
       title: "Deployment review · issue",
       localDate: "2026-10-30",
     });

@@ -1,5 +1,8 @@
 export { AppShell, type AppShellProps } from "./app-shell.js";
-export { type AppRuntimeServices } from "./app-services-context.js";
+export {
+  type AppRuntimeServices,
+  type DataManagementRuntimeServices,
+} from "./app-services-context.js";
 export { useAppServices } from "./app-services-hooks.js";
 export { AppServicesProvider, type AppServicesProviderProps } from "./app-services-provider.js";
 export {
@@ -25,12 +28,19 @@ export {
   type ExportStorageServices,
   type ImportStorageServices,
 } from "./app-runtime-services.js";
+export type {
+  DataHealthIssue,
+  DataHealthReport,
+  SearchRebuildProgress,
+  SearchRebuildResult,
+} from "@dailyflow/application";
 export { ActivityHeatmap, type ActivityHeatmapProps } from "./dashboard/activity-heatmap.js";
 export { ImportPage } from "./data-management/import-page.js";
 export { ExportPage } from "./data-management/export-page.js";
 export { ExportPanel } from "./data-management/export-panel.js";
 export { BackupPage } from "./data-management/backup-page.js";
 export { BackupPanel } from "./data-management/backup-panel.js";
+export { DataManagementPage } from "./data-management/data-management-page.js";
 export {
   createBackupRuntimeServices,
   type BackupRuntimeDependencies,
@@ -50,6 +60,12 @@ export {
 } from "./data-management/import-preview-table.js";
 export { ImportResult, type ImportResultProps } from "./data-management/import-result.js";
 export { ImportWizard } from "./data-management/import-wizard.js";
+export { HealthReport, type HealthReportProps } from "./data-management/health-report.js";
+export {
+  IndexMaintenance,
+  type IndexMaintenanceProps,
+} from "./data-management/index-maintenance.js";
+export { StorageOverview, type StorageOverviewProps } from "./data-management/storage-overview.js";
 export { DashboardPage, type DashboardPageProps } from "./dashboard/dashboard-page.js";
 export { TodayJournalPanel, type TodayJournalPanelProps } from "./dashboard/today-journal-panel.js";
 export { TodayTasksPanel } from "./dashboard/today-tasks-panel.js";

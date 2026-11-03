@@ -61,7 +61,11 @@ function createServices(
     },
     search: {
       query: vi.fn(async () => result),
-      rebuild: vi.fn(async () => ({ indexedCount: 12, completedAt: NOW })),
+      rebuild: vi.fn(async () => ({
+        indexedCount: 12,
+        completedAt: NOW,
+        status: "completed" as const,
+      })),
     },
     lifecycle: {
       register: vi.fn(() => () => undefined),

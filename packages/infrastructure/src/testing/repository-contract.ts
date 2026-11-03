@@ -96,6 +96,7 @@ export interface TaskRepositoryHarness {
 export interface SearchPortHarness {
   readonly search: SearchPort & SearchIndexWriter;
   readonly clock: MutableClock;
+  readonly seedRebuildAuthority?: () => Promise<void>;
 }
 
 export interface JournalParityFixture {
@@ -840,7 +841,7 @@ export function describeSearchPortContract(
     });
 
     it("rebuilds the requested scope and reports ready index state", async () => {
-      const { search, clock } = createHarness();
+      const { search, clock, seedRebuildAuthority } = createHarness();
       await search.replaceDocuments(CONTRACT_IDS.journal, [
         makeSearchDocument({
           id: CONTRACT_IDS.journal,
@@ -856,6 +857,7 @@ export function describeSearchPortContract(
         }),
       ]);
 
+      await seedRebuildAuthority?.();
       clock.set("2026-10-30T06:00:00.000Z");
       const rebuilt = await search.rebuild(["journal"]);
       const result = await search.query({ text: "journal", limit: 20 });
@@ -863,6 +865,7 @@ export function describeSearchPortContract(
       expect(rebuilt).toEqual({
         indexedCount: 1,
         completedAt: "2026-10-30T06:00:00.000Z",
+        status: "completed",
       });
       expect(result.indexState).toBe("ready");
     });

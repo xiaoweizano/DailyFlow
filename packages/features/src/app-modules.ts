@@ -93,5 +93,6 @@ export const routePaths = {
   data: "/data",
   dataImport: "/data/import",
   dataExport: "/data/export",
+  dataBackup: "/data/backup",
   settings: "/settings",
 } as const;

@@ -212,7 +212,11 @@ export class MemorySearchPort implements SearchPort, SearchIndexWriter {
     };
   }
 
-  async rebuild(scope?: readonly SearchEntityType[]): Promise<SearchRebuildResult> {
+  async rebuild(
+    scope?: readonly SearchEntityType[],
+    _options?: Parameters<SearchPort["rebuild"]>[1],
+  ): Promise<SearchRebuildResult> {
+    void _options;
     const selected =
       scope === undefined
         ? [...this.documents.values()]
@@ -223,6 +227,7 @@ export class MemorySearchPort implements SearchPort, SearchIndexWriter {
     return {
       indexedCount: selected.length,
       completedAt: parseUtcTimestamp(this.dependencies.clock.nowUtc()),
+      status: "completed",
     };
   }
 }

@@ -1,5 +1,6 @@
 import "fake-indexeddb/auto";
 
+import { parseContentHash, parseLocalDate, parseUtcTimestamp } from "@dailyflow/domain";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { DailyFlowDb } from "../src/web/db.js";
@@ -23,6 +24,26 @@ function createHarness() {
     database,
     search: new DexieSearchPort({ database, clock }),
     clock,
+    seedRebuildAuthority: async () => {
+      await database.journals.put({
+        id: CONTRACT_IDS.journal,
+        journalDate: parseLocalDate("2026-10-30"),
+        timezone: "Asia/Shanghai",
+        title: "Journal",
+        contentJson: JSON.stringify({ type: "doc", content: [] }),
+        editorSchemaVersion: 1,
+        contentMarkdown: "",
+        contentPlainText: "",
+        contentHash: parseContentHash("a".repeat(64)),
+        projectionVersion: 1,
+        excerpt: "",
+        status: "active",
+        revision: 1,
+        createdAt: parseUtcTimestamp("2026-10-30T05:00:00.000Z"),
+        updatedAt: parseUtcTimestamp("2026-10-30T05:00:00.000Z"),
+        deletedAt: null,
+      });
+    },
   };
 }
 
@@ -74,6 +95,24 @@ describe("Dexie search index maintenance", () => {
       }),
     ]);
     await database.searchTermPostings.clear();
+    await database.journals.put({
+      id: CONTRACT_IDS.journal,
+      journalDate: parseLocalDate("2026-10-30"),
+      timezone: "Asia/Shanghai",
+      title: "Release checklist",
+      contentJson: JSON.stringify({ type: "doc", content: [] }),
+      editorSchemaVersion: 1,
+      contentMarkdown: "Deploy rollback",
+      contentPlainText: "Deploy rollback",
+      contentHash: parseContentHash("a".repeat(64)),
+      projectionVersion: 1,
+      excerpt: "Deploy rollback",
+      status: "active",
+      revision: 1,
+      createdAt: parseUtcTimestamp("2026-10-30T05:00:00.000Z"),
+      updatedAt: parseUtcTimestamp("2026-10-30T05:00:00.000Z"),
+      deletedAt: null,
+    });
     await database.meta.put({ key: "searchIndexState", value: "stale" });
     clock.set("2026-10-30T06:00:00.000Z");
 
@@ -82,6 +121,7 @@ describe("Dexie search index maintenance", () => {
     expect(rebuilt).toEqual({
       indexedCount: 1,
       completedAt: "2026-10-30T06:00:00.000Z",
+      status: "completed",
     });
     await expect(database.meta.get("searchIndexState")).resolves.toMatchObject({ value: "ready" });
     expect((await search.query({ text: "release", limit: 20 })).items).toHaveLength(2);

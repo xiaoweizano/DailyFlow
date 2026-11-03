@@ -7,9 +7,9 @@ use serde::Serialize;
 use dailyflow_desktop::{
     attachments::AttachmentStore,
     commands::{
-        analytics_commands, attachment_commands, backup_commands, export_commands, import_commands,
-        journal_commands, knowledge_commands, report_commands, search_commands, task_commands,
-        timeline_commands,
+        analytics_commands, attachment_commands, backup_commands, data_commands, export_commands,
+        import_commands, journal_commands, knowledge_commands, report_commands, search_commands,
+        task_commands, timeline_commands,
     },
     db::Database,
 };
@@ -44,6 +44,7 @@ fn main() {
             let database_path = data_directory.join("dailyflow.db");
             app.manage(Database::open(database_path)?);
             app.manage(AttachmentStore::open(data_directory)?);
+            app.manage(search_commands::SearchRebuildState::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -73,6 +74,8 @@ fn main() {
             report_commands::report_save,
             search_commands::search_query,
             search_commands::search_rebuild,
+            search_commands::search_cancel_rebuild,
+            data_commands::data_health_inspect,
             attachment_commands::attachment_put,
             attachment_commands::attachment_read,
             attachment_commands::attachment_soft_delete_owner_links,

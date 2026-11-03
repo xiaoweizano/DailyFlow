@@ -38,6 +38,8 @@ export const TAURI_COMMANDS = {
   reportSave: "report_save",
   searchQuery: "search_query",
   searchRebuild: "search_rebuild",
+  searchCancelRebuild: "search_cancel_rebuild",
+  dataHealthInspect: "data_health_inspect",
   attachmentPut: "attachment_put",
   attachmentRead: "attachment_read",
   attachmentSoftDeleteOwnerLinks: "attachment_soft_delete_owner_links",
@@ -520,6 +522,54 @@ export const SearchResultPageDtoSchema = pageDtoSchema(SearchHitDtoSchema).exten
 export const SearchRebuildResultDtoSchema = z.object({
   indexedCount: z.number().int().nonnegative(),
   completedAt: UtcTimestampSchema,
+  status: z.enum(["completed", "cancelled"]),
+});
+
+export const SEARCH_REBUILD_PROGRESS_EVENT = "search-rebuild-progress";
+
+export const SearchRebuildProgressEventDtoSchema = z.object({
+  requestId: z.string().min(1),
+  phase: z.enum(["reading", "indexing", "committing"]),
+  processedCount: z.number().int().nonnegative(),
+  totalCount: z.number().int().nonnegative(),
+});
+
+export type SearchRebuildProgressEventDto = z.infer<typeof SearchRebuildProgressEventDtoSchema>;
+
+export const DataHealthFactsDtoSchema = z.object({
+  integrity: z.string(),
+  foreignKeyViolationCount: z.number().int().nonnegative(),
+  duplicateJournalDateCount: z.number().int().nonnegative(),
+  orphanedAttachmentCount: z.number().int().nonnegative(),
+  invalidAttachmentLinkCount: z.number().int().nonnegative(),
+  invalidTaskRelationCount: z.number().int().nonnegative(),
+  indexedDocumentCount: z.number().int().nonnegative(),
+  authoritativeDocumentCount: z.number().int().nonnegative(),
+  staleProjectionCount: z.number().int().nonnegative(),
+  staleIndexVersionCount: z.number().int().nonnegative(),
+  searchIndexState: z.enum(["ready", "stale", "failed"]),
+  lastBackupAt: UtcTimestampSchema.nullable(),
+});
+
+export const DataStorageSummaryDtoSchema = z.object({
+  storageKind: z.literal("sqlite"),
+  locationLabel: z.string().min(1),
+  schemaVersion: z.number().int().positive(),
+  usageBytes: z.number().int().nonnegative(),
+  quotaBytes: z.number().int().nonnegative().nullable(),
+  persisted: z.boolean(),
+  journalCount: z.number().int().nonnegative(),
+  knowledgeItemCount: z.number().int().nonnegative(),
+  taskCount: z.number().int().nonnegative(),
+  attachmentCount: z.number().int().nonnegative(),
+  rawImportByteCount: z.number().int().nonnegative(),
+  searchDocumentCount: z.number().int().nonnegative(),
+  lastBackupAt: UtcTimestampSchema.nullable(),
+});
+
+export const DataHealthSnapshotDtoSchema = z.object({
+  facts: DataHealthFactsDtoSchema,
+  storage: DataStorageSummaryDtoSchema,
 });
 
 export const AttachmentOwnerTypeDtoSchema = z.enum([
@@ -983,6 +1033,7 @@ export type SearchQueryDto = z.infer<typeof SearchQueryDtoSchema>;
 export type SearchHitDto = z.infer<typeof SearchHitDtoSchema>;
 export type SearchResultPageDto = z.infer<typeof SearchResultPageDtoSchema>;
 export type SearchRebuildResultDto = z.infer<typeof SearchRebuildResultDtoSchema>;
+export type DataHealthSnapshotDto = z.infer<typeof DataHealthSnapshotDtoSchema>;
 export type AttachmentOwnerTypeDto = z.infer<typeof AttachmentOwnerTypeDtoSchema>;
 export type AttachmentPutCommandDto = z.infer<typeof AttachmentPutCommandDtoSchema>;
 export type AttachmentRefDto = z.infer<typeof AttachmentRefDtoSchema>;

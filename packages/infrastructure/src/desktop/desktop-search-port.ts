@@ -4,12 +4,21 @@ import {
   type SearchRebuildResult,
   type SearchResultPage,
 } from "@dailyflow/application";
+import { createUuidV7 } from "@dailyflow/shared";
 
 import type { TauriCommandClient } from "./tauri-client.js";
-import type { SearchQueryDto } from "./tauri-contracts.js";
+import {
+  SEARCH_REBUILD_PROGRESS_EVENT,
+  SearchRebuildProgressEventDtoSchema,
+  type SearchQueryDto,
+  type SearchRebuildProgressEventDto,
+} from "./tauri-contracts.js";
+
+export type TauriListen = <T>(event: string, handler: (payload: T) => void) => Promise<() => void>;
 
 export interface DesktopSearchPortOptions {
   readonly client: TauriCommandClient;
+  readonly listen?: TauriListen;
 }
 
 function toSearchQueryDto(query: SearchQuery): SearchQueryDto {
@@ -25,9 +34,11 @@ function toSearchQueryDto(query: SearchQuery): SearchQueryDto {
 
 export class DesktopSearchPort implements SearchPort {
   private readonly client: TauriCommandClient;
+  private readonly listen: TauriListen | undefined;
 
   constructor(options: DesktopSearchPortOptions) {
     this.client = options.client;
+    this.listen = options.listen;
   }
 
   async query(input: SearchQuery): Promise<SearchResultPage> {
@@ -46,7 +57,38 @@ export class DesktopSearchPort implements SearchPort {
     };
   }
 
-  async rebuild(scope?: Parameters<SearchPort["rebuild"]>[0]): Promise<SearchRebuildResult> {
-    return this.client.rebuildSearch(scope);
+  async rebuild(
+    scope?: Parameters<SearchPort["rebuild"]>[0],
+    options?: Parameters<SearchPort["rebuild"]>[1],
+  ): Promise<SearchRebuildResult> {
+    const requestId = createUuidV7();
+    let unlisten: (() => void) | undefined;
+    if (options?.onProgress !== undefined && this.listen !== undefined) {
+      unlisten = await this.listen<SearchRebuildProgressEventDto>(
+        SEARCH_REBUILD_PROGRESS_EVENT,
+        (payload) => {
+          const event = SearchRebuildProgressEventDtoSchema.safeParse(payload);
+          if (!event.success || event.data.requestId !== requestId) {
+            return;
+          }
+          options.onProgress?.({
+            phase: event.data.phase,
+            processedCount: event.data.processedCount,
+            totalCount: event.data.totalCount,
+          });
+        },
+      );
+    }
+    const onAbort = (): void => {
+      void this.client.cancelSearchRebuild(requestId).catch(() => undefined);
+    };
+    options?.signal?.addEventListener("abort", onAbort, { once: true });
+
+    try {
+      return await this.client.rebuildSearch(requestId, scope);
+    } finally {
+      options?.signal?.removeEventListener("abort", onAbort);
+      unlisten?.();
+    }
   }
 }

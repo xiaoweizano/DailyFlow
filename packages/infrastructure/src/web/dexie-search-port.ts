@@ -4,16 +4,35 @@ import type {
   SearchHit,
   SearchPort,
   SearchQuery,
+  SearchRebuildOptions,
   SearchRebuildResult,
   SearchResultPage,
 } from "@dailyflow/application";
 import { PortError } from "@dailyflow/application";
+import { jsonToPlainText, type TiptapJsonNode } from "@dailyflow/editor";
 import { createSearchBigrams, normalizeSearchText } from "@dailyflow/shared";
-import { parseUtcTimestamp, type Clock, type EntityId } from "@dailyflow/domain";
+import {
+  parseContentHash,
+  parseLocalDate,
+  parseUtcTimestamp,
+  type Clock,
+  type EntityId,
+} from "@dailyflow/domain";
 
 import { decodeCursor, encodeCursor, resolvePageSize } from "../memory/pagination-cursor.js";
 import type { DailyFlowDb } from "./db.js";
-import type { SearchDocumentRow, SearchPostingField, SearchTermPostingRow } from "./schema.js";
+import type {
+  JournalRow,
+  JournalTagRow,
+  KnowledgeItemRow,
+  KnowledgeTagRow,
+  SearchDocumentRow,
+  SearchPostingField,
+  SearchTermPostingRow,
+  StructuredBlockRow,
+  TagRow,
+  TaskRow,
+} from "./schema.js";
 
 export interface DexieSearchIndexWriter {
   replaceDocuments(ownerEntityId: EntityId, documents: readonly SearchDocument[]): Promise<void>;
@@ -101,6 +120,173 @@ function collectPostings(document: SearchDocumentRow): SearchTermPostingRow[] {
     frequency,
     field,
   }));
+}
+
+const EMPTY_CONTENT_HASH = parseContentHash("0".repeat(64));
+
+interface AuthoritativeSearchSnapshot {
+  readonly documents: readonly SearchDocument[];
+  readonly ownerEntityIdById: ReadonlyMap<EntityId, EntityId>;
+  readonly totalCount: number;
+}
+
+interface SearchAuthorityRows {
+  readonly journals: readonly JournalRow[];
+  readonly structuredBlocks: readonly StructuredBlockRow[];
+  readonly knowledgeItems: readonly KnowledgeItemRow[];
+  readonly tasks: readonly TaskRow[];
+  readonly tags: readonly TagRow[];
+  readonly journalTags: readonly JournalTagRow[];
+  readonly knowledgeTags: readonly KnowledgeTagRow[];
+}
+
+function tagNames(
+  tags: SearchAuthorityRows["tags"],
+  links: readonly { readonly tagId: EntityId }[],
+): string {
+  const linksByTag = new Map(tags.map((tag) => [tag.id, tag.name] as const));
+  return links
+    .map((link) => linksByTag.get(link.tagId))
+    .filter((name): name is string => name !== undefined)
+    .sort()
+    .join(" ");
+}
+
+function createAuthoritativeDocuments(
+  rows: SearchAuthorityRows,
+  scope?: readonly SearchEntityType[],
+): SearchDocument[] {
+  const selectedTypes = scope === undefined ? null : new Set(scope);
+  const shouldInclude = (entityType: SearchEntityType): boolean =>
+    selectedTypes === null || selectedTypes.has(entityType);
+  const activeJournals = rows.journals.filter(
+    (journal) => journal.deletedAt === null && journal.status === "active",
+  );
+  const journalById = new Map(activeJournals.map((journal) => [journal.id, journal] as const));
+  const journalTagsById = new Map<EntityId, JournalTagRow[]>();
+  const knowledgeTagsById = new Map<EntityId, KnowledgeTagRow[]>();
+
+  for (const link of rows.journalTags) {
+    const links = journalTagsById.get(link.journalId) ?? [];
+    links.push(link);
+    journalTagsById.set(link.journalId, links);
+  }
+  for (const link of rows.knowledgeTags) {
+    const links = knowledgeTagsById.get(link.knowledgeItemId) ?? [];
+    links.push(link);
+    knowledgeTagsById.set(link.knowledgeItemId, links);
+  }
+
+  const documents: SearchDocument[] = [];
+
+  if (shouldInclude("journal")) {
+    for (const journal of activeJournals) {
+      const tagsText = tagNames(rows.tags, journalTagsById.get(journal.id) ?? []);
+      const normalizedText = normalizeSearchText(
+        `${journal.title} ${journal.contentPlainText} ${tagsText}`,
+      );
+      documents.push({
+        id: journal.id,
+        entityType: "journal",
+        entityId: journal.id,
+        title: journal.title,
+        bodyText: journal.contentPlainText,
+        structuredText: "",
+        tagsText,
+        normalizedText,
+        tokenizedText: normalizedText,
+        localDate: journal.journalDate,
+        updatedAt: journal.updatedAt,
+        contentHash: journal.contentHash,
+        indexVersion: 1,
+      });
+    }
+  }
+
+  if (shouldInclude("knowledge_item")) {
+    for (const item of rows.knowledgeItems) {
+      if (item.deletedAt !== null || item.status !== "active") {
+        continue;
+      }
+      const bodyText = jsonToPlainText(JSON.parse(item.contentJson) as TiptapJsonNode);
+      const tagsText = tagNames(rows.tags, knowledgeTagsById.get(item.id) ?? []);
+      const normalizedText = normalizeSearchText(`${item.title} ${bodyText} ${tagsText}`);
+      documents.push({
+        id: item.id,
+        entityType: "knowledge_item",
+        entityId: item.id,
+        title: item.title,
+        bodyText,
+        structuredText: "",
+        tagsText,
+        normalizedText,
+        tokenizedText: normalizedText,
+        localDate: parseLocalDate(item.updatedAt.slice(0, 10)),
+        updatedAt: item.updatedAt,
+        contentHash: item.contentHash ?? EMPTY_CONTENT_HASH,
+        indexVersion: 1,
+      });
+    }
+  }
+
+  if (shouldInclude("task")) {
+    for (const task of rows.tasks) {
+      if (task.deletedAt !== null) {
+        continue;
+      }
+      const normalizedText = normalizeSearchText(`${task.title} ${task.descriptionText}`);
+      documents.push({
+        id: task.id,
+        entityType: "task",
+        entityId: task.id,
+        title: task.title,
+        bodyText: task.descriptionText,
+        structuredText: "",
+        tagsText: "",
+        normalizedText,
+        tokenizedText: normalizedText,
+        localDate: task.dueDate,
+        updatedAt: task.updatedAt,
+        contentHash: EMPTY_CONTENT_HASH,
+        indexVersion: 1,
+      });
+    }
+  }
+
+  if (shouldInclude("structured_block")) {
+    for (const block of rows.structuredBlocks) {
+      const journal = journalById.get(block.journalId);
+      if (block.deletedAt !== null || journal === undefined) {
+        continue;
+      }
+      const normalizedText = normalizeSearchText(
+        `${journal.title} ${block.blockType} ${block.renderedText}`,
+      );
+      documents.push({
+        id: block.id,
+        entityType: "structured_block",
+        entityId: block.id,
+        title: `${journal.title} · ${block.blockType}`,
+        bodyText: block.renderedText,
+        structuredText: block.renderedText,
+        tagsText: "",
+        normalizedText,
+        tokenizedText: normalizedText,
+        localDate: journal.journalDate,
+        updatedAt: block.updatedAt,
+        contentHash: EMPTY_CONTENT_HASH,
+        indexVersion: 1,
+      });
+    }
+  }
+
+  return documents.sort((left, right) => left.id.localeCompare(right.id));
+}
+
+function throwIfCancelled(signal?: AbortSignal): void {
+  if (signal?.aborted === true) {
+    throw new DOMException("Search rebuild cancelled", "AbortError");
+  }
 }
 
 function toSearchDocumentRow(ownerEntityId: EntityId, document: SearchDocument): SearchDocumentRow {
@@ -342,9 +528,56 @@ export class DexieSearchPort implements SearchPort, DexieSearchIndexWriter {
     };
   }
 
-  async rebuild(scope?: readonly SearchEntityType[]): Promise<SearchRebuildResult> {
+  async rebuild(
+    scope?: readonly SearchEntityType[],
+    options: SearchRebuildOptions = {},
+  ): Promise<SearchRebuildResult> {
     const completedAt = parseUtcTimestamp(this.dependencies.clock.nowUtc());
-    const indexedCount = await this.dependencies.database.transaction(
+    if (options.signal?.aborted === true) {
+      return { indexedCount: 0, completedAt, status: "cancelled" };
+    }
+
+    const snapshot = await this.readAuthoritativeSnapshot(scope, options);
+    try {
+      throwIfCancelled(options.signal);
+    } catch {
+      return { indexedCount: 0, completedAt, status: "cancelled" };
+    }
+
+    const rows = snapshot.documents.map((document) =>
+      toSearchDocumentRow(
+        snapshot.ownerEntityIdById.get(document.id) ?? document.entityId,
+        document,
+      ),
+    );
+    const postings = rows.flatMap(collectPostings);
+
+    options.onProgress?.({
+      phase: "indexing",
+      processedCount: 0,
+      totalCount: snapshot.totalCount,
+    });
+    for (let index = 0; index < rows.length; index += 1) {
+      try {
+        throwIfCancelled(options.signal);
+      } catch {
+        return { indexedCount: 0, completedAt, status: "cancelled" };
+      }
+      options.onProgress?.({
+        phase: "indexing",
+        processedCount: index + 1,
+        totalCount: snapshot.totalCount,
+      });
+    }
+
+    options.onProgress?.({
+      phase: "committing",
+      processedCount: snapshot.totalCount,
+      totalCount: snapshot.totalCount,
+    });
+
+    let cancelled = false;
+    await this.dependencies.database.transaction(
       "rw",
       [
         this.dependencies.database.searchDocs,
@@ -352,20 +585,25 @@ export class DexieSearchPort implements SearchPort, DexieSearchIndexWriter {
         this.dependencies.database.meta,
       ],
       async () => {
-        const selected =
-          scope === undefined
-            ? await this.dependencies.database.searchDocs.toArray()
-            : (await this.dependencies.database.searchDocs.toArray()).filter((document) =>
-                scope.includes(document.entityType),
-              );
-        const documentIds = selected.map((document) => document.id);
-        if (documentIds.length > 0) {
+        if (options.signal?.aborted === true) {
+          cancelled = true;
+          return;
+        }
+        const selectedTypes = scope === undefined ? null : new Set(scope);
+        const oldRows = (await this.dependencies.database.searchDocs.toArray()).filter(
+          (document) => selectedTypes === null || selectedTypes.has(document.entityType),
+        );
+        const oldDocumentIds = oldRows.map((document) => document.id);
+        if (oldDocumentIds.length > 0) {
           await this.dependencies.database.searchTermPostings
             .where("docId")
-            .anyOf(documentIds)
+            .anyOf(oldDocumentIds)
             .delete();
         }
-        const postings = selected.flatMap(collectPostings);
+        await this.dependencies.database.searchDocs.bulkDelete(oldDocumentIds);
+        if (rows.length > 0) {
+          await this.dependencies.database.searchDocs.bulkPut(rows);
+        }
         if (postings.length > 0) {
           await this.dependencies.database.searchTermPostings.bulkPut(postings);
         }
@@ -374,12 +612,52 @@ export class DexieSearchPort implements SearchPort, DexieSearchIndexWriter {
           value: "ready",
           updatedAt: completedAt,
         });
-
-        return selected.length;
       },
     );
 
-    return { indexedCount, completedAt };
+    return {
+      indexedCount: cancelled ? 0 : snapshot.documents.length,
+      completedAt,
+      status: cancelled ? "cancelled" : "completed",
+    };
+  }
+
+  private async readAuthoritativeSnapshot(
+    scope: readonly SearchEntityType[] | undefined,
+    options: SearchRebuildOptions,
+  ): Promise<AuthoritativeSearchSnapshot> {
+    const database = this.dependencies.database;
+    const rows = await database.transaction(
+      "r",
+      [
+        database.journals,
+        database.structuredBlocks,
+        database.knowledgeItems,
+        database.tasks,
+        database.tags,
+        database.journalTags,
+        database.knowledgeTags,
+      ],
+      async (): Promise<SearchAuthorityRows> => ({
+        journals: await database.journals.toArray(),
+        structuredBlocks: await database.structuredBlocks.toArray(),
+        knowledgeItems: await database.knowledgeItems.toArray(),
+        tasks: await database.tasks.toArray(),
+        tags: await database.tags.toArray(),
+        journalTags: await database.journalTags.toArray(),
+        knowledgeTags: await database.knowledgeTags.toArray(),
+      }),
+    );
+    const documents = createAuthoritativeDocuments(rows, scope);
+    const ownerEntityIdById = new Map<EntityId, EntityId>(
+      rows.structuredBlocks.map((block) => [block.id, block.journalId] as const),
+    );
+    options.onProgress?.({
+      phase: "reading",
+      processedCount: documents.length,
+      totalCount: documents.length,
+    });
+    return { documents, ownerEntityIdById, totalCount: documents.length };
   }
 
   private async getIndexState(): Promise<SearchResultPage["indexState"]> {

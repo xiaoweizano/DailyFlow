@@ -1,5 +1,6 @@
 export { createDesktopServices, type DesktopServices } from "./desktop-services.js";
 export { DesktopAttachmentStore } from "./desktop-attachment-store.js";
+export { DesktopDataManagementPort } from "./desktop-data-management-port.js";
 export {
   DesktopBackupService,
   type DesktopBackupClient,
@@ -36,6 +37,11 @@ export {
   type DesktopImportSourceOptions,
 } from "./desktop-import-source.js";
 export { DesktopReportRepository } from "./desktop-report-repository.js";
+export {
+  DesktopSearchPort,
+  type DesktopSearchPortOptions,
+  type TauriListen,
+} from "./desktop-search-port.js";
 export { DesktopTaskRepository } from "./desktop-task-repository.js";
 export {
   DesktopKnowledgeRepository,

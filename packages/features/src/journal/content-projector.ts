@@ -89,7 +89,7 @@ function createSearchDocuments(
     return {
       id: block.id,
       entityType: "structured_block" as const,
-      entityId: context.ownerEntityId,
+      entityId: block.id,
       title: blockTitle,
       bodyText: blockText,
       structuredText: blockText,

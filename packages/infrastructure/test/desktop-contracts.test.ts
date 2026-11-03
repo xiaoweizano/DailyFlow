@@ -12,7 +12,7 @@ import {
 import { describe, expect, it, vi } from "vitest";
 
 import { DesktopJournalRepository } from "../src/desktop/desktop-journal-repository.js";
-import { DesktopSearchPort } from "../src/desktop/desktop-search-port.js";
+import { DesktopSearchPort, type TauriListen } from "../src/desktop/desktop-search-port.js";
 import { DesktopTaskRepository } from "../src/desktop/desktop-task-repository.js";
 import { DesktopTimelineQuery } from "../src/desktop/desktop-timeline-query.js";
 import { TauriCommandClient, type TauriInvoke } from "../src/desktop/tauri-client.js";
@@ -292,18 +292,119 @@ describe("desktop Tauri contracts", () => {
     const invoke = createInvoke({
       indexedCount: 2,
       completedAt: SAVED_AT,
+      status: "completed",
     });
     const search = new DesktopSearchPort({ client: new TauriCommandClient(invoke) });
 
     const rebuilt = await search.rebuild(["journal", "knowledge_item"]);
 
     expect(invoke).toHaveBeenCalledWith("search_rebuild", {
+      requestId: expect.any(String),
       scope: ["journal", "knowledge_item"],
     });
     expect(rebuilt).toEqual({
       indexedCount: 2,
       completedAt: SAVED_AT,
+      status: "completed",
     });
+  });
+
+  it("cancels a desktop search rebuild by request id and preserves the result", async () => {
+    const controller = new AbortController();
+    let finishRebuild: ((result: unknown) => void) | undefined;
+    const invoke = vi.fn<TauriInvoke>(async (command, args) => {
+      if (command === "search_rebuild") {
+        expect(args).toMatchObject({ requestId: expect.any(String) });
+        return new Promise((resolve) => {
+          finishRebuild = resolve;
+        });
+      }
+      if (command === "search_cancel_rebuild") {
+        expect(args).toMatchObject({ requestId: expect.any(String) });
+        finishRebuild?.({
+          indexedCount: 0,
+          completedAt: SAVED_AT,
+          status: "cancelled",
+        });
+        return undefined;
+      }
+      throw new Error(`Unexpected command: ${command}`);
+    });
+    const search = new DesktopSearchPort({ client: new TauriCommandClient(invoke) });
+
+    const rebuildPromise = search.rebuild(undefined, { signal: controller.signal });
+    const requestId = (invoke.mock.calls[0]?.[1] as { requestId: string }).requestId;
+    expect(invoke).toHaveBeenNthCalledWith(1, "search_rebuild", {
+      requestId,
+    });
+
+    controller.abort();
+    await Promise.resolve();
+
+    expect(invoke).toHaveBeenNthCalledWith(2, "search_cancel_rebuild", {
+      requestId,
+    });
+    const rebuilt = await rebuildPromise;
+
+    expect(rebuilt.status).toBe("cancelled");
+  });
+
+  it("forwards matching desktop search rebuild progress and unsubscribes", async () => {
+    const progress = vi.fn();
+    const unlisten = vi.fn();
+    let listener:
+      | ((payload: {
+          requestId: string;
+          phase: "reading" | "indexing" | "committing";
+          processedCount: number;
+          totalCount: number;
+        }) => void)
+      | undefined;
+    const listenSpy = vi.fn();
+    const listen: TauriListen = async <T>(event: string, handler: (payload: T) => void) => {
+      listenSpy(event, handler);
+      listener = handler as typeof listener;
+      return unlisten;
+    };
+    const invoke = vi.fn<TauriInvoke>(async (command, args) => {
+      expect(command).toBe("search_rebuild");
+      expect(listenSpy).toHaveBeenCalledOnce();
+      const requestId = (args as { requestId: string }).requestId;
+
+      listener?.({
+        requestId: "another-request",
+        phase: "reading",
+        processedCount: 99,
+        totalCount: 100,
+      });
+      listener?.({
+        requestId,
+        phase: "indexing",
+        processedCount: 2,
+        totalCount: 4,
+      });
+
+      return {
+        indexedCount: 4,
+        completedAt: SAVED_AT,
+        status: "completed",
+      };
+    });
+    const search = new DesktopSearchPort({
+      client: new TauriCommandClient(invoke),
+      listen,
+    });
+
+    await search.rebuild(undefined, { onProgress: progress });
+
+    expect(listenSpy).toHaveBeenCalledWith("search-rebuild-progress", expect.any(Function));
+    expect(progress).toHaveBeenCalledOnce();
+    expect(progress).toHaveBeenCalledWith({
+      phase: "indexing",
+      processedCount: 2,
+      totalCount: 4,
+    });
+    expect(unlisten).toHaveBeenCalledOnce();
   });
 
   it("accepts an empty Tauri command response", async () => {

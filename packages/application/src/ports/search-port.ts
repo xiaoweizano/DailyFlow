@@ -51,9 +51,24 @@ export interface SearchResultPage {
 export interface SearchRebuildResult {
   readonly indexedCount: number;
   readonly completedAt: UtcTimestamp;
+  readonly status: "completed" | "cancelled";
+}
+
+export interface SearchRebuildProgress {
+  readonly phase: "reading" | "indexing" | "committing";
+  readonly processedCount: number;
+  readonly totalCount: number;
+}
+
+export interface SearchRebuildOptions {
+  readonly signal?: AbortSignal;
+  readonly onProgress?: (progress: SearchRebuildProgress) => void;
 }
 
 export interface SearchPort {
   query(input: SearchQuery): Promise<SearchResultPage>;
-  rebuild(scope?: readonly SearchEntityType[]): Promise<SearchRebuildResult>;
+  rebuild(
+    scope?: readonly SearchEntityType[],
+    options?: SearchRebuildOptions,
+  ): Promise<SearchRebuildResult>;
 }
