@@ -1,3 +1,4 @@
+import { DisabledAiRegistry } from "@dailyflow/ai";
 import { createAppRuntimeServices, type AppRuntimeServices } from "@dailyflow/features";
 import { createDesktopServices, type TauriListen } from "@dailyflow/infrastructure/desktop";
 import { listen } from "@tauri-apps/api/event";
@@ -10,5 +11,11 @@ const listenToTauriEvent: TauriListen = async <T>(event: string, handler: (paylo
 const storageServices = createDesktopServices({
   searchProgressListener: listenToTauriEvent,
 });
+const { secretStore, settingsStore, ...storagePorts } = storageServices;
 
-export const desktopServices: AppRuntimeServices = createAppRuntimeServices(storageServices);
+export const desktopServices: AppRuntimeServices = createAppRuntimeServices({
+  ...storagePorts,
+  settingsStore,
+  secretStore,
+  aiProviderRegistry: new DisabledAiRegistry(),
+});

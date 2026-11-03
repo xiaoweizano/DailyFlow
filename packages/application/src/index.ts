@@ -198,6 +198,47 @@ export {
   type RebuildSearchIndexDependencies,
 } from "./use-cases/rebuild-search-index.js";
 export type { Clock } from "./ports/clock.js";
+export type {
+  AiCancellation,
+  AiCompletionRequest,
+  AiContextPart,
+  AiProviderDescriptor,
+  AiProviderPort,
+  AiProviderRegistry,
+  AiPurpose,
+} from "./ports/ai-provider.js";
+export type { SecretStore, SecretStoreBackend } from "./ports/secret-store.js";
+export {
+  prepareAiAssist,
+  runAiAssist,
+  type AiAssistDraft,
+  type AiAssistOutcome,
+  type AiAssistPreview,
+  type AiAssistPreviewPart,
+  type PrepareAiAssistDependencies,
+  type RunAiAssistDependencies,
+  type RunAiAssistOptions,
+} from "./use-cases/run-ai-assist.js";
+export type { SettingsStore } from "./ports/settings-store.js";
+export {
+  DEFAULT_USER_PREFERENCES,
+  DensityPreferenceSchema,
+  HistoryRetentionSchema,
+  SETTINGS_KEYS,
+  ThemePreferenceSchema,
+  UserPreferencesSchema,
+  loadUserPreferences,
+  saveUserPreferences,
+  type DensityPreference,
+  type HistoryRetention,
+  type SettingsWarning,
+  type SettingsWarningCode,
+  type ThemePreference,
+  type UserPreferences,
+  type UserPreferencesDependencies,
+  type UserPreferencesLoadResult,
+  type UserPreferencesSaveResult,
+} from "./use-cases/settings.js";
 export {
   CompleteTaskInputSchema,
   completeTask,

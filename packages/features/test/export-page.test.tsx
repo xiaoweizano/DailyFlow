@@ -14,6 +14,7 @@ import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { createBackupServicesStub } from "./backup-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 
 const estimate: ExportEstimate = {
   entityCount: 12,
@@ -46,6 +47,7 @@ function createExports(overrides: Partial<ExportRuntimeServices> = {}): ExportRu
 
 function createServices(exports: ExportRuntimeServices): AppRuntimeServices {
   return {
+    ...createRuntimeSettingsStub(),
     analytics: createAnalyticsServicesStub(),
     backups: createBackupServicesStub(),
     exports,

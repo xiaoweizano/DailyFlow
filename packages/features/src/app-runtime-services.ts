@@ -1,7 +1,12 @@
 import {
   checkDataHealth,
+  loadUserPreferences,
+  prepareAiAssist,
   rebuildSearchIndex,
+  runAiAssist,
+  saveUserPreferences,
   TxtImportService,
+  type AiProviderRegistry,
   type AppServices,
   type DataManagementPort,
   type ExportSource,
@@ -9,6 +14,8 @@ import {
   type ImportRepository,
   type ImportSource,
   type ImportTxtAnalyzer,
+  type SecretStore,
+  type SettingsStore,
   type TimelineQuery,
   type TxtDocumentConverter,
 } from "@dailyflow/application";
@@ -47,6 +54,9 @@ export interface CreateAppRuntimeServicesOptions extends Pick<
   readonly today?: () => LocalDate;
   readonly timezone?: () => string;
   readonly dataManagement: DataManagementPort;
+  readonly settingsStore: SettingsStore;
+  readonly aiProviderRegistry: AiProviderRegistry;
+  readonly secretStore: SecretStore;
 }
 
 export interface ImportStorageServices {
@@ -139,6 +149,17 @@ export function createAppRuntimeServices(
       today: options.today ?? systemLocalDate,
     }),
     timeline: options.timeline,
+    settings: {
+      load: () => loadUserPreferences({ store: options.settingsStore }),
+      save: (input) => saveUserPreferences({ store: options.settingsStore }, input),
+    },
+    ai: {
+      providers: options.aiProviderRegistry.list(),
+      secretBackend: options.secretStore.backend,
+      prepare: (input) => prepareAiAssist({ registry: options.aiProviderRegistry }, input),
+      run: (preview, runOptions) =>
+        runAiAssist({ registry: options.aiProviderRegistry }, preview, runOptions),
+    },
     dataManagement: {
       inspect: () => checkDataHealth({ port: options.dataManagement, clock }),
       rebuildSearchIndex: (rebuildOptions) =>

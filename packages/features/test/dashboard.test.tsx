@@ -19,6 +19,7 @@ import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { ActivityHeatmap } from "../src/dashboard/activity-heatmap.js";
@@ -89,6 +90,7 @@ function createServices(
   const summaries = options.summaries ?? [];
 
   return {
+    ...createRuntimeSettingsStub(),
     analytics: createAnalyticsServicesStub(),
     backups: createBackupServicesStub(),
     exports: createExportServicesStub(),

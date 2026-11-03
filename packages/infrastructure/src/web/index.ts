@@ -4,6 +4,9 @@ export {
   type WebServices,
 } from "./web-services.js";
 export { WebAttachmentStore, type WebAttachmentStoreOptions } from "./web-attachment-store.js";
+
+export { WebSecretStore } from "./web-secret-store.js";
+export { WebSettingsStore, type WebSettingsStoreOptions } from "./web-settings-store.js";
 export { WebBackupService, type WebBackupServiceOptions } from "./web-backup-service.js";
 export {
   WebBackupSource,

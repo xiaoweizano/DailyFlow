@@ -2,18 +2,23 @@
 
 import "./setup-dom.js";
 
-import type { SavedJournalSnapshot, StoredAttachment } from "@dailyflow/application";
+import {
+  DEFAULT_USER_PREFERENCES,
+  type SavedJournalSnapshot,
+  type StoredAttachment,
+} from "@dailyflow/application";
 import { createJournal, parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
 import { ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import { JournalPage } from "../src/journal/journal-page.js";
 
@@ -41,6 +46,7 @@ function createServices() {
   );
 
   return {
+    ...createRuntimeSettingsStub(),
     analytics: createAnalyticsServicesStub(),
     backups: createBackupServicesStub(),
     exports: createExportServicesStub(),
@@ -126,7 +132,37 @@ function renderJournalPage(services: ReturnType<typeof createServices>) {
   );
 }
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("JournalPage", () => {
+  it("uses the persisted autosave interval for journal edits", async () => {
+    const services = createServices();
+    services.settings.load = vi.fn(async () => ({
+      preferences: {
+        ...DEFAULT_USER_PREFERENCES,
+        autosaveIntervalMs: 1200,
+      },
+      warning: null,
+    }));
+    renderJournalPage(services);
+
+    await waitFor(() => expect(services.settings.load).toHaveBeenCalledOnce());
+    const editor = await screen.findByLabelText("日志正文");
+
+    const user = userEvent.setup();
+    await user.click(editor);
+    await user.keyboard(" 使用自定义间隔");
+
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    expect(services.journal.save).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(services.journal.save).toHaveBeenCalledOnce(), {
+      timeout: 500,
+    });
+  });
+
   it("loads a journal and autosaves edits after the debounce", async () => {
     const services = createServices();
     const user = userEvent.setup();

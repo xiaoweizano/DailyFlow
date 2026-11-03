@@ -1,4 +1,5 @@
 import type {
+  AiProviderRegistry,
   BackupArtifact,
   BackupService,
   BackupTarget,
@@ -6,6 +7,8 @@ import type {
   ImportService,
   ImportSource,
   ImportTxtAnalyzer,
+  SecretStore,
+  SettingsStore,
   TxtDocumentConverter,
 } from "@dailyflow/application";
 import { parseContentHash, parseEntityId, parseUtcTimestamp } from "@dailyflow/domain";
@@ -16,6 +19,25 @@ import {
   type CreateAppRuntimeServicesOptions,
 } from "../src/app-runtime-services.js";
 import { createBackupStorageStub } from "./backup-stub.js";
+
+function createSettingsPorts() {
+  return {
+    settingsStore: {
+      read: vi.fn(async () => null),
+      write: vi.fn(async () => undefined),
+    } satisfies SettingsStore,
+    aiProviderRegistry: {
+      list: () => [],
+      resolve: () => null,
+    } satisfies AiProviderRegistry,
+    secretStore: {
+      backend: "session-memory" as const,
+      get: vi.fn(async () => null),
+      set: vi.fn(async () => undefined),
+      delete: vi.fn(async () => undefined),
+    } satisfies SecretStore,
+  };
+}
 
 describe("createAppRuntimeServices", () => {
   it("composes backup runtime services from injected backup storage", async () => {
@@ -71,6 +93,7 @@ describe("createAppRuntimeServices", () => {
       knowledge: {},
       reports: {},
       search: {},
+      ...createSettingsPorts(),
       tasks: {},
       timeline: {},
     } as unknown as CreateAppRuntimeServicesOptions;
@@ -120,6 +143,7 @@ describe("createAppRuntimeServices", () => {
       knowledge: {},
       reports: {},
       search: {},
+      ...createSettingsPorts(),
       tasks: {},
       timeline: {},
     } as unknown as CreateAppRuntimeServicesOptions;
@@ -129,5 +153,73 @@ describe("createAppRuntimeServices", () => {
 
     await expect(imports.selectRoot()).resolves.toBe(root);
     expect(source.selectRoot).toHaveBeenCalledOnce();
+  });
+
+  it("composes settings and the disabled AI boundary from explicit ports", async () => {
+    const settingsStore: SettingsStore = {
+      read: vi.fn(async () => null),
+      write: vi.fn(async () => undefined),
+    };
+    const registry: AiProviderRegistry = {
+      list: () => [
+        {
+          id: "disabled",
+          displayName: "未配置",
+          capabilities: [],
+          sendsDataOffDevice: false,
+        },
+      ],
+      resolve: () => null,
+    };
+    const secretStore: SecretStore = {
+      backend: "session-memory",
+      get: vi.fn(async () => null),
+      set: vi.fn(async () => undefined),
+      delete: vi.fn(async () => undefined),
+    };
+    const options = {
+      analytics: {},
+      attachments: {},
+      backupStorage: createBackupStorageStub(),
+      exportStorage: {
+        source: {},
+        target: {},
+      },
+      importStorage: {} as never,
+      journals: {},
+      knowledge: {},
+      reports: {},
+      search: {},
+      settingsStore,
+      aiProviderRegistry: registry,
+      secretStore,
+      tasks: {},
+      timeline: {},
+    } as unknown as CreateAppRuntimeServicesOptions;
+
+    const services = createAppRuntimeServices(options);
+
+    await expect(services.settings.load()).resolves.toMatchObject({
+      warning: null,
+      preferences: { theme: "system" },
+    });
+    await expect(
+      services.settings.save({
+        theme: "dark",
+        density: "comfortable",
+        autosaveIntervalMs: 800,
+        weekStartsOn: 1,
+        showWarnings: true,
+        historyRetention: {
+          maxVersions: 100,
+          maxAgeDays: 180,
+        },
+      }),
+    ).resolves.toMatchObject({ persisted: true });
+    expect(settingsStore.write).toHaveBeenCalledOnce();
+    expect(services.ai).toMatchObject({
+      secretBackend: "session-memory",
+      providers: [{ id: "disabled", displayName: "未配置" }],
+    });
   });
 });

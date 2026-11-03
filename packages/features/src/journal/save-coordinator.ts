@@ -20,7 +20,7 @@ const DEFAULT_DEBOUNCE_MS = 800;
 
 export class SaveCoordinator<TDraft, TSaved> {
   private readonly save: SaveCoordinatorOptions<TDraft, TSaved>["save"];
-  private readonly debounceMs: number;
+  private debounceMs: number;
   private readonly now: () => Date;
   private readonly listeners = new Set<(state: SaveCoordinatorState<TDraft, TSaved>) => void>();
 
@@ -69,6 +69,13 @@ export class SaveCoordinator<TDraft, TSaved> {
     this.emit();
 
     if (this.inFlight === null) {
+      this.scheduleSave();
+    }
+  }
+
+  setDebounceMs(debounceMs: number): void {
+    this.debounceMs = debounceMs;
+    if (this.draft !== null && this.status === "dirty") {
       this.scheduleSave();
     }
   }

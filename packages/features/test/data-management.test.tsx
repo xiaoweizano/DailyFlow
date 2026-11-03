@@ -16,6 +16,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import { DataManagementPage } from "../src/data-management/data-management-page.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 
 const report: DataHealthReport = {
   status: "attention",
@@ -70,7 +71,10 @@ const report: DataHealthReport = {
 };
 
 function renderPage(services: DataManagementRuntimeServices): void {
-  const runtime = { dataManagement: services } as unknown as AppRuntimeServices;
+  const runtime = {
+    ...createRuntimeSettingsStub(),
+    dataManagement: services,
+  } as unknown as AppRuntimeServices;
   render(
     <AppServicesProvider services={runtime}>
       <MemoryRouter>

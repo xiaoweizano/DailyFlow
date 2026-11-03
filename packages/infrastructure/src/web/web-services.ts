@@ -30,6 +30,8 @@ import { WebBackupTarget } from "./web-backup-target.js";
 import { WebExportSource } from "./web-export-source.js";
 import { WebExportTarget } from "./web-export-target.js";
 import { WebImportSource } from "./web-import-source.js";
+import { WebSecretStore } from "./web-secret-store.js";
+import { WebSettingsStore } from "./web-settings-store.js";
 import { TxtAnalyzer } from "../shared/import/txt-analyzer.js";
 import { TxtDocumentConverter } from "../shared/import/txt-document-converter.js";
 
@@ -54,6 +56,8 @@ export type WebServices = Pick<
     readonly target: ExportTarget;
   };
   readonly timeline: DexieTimelineQuery;
+  readonly settingsStore: WebSettingsStore;
+  readonly secretStore: WebSecretStore;
 };
 
 export interface CreateWebServicesOptions {
@@ -116,5 +120,7 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
     search,
     tasks: new DexieTaskRepository({ database, clock }),
     timeline: new DexieTimelineQuery({ database }),
+    settingsStore: new WebSettingsStore({ database, clock }),
+    secretStore: new WebSecretStore(),
   };
 }

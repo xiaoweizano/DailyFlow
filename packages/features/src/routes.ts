@@ -13,8 +13,9 @@ import { DashboardPage } from "./dashboard/dashboard-page.js";
 import { JournalPage } from "./journal/journal-page.js";
 import { KnowledgeDetailPage } from "./knowledge/knowledge-detail.js";
 import { KnowledgePage } from "./knowledge/knowledge-page.js";
-import { ModulePage, NotFoundPage } from "./module-page.js";
+import { NotFoundPage } from "./module-page.js";
 import { SearchPage } from "./search/search-page.js";
+import { SettingsPage } from "./settings/settings-page.js";
 import { TasksPage } from "./tasks/tasks-page.js";
 import { TimelinePage } from "./timeline/timeline-page.js";
 
@@ -100,7 +101,7 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "settings",
-          element: createElement(ModulePage, { moduleId: "settings" }),
+          element: createElement(SettingsPage),
         },
         {
           path: "*",

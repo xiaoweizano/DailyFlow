@@ -1,11 +1,19 @@
 import type {
+  AiAssistOutcome,
+  AiAssistPreview,
+  AiProviderDescriptor,
   DataHealthReport,
   ImportService,
+  RunAiAssistOptions,
   SearchPort,
   SearchRebuildOptions,
   SearchRebuildResult,
+  SecretStoreBackend,
+  UserPreferencesLoadResult,
+  UserPreferencesSaveResult,
   TimelineQuery,
 } from "@dailyflow/application";
+import type { AppError, Result } from "@dailyflow/shared";
 import { createContext } from "react";
 
 import type { AnalyticsRuntimeServices } from "./analytics/analytics-services.js";
@@ -29,7 +37,24 @@ export interface AppRuntimeServices {
   readonly lifecycle: SaveLifecycle;
   readonly tasks: TaskRuntimeServices;
   readonly timeline: TimelineQuery;
+  readonly settings: SettingsRuntimeServices;
+  readonly ai: AiRuntimeServices;
   readonly dataManagement?: DataManagementRuntimeServices;
+}
+
+export interface SettingsRuntimeServices {
+  load(): Promise<UserPreferencesLoadResult>;
+  save(input: unknown): Promise<UserPreferencesSaveResult>;
+}
+
+export interface AiRuntimeServices {
+  readonly providers: readonly AiProviderDescriptor[];
+  readonly secretBackend: SecretStoreBackend;
+  prepare(input: unknown): Promise<Result<AiAssistPreview, AppError>>;
+  run(
+    preview: AiAssistPreview,
+    options?: RunAiAssistOptions,
+  ): Promise<Result<AiAssistOutcome, AppError>>;
 }
 
 export interface DataManagementRuntimeServices {

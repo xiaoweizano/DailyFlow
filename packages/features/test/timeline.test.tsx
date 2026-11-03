@@ -28,6 +28,7 @@ import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import type { TaskRuntimeServices } from "../src/tasks/task-services.js";
@@ -121,6 +122,7 @@ function createServices(
   };
 
   return {
+    ...createRuntimeSettingsStub(),
     analytics: createAnalyticsServicesStub(),
     backups: createBackupServicesStub(),
     exports: createExportServicesStub(),

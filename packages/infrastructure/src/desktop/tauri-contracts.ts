@@ -58,6 +58,8 @@ export const TAURI_COMMANDS = {
   backupReadFile: "backup_read_file",
   backupWriteFile: "backup_write_file",
   backupRestore: "backup_restore",
+  settingsRead: "settings_read",
+  settingsWrite: "settings_write",
 } as const;
 
 export type TauriCommandName = (typeof TAURI_COMMANDS)[keyof typeof TAURI_COMMANDS];
@@ -88,6 +90,12 @@ const LocalDateDtoSchema = z
     }
   }, "Must be a valid local date.")
   .transform<LocalDate>((value) => parseLocalDate(value));
+
+export const SettingsReadResultDtoSchema = z.object({
+  valueJson: z.string().nullable(),
+});
+
+export type SettingsReadResultDto = z.infer<typeof SettingsReadResultDtoSchema>;
 
 export const JournalSaveCheckpointSchema = z.enum(["autosave", "explicit", "restore", "import"]);
 

@@ -7,6 +7,7 @@ pub mod migrations;
 pub mod models;
 pub mod report_repository;
 pub mod search_repository;
+pub mod settings_repository;
 pub mod task_repository;
 pub mod timeline_repository;
 

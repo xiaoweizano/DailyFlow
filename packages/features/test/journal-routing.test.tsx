@@ -20,6 +20,7 @@ import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { createAppRoutes } from "../src/routes.js";
@@ -51,6 +52,7 @@ function createLookup(date: string): JournalLookup {
 
 function createServices(error?: AppError) {
   return {
+    ...createRuntimeSettingsStub(),
     analytics: createAnalyticsServicesStub(),
     backups: createBackupServicesStub(),
     exports: createExportServicesStub(),

@@ -46,6 +46,22 @@ describe("SaveCoordinator", () => {
     expect(coordinator.getState().draft).toBeNull();
   });
 
+  it("reschedules an existing dirty draft when the debounce interval changes", async () => {
+    vi.useFakeTimers();
+    const save = vi.fn(async () => ok<Saved>({ revision: 1 }));
+    const coordinator = new SaveCoordinator<Draft, Saved>({ save });
+
+    coordinator.update({ text: "preference changed while editing" });
+    await vi.advanceTimersByTimeAsync(400);
+    coordinator.setDebounceMs(1_200);
+
+    await vi.advanceTimersByTimeAsync(1_199);
+    expect(save).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(save).toHaveBeenCalledOnce();
+  });
+
   it("keeps a single in-flight save and preserves edits made while saving", async () => {
     vi.useFakeTimers();
     let resolveFirstSave: ((result: Awaited<ReturnType<typeof ok<Saved>>>) => void) | undefined;

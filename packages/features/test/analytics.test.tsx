@@ -25,6 +25,7 @@ import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 
 const NOW = parseUtcTimestamp("2026-10-30T03:20:11.123Z");
 const REPORT_ID = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c81");
@@ -168,6 +169,7 @@ function createServices(
   analytics: AnalyticsRuntimeServices = createAnalyticsServices(),
 ): AppRuntimeServices {
   return {
+    ...createRuntimeSettingsStub(),
     analytics,
     backups: createBackupServicesStub(),
     exports: createExportServicesStub(),

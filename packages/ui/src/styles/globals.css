@@ -38,6 +38,33 @@
     text-rendering: optimizeLegibility;
   }
 
+  :root[data-theme="dark"] {
+    --background: 220 16% 10%;
+    --foreground: 42 20% 94%;
+    --surface: 220 15% 13%;
+    --surface-muted: 220 14% 16%;
+    --surface-raised: 220 14% 15%;
+    --border: 220 11% 24%;
+    --border-strong: 220 9% 34%;
+    --primary: 172 42% 48%;
+    --primary-hover: 172 44% 55%;
+    --primary-foreground: 220 18% 9%;
+    --accent: 29 65% 56%;
+    --accent-soft: 29 31% 22%;
+    --success: 150 43% 52%;
+    --warning: 38 76% 58%;
+    --danger: 2 68% 62%;
+    --info: 210 68% 62%;
+    --muted-foreground: 220 9% 67%;
+    --focus: 172 56% 57%;
+    color-scheme: dark;
+  }
+
+  :root[data-density="compact"] {
+    --topbar-height: 50px;
+    --statusbar-height: 28px;
+  }
+
   * {
     border-color: hsl(var(--border));
   }

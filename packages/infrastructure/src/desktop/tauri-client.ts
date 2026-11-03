@@ -46,6 +46,7 @@ import {
   SearchQueryDtoSchema,
   SearchRebuildResultDtoSchema,
   SearchResultPageDtoSchema,
+  SettingsReadResultDtoSchema,
   SearchEntityTypeSchema,
   StoredAttachmentDtoSchema,
   TAURI_COMMANDS,
@@ -535,6 +536,28 @@ export class TauriCommandClient {
     );
   }
 
+  async readSetting(key: string): Promise<string | null> {
+    const result = await this.request(
+      TAURI_COMMANDS.settingsRead,
+      { key },
+      SettingsReadResultDtoSchema,
+      z.object({ key: z.string().min(1).max(200) }),
+    );
+    return result.valueJson;
+  }
+
+  async writeSetting(key: string, valueJson: string): Promise<void> {
+    await this.request(
+      TAURI_COMMANDS.settingsWrite,
+      { key, valueJson },
+      z.union([z.null(), z.undefined()]),
+      z.object({
+        key: z.string().min(1).max(200),
+        valueJson: z.string().refine(isJsonText, "Must be valid JSON text."),
+      }),
+    );
+  }
+
   private async request<S extends z.ZodTypeAny>(
     command: string,
     args: Record<string, unknown>,
@@ -567,5 +590,14 @@ export class TauriCommandClient {
 
       throw error;
     }
+  }
+}
+
+function isJsonText(value: string): boolean {
+  try {
+    JSON.parse(value);
+    return true;
+  } catch {
+    return false;
   }
 }

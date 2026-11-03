@@ -1024,37 +1024,37 @@ docs/
 - Create: `packages/features/test/command-registry.test.tsx`
 - Create: `packages/features/test/settings.test.tsx`
 
-- [ ] **Step 1: 写平台快捷键测试**
+- [x] **Step 1: 写平台快捷键测试**
 
   抽象 `Mod`，断言 Windows Ctrl、macOS Cmd、Web 平台识别；输入框、代码块和对话框内不劫持文本编辑。覆盖冲突提示和快捷键帮助面板。
 
-- [ ] **Step 2: 实现设置持久化**
+- [x] **Step 2: 实现设置持久化**
 
   主题、密度、自动保存间隔、周起始日和历史保留策略经过 Zod 校验写入 `settings`。非法值回退默认并提示；设置读取失败不阻止打开日志。
 
-- [ ] **Step 3: 实现 AI 端口与默认关闭**
+- [x] **Step 3: 实现 AI 端口与默认关闭**
 
   在 Application 定义 `AiProviderPort`、`AiProviderRegistry`、`AiCancellation` 和 `SecretStore` 接口；V1 组合根注入 `DisabledAiRegistry`，UI 明确显示“未配置”，不发起网络请求。
 
-- [ ] **Step 4: 固化安全凭据边界**
+- [x] **Step 4: 固化安全凭据边界**
 
   用内存 fake 验证 `SecretStore` 契约，禁止 Key 写入 IndexedDB、`localStorage`、备份或诊断日志。V1 不展示真实厂商 Key 输入；未来 Provider 接入时，桌面使用系统钥匙串，Web 只放当前标签页内存或要求每次输入。SecretStore 失败只影响未来 AI 扩展。
 
-- [ ] **Step 5: 验证禁用态和未来显式流程契约**
+- [x] **Step 5: 验证禁用态和未来显式流程契约**
 
   V1 不显示可触发真实请求的 AI 操作，网络替身记录到的请求数必须为 0。用 fake Provider 验证未来请求必须由用户显式发起，预览显示 Provider、用途、片段、代码块、字符数和目标；支持取消/超时，返回文本只能进入草稿区并经确认保存。不得发送附件、路径、完整历史或代码块。
 
-- [ ] **Step 6: 注册 Settings 路由**
+- [x] **Step 6: 注册 Settings 路由**
 
   在共享路由表注册 `/settings` 并接入两个组合根。桌面和 Web 都要验证快捷键帮助、设置非法值回退、未配置 AI 状态和安全凭据提示；桌面 HashRouter 重新进入设置后仍能读取已持久化设置。
 
-- [ ] **Step 7: 运行验证**
+- [x] **Step 7: 运行验证**
 
   Run: `pnpm --filter @dailyflow/ai test && pnpm --filter @dailyflow/features test -- settings && pnpm --filter @dailyflow/features test -- command-registry && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build`
 
   Expected: 无 Provider 时所有设置和报告正常；Web 存储中找不到 API Key；快捷键在三种平台映射正确。
 
-- [ ] **Step 8: 提交**
+- [x] **Step 8: 提交**
 
   Run: `git add packages apps/desktop apps/web && git commit -m "feat: add settings shortcuts and optional ai boundary"`
 

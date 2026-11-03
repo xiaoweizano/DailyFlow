@@ -26,6 +26,7 @@ import {
 } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 
 const selectedFile: BackupSourceFile = {
   filename: backupArtifactStub.filename,
@@ -65,6 +66,7 @@ function createBackups(overrides: Partial<BackupRuntimeServices> = {}): BackupRu
 
 function createServices(backups: BackupRuntimeServices): AppRuntimeServices {
   return {
+    ...createRuntimeSettingsStub(),
     analytics: createAnalyticsServicesStub(),
     backups,
     exports: createExportServicesStub(),

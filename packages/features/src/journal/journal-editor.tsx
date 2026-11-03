@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { useUserPreferences } from "../preferences/use-user-preferences.js";
 import { AttachmentUploadPlaceholder } from "./attachment-node-view.js";
 import { EditorToolbar } from "./editor-toolbar.js";
 import { createJournalEditorExtensions } from "./journal-editor-extensions.js";
@@ -62,6 +63,7 @@ interface AttachmentUploadFailure {
 
 export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React.JSX.Element {
   const services = useAppServices();
+  const { preferences } = useUserPreferences();
   const { journal, isPersisted } = lookup;
   const [title, setTitle] = useState(journal.title);
   const [tagsText, setTagsText] = useState("");
@@ -85,7 +87,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const coordinatorRef = useRef<SaveCoordinator<JournalDraft, SavedJournalSnapshot> | null>(null);
   if (coordinatorRef.current === null) {
     coordinatorRef.current = new SaveCoordinator<JournalDraft, SavedJournalSnapshot>({
-      debounceMs: 800,
+      debounceMs: preferences.autosaveIntervalMs,
       save: (draft) =>
         services.journal.save({
           journalId: journal.id,
@@ -183,6 +185,10 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
       setAttachmentBusy(false);
     }
   }
+
+  useEffect(() => {
+    coordinator.setDebounceMs(preferences.autosaveIntervalMs);
+  }, [coordinator, preferences.autosaveIntervalMs]);
 
   useEffect(() => {
     return coordinator.subscribe((state) => {

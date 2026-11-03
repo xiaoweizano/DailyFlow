@@ -9,7 +9,7 @@ use dailyflow_desktop::{
     commands::{
         analytics_commands, attachment_commands, backup_commands, data_commands, export_commands,
         import_commands, journal_commands, knowledge_commands, report_commands, search_commands,
-        task_commands, timeline_commands,
+        settings_commands, task_commands, timeline_commands,
     },
     db::Database,
 };
@@ -86,6 +86,8 @@ fn main() {
             backup_commands::backup_read_file,
             backup_commands::backup_write_file,
             backup_commands::backup_restore,
+            settings_commands::settings_read,
+            settings_commands::settings_write,
             import_commands::import_create_session,
             import_commands::import_save_preview,
             import_commands::import_find_existing_matches,

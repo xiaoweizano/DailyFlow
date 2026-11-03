@@ -1,10 +1,19 @@
 export { AppShell, type AppShellProps } from "./app-shell.js";
 export {
   type AppRuntimeServices,
+  type AiRuntimeServices,
   type DataManagementRuntimeServices,
+  type SettingsRuntimeServices,
 } from "./app-services-context.js";
 export { useAppServices } from "./app-services-hooks.js";
 export { AppServicesProvider, type AppServicesProviderProps } from "./app-services-provider.js";
+export { applyVisualPreferences } from "./preferences/apply-visual-preferences.js";
+export {
+  UserPreferencesProvider,
+  type UserPreferencesProviderProps,
+} from "./preferences/user-preferences-context.js";
+export { type UserPreferencesRuntime } from "./preferences/user-preferences-runtime.js";
+export { useUserPreferences } from "./preferences/use-user-preferences.js";
 export {
   createAttachmentRuntimeServices,
   type AttachmentRuntimeDependencies,
@@ -79,6 +88,20 @@ export {
 } from "./app-modules.js";
 export { ModulePage, NotFoundPage } from "./module-page.js";
 export { createAppRoutes } from "./routes.js";
+export {
+  createCommandRegistry,
+  defaultShortcutCommands,
+  detectShortcutPlatform,
+  formatShortcut,
+  isShortcutBlockedTarget,
+  type CommandRegistry,
+  type ShortcutCommand,
+  type ShortcutConflict,
+  type ShortcutPlatform,
+} from "./platform/command-registry.js";
+export { AiSettings, type AiSettingsProps } from "./settings/ai-settings.js";
+export { SettingsPage, type SettingsPageProps } from "./settings/settings-page.js";
+export { ShortcutHelpPanel, type ShortcutHelpPanelProps } from "./settings/shortcut-settings.js";
 export {
   createSaveLifecycle,
   type SaveFlushHandler,

@@ -18,6 +18,10 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from "reac
 import { Input, SaveStatus } from "@dailyflow/ui";
 
 import { appModules, type AppModuleId, type AppRouteOptions } from "./app-modules.js";
+import {
+  createCommandRegistry,
+  detectShortcutPlatform,
+} from "./platform/command-registry.js";
 import { SearchCommand } from "./search/search-command.js";
 
 export type AppShellProps = AppRouteOptions;
@@ -68,32 +72,34 @@ export function AppShell({ platform, storageLabel, version }: AppShellProps): Re
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
-    function handleShortcut(event: KeyboardEvent): void {
-      const target = event.target;
-      const isEditable =
-        target instanceof HTMLElement &&
-        (target.matches("input, textarea, select") ||
-          target.isContentEditable ||
-          target.closest("[contenteditable='true']") !== null);
+    const registry = createCommandRegistry({
+      platform: detectShortcutPlatform(),
+    });
 
-      if (
-        event.defaultPrevented ||
-        event.key !== "/" ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey ||
-        isEditable
-      ) {
+    function handleShortcut(event: KeyboardEvent): void {
+      const resolved = registry.resolve(event);
+      if (resolved === null) {
         return;
       }
 
-      event.preventDefault();
-      setSearchOpen(true);
+      switch (resolved.definition.id) {
+        case "global-search":
+          setSearchOpen(true);
+          break;
+        case "open-settings":
+          navigate("/settings");
+          break;
+        case "shortcut-help":
+          navigate("/settings#shortcut-help");
+          break;
+        default:
+          break;
+      }
     }
 
     window.addEventListener("keydown", handleShortcut);
     return () => window.removeEventListener("keydown", handleShortcut);
-  }, []);
+  }, [navigate]);
 
   function handleSearch(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();

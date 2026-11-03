@@ -32,6 +32,8 @@ import { DesktopImportSource, type DesktopDirectoryPicker } from "./desktop-impo
 import { DesktopJournalRepository } from "./desktop-journal-repository.js";
 import { DesktopKnowledgeRepository } from "./desktop-knowledge-repository.js";
 import { DesktopSearchPort, type TauriListen } from "./desktop-search-port.js";
+import { DesktopSecretStore } from "./desktop-secret-store.js";
+import { DesktopSettingsStore } from "./desktop-settings-store.js";
 import { DesktopReportRepository } from "./desktop-report-repository.js";
 import { DesktopTaskRepository } from "./desktop-task-repository.js";
 import { DesktopTimelineQuery } from "./desktop-timeline-query.js";
@@ -58,6 +60,8 @@ export type DesktopServices = Pick<
   };
   readonly timeline: TimelineQuery;
   readonly dataManagement: DataManagementPort;
+  readonly settingsStore: DesktopSettingsStore;
+  readonly secretStore: DesktopSecretStore;
 };
 
 export interface CreateDesktopServicesOptions {
@@ -126,6 +130,8 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
         : { listen: options.searchProgressListener }),
     }),
     timeline: new DesktopTimelineQuery({ client }),
+    settingsStore: new DesktopSettingsStore({ client }),
+    secretStore: new DesktopSecretStore({ client }),
   };
 }
 
