@@ -2,7 +2,7 @@ import type { ImportCommitResult, ImportPreview } from "@dailyflow/application";
 import { Button } from "@dailyflow/ui";
 import { CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 
-import { formatByteCount } from "./import-preview-table.js";
+import { formatByteCount } from "./import-preview-utils.js";
 
 export interface ImportResultProps {
   readonly result: ImportCommitResult;

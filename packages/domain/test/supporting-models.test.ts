@@ -126,7 +126,7 @@ describe("supporting domain models", () => {
     expect(attachment.blobId).toBe("0198e2f4-7e33-7c70-a8b2-18c1520f9c28");
   });
 
-  it("starts a new import session in scanning state without fabricated counts", () => {
+  it("starts a new import session in scanning state at revision one", () => {
     const session = createImportSession(
       {
         rootLabel: "历史日志",
@@ -138,7 +138,7 @@ describe("supporting domain models", () => {
     expect(session.status).toBe("scanning");
     expect(session.scannedCount).toBe(0);
     expect(session.entries).toEqual([]);
-    expect(session.revision).toBe(0);
+    expect(session.revision).toBe(1);
   });
 
   it("creates a report for a validated period without converting its dates", () => {

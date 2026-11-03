@@ -25,6 +25,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
@@ -73,11 +74,7 @@ const journal = createJournal(
   },
 );
 
-function makeKnowledgeItem(
-  kind: KnowledgeKind,
-  title: string,
-  id = KNOWLEDGE_ID,
-): KnowledgeItem {
+function makeKnowledgeItem(kind: KnowledgeKind, title: string, id = KNOWLEDGE_ID): KnowledgeItem {
   return {
     ...createKnowledgeItem(
       {
@@ -110,11 +107,7 @@ function makeKnowledgeItem(
 }
 
 const issueItem = makeKnowledgeItem("issue", "部署连接超时");
-const solutionItem = makeKnowledgeItem(
-  "solution",
-  "回滚部署并保留旧版本",
-  SOLUTION_KNOWLEDGE_ID,
-);
+const solutionItem = makeKnowledgeItem("solution", "回滚部署并保留旧版本", SOLUTION_KNOWLEDGE_ID);
 
 function createKnowledgeServices(
   overrides: Partial<KnowledgeRuntimeServices> = {},
@@ -138,6 +131,7 @@ function createServices(
 ): AppRuntimeServices {
   return {
     analytics: createAnalyticsServicesStub(),
+    backups: createBackupServicesStub(),
     exports: createExportServicesStub(),
     imports: createImportServicesStub(),
     knowledge,

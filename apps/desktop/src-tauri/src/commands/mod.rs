@@ -1,5 +1,6 @@
 pub mod analytics_commands;
 pub mod attachment_commands;
+pub mod backup_commands;
 pub mod export_commands;
 pub mod import_commands;
 pub mod journal_commands;

@@ -119,10 +119,7 @@ export function KnowledgePromotionDialog({
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button
-            disabled={saving || title.trim() === ""}
-            onClick={() => void handlePromote()}
-          >
+          <Button disabled={saving || title.trim() === ""} onClick={() => void handlePromote()}>
             {saving ? (
               <RotateCw aria-hidden="true" className="size-4 animate-spin" />
             ) : (

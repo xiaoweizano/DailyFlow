@@ -18,10 +18,7 @@ import {
   type Task,
 } from "@dailyflow/domain";
 
-import {
-  buildExportArchive,
-  createExportArtifact,
-} from "../shared/export/export-archive.js";
+import { buildExportArchive, createExportArtifact } from "../shared/export/export-archive.js";
 import { estimateExportDataset } from "../shared/export/export-estimate.js";
 import type { TauriCommandClient } from "./tauri-client.js";
 import type {
@@ -143,8 +140,7 @@ function toImportEntry(dto: ImportEntryDto): ImportEntry {
     fileSha256: dto.fileSha256,
     rawSize: dto.rawSize,
     rawCaptureStatus: dto.rawCaptureStatus,
-    rawBytes:
-      dto.rawBytesBase64 === null ? null : base64ToBytes(dto.rawBytesBase64),
+    rawBytes: dto.rawBytesBase64 === null ? null : base64ToBytes(dto.rawBytesBase64),
     rawCleanedAt: dto.rawCleanedAt,
     status: dto.status,
     conflictKind: dto.conflictKind,
@@ -152,9 +148,7 @@ function toImportEntry(dto: ImportEntryDto): ImportEntry {
     errorDetail: dto.errorDetail,
     journalId: dto.journalId,
     previousJournalRevision:
-      dto.previousJournalRevision === null
-        ? null
-        : parseRevision(dto.previousJournalRevision),
+      dto.previousJournalRevision === null ? null : parseRevision(dto.previousJournalRevision),
     createdAt: dto.createdAt,
     committedAt: dto.committedAt,
   };
@@ -174,9 +168,7 @@ function toDataset(snapshot: ExportSnapshotDto): ExportDataset {
         tags: [...record.tags].sort(compareText),
       }))
       .sort((left, right) => compareText(left.item.id, right.item.id)),
-    tasks: snapshot.tasks
-      .map(toTask)
-      .sort((left, right) => compareText(left.id, right.id)),
+    tasks: snapshot.tasks.map(toTask).sort((left, right) => compareText(left.id, right.id)),
     attachments: snapshot.attachments
       .map((record) => ({
         attachment: toAttachment(record.attachment),
@@ -223,9 +215,6 @@ export class DesktopExportSource implements ExportSource {
       options,
       generatedAt: options.generatedAt,
     });
-    return createExportArtifact(
-      bundle,
-      `dailyflow-export-${options.generatedAt.slice(0, 10)}.zip`,
-    );
+    return createExportArtifact(bundle, `dailyflow-export-${options.generatedAt.slice(0, 10)}.zip`);
   }
 }

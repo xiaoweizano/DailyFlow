@@ -13,8 +13,7 @@ import { zipSync } from "fflate";
 
 const textEncoder = new TextEncoder();
 export const EXPORT_ZIP_TIME = new Date("1980-01-01T00:00:00.000Z");
-const WINDOWS_RESERVED_NAME =
-  /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/iu;
+const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/iu;
 
 export interface ExportArchiveBundle {
   readonly files: readonly ExportFile[];
@@ -42,6 +41,7 @@ function exportEnabled(
 export function sanitizeExportFileName(input: string, fallback = "untitled"): string {
   let value = input
     .normalize("NFC")
+    // eslint-disable-next-line no-control-regex -- Filesystem names must not contain control characters.
     .replace(/[\u0000-\u001f\u007f<>:"/\\|?*]/gu, " ")
     .replace(/\s+/gu, " ")
     .trim()
@@ -56,14 +56,21 @@ export function sanitizeExportFileName(input: string, fallback = "untitled"): st
 
   const characters = Array.from(value);
   if (characters.length > 160) {
-    value = characters.slice(0, 160).join("").replace(/[.\s]+$/gu, "");
+    value = characters
+      .slice(0, 160)
+      .join("")
+      .replace(/[.\s]+$/gu, "");
   }
 
   return value.length === 0 ? fallback : value;
 }
 
 function uniquePaths(
-  entries: readonly { readonly basePath: string; readonly id: string; readonly bytes: Uint8Array }[],
+  entries: readonly {
+    readonly basePath: string;
+    readonly id: string;
+    readonly bytes: Uint8Array;
+  }[],
 ): ExportFile[] {
   const counts = new Map<string, number>();
   for (const entry of entries) {
@@ -150,7 +157,9 @@ function ndjsonFile(lines: readonly NdjsonEntityLine[]): Uint8Array {
     (left, right) =>
       compareText(left.entityType, right.entityType) || compareText(left.id, right.id),
   );
-  return encodeText(ordered.length === 0 ? "" : `${ordered.map((entry) => entry.line).join("\n")}\n`);
+  return encodeText(
+    ordered.length === 0 ? "" : `${ordered.map((entry) => entry.line).join("\n")}\n`,
+  );
 }
 
 function selected<T>(
@@ -339,11 +348,7 @@ export async function buildExportArchive(
   }
 
   if (exportEnabled(scope, "imports")) {
-    const sessions = selected(
-      dataset.imports.sessions,
-      includeDeleted,
-      () => null,
-    );
+    const sessions = selected(dataset.imports.sessions, includeDeleted, () => null);
     files.push({
       path: "imports/sessions.ndjson",
       bytes: ndjsonFile(
@@ -380,9 +385,7 @@ export async function buildExportArchive(
     const lines: NdjsonEntityLine[] = [];
     for (const { sessionId, entry } of dataset.imports.entries) {
       const captured =
-        includeImportRawBytes &&
-        entry.rawCaptureStatus === "captured" &&
-        entry.rawBytes !== null;
+        includeImportRawBytes && entry.rawCaptureStatus === "captured" && entry.rawBytes !== null;
       const rawBlobPath = captured
         ? `imports/raw/${entry.id}-${sanitizeExportFileName(entry.originalFileName)}.bin`
         : null;

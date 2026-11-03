@@ -1,8 +1,4 @@
-import type {
-  ExportArtifact,
-  ExportSaveResult,
-  ExportTarget,
-} from "@dailyflow/application";
+import type { ExportArtifact, ExportSaveResult, ExportTarget } from "@dailyflow/application";
 
 export interface WebFileWritable {
   write(data: Uint8Array): Promise<void>;
@@ -26,9 +22,7 @@ export type WebSaveFilePicker = (
   options?: WebSaveFilePickerOptions,
 ) => Promise<WebFileHandle | null>;
 
-export type WebArtifactDownload = (
-  artifact: ExportArtifact,
-) => void | Promise<void>;
+export type WebArtifactDownload = (artifact: ExportArtifact) => void | Promise<void>;
 
 export interface WebExportTargetOptions {
   readonly saveFilePicker?: WebSaveFilePicker;

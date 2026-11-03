@@ -155,7 +155,11 @@ export function shiftAnalyticsPeriod(period: AnalyticsPeriod, amount: number): A
   }
 
   if (period.periodType === "week") {
-    return resolveAnalyticsPeriod(period.periodType, shiftDate(period.start, amount * 7), period.timezone);
+    return resolveAnalyticsPeriod(
+      period.periodType,
+      shiftDate(period.start, amount * 7),
+      period.timezone,
+    );
   }
 
   const [yearText = "0", monthText = "0"] = period.start.split("-");
@@ -163,11 +167,7 @@ export function shiftAnalyticsPeriod(period: AnalyticsPeriod, amount: number): A
   const month = Number(monthText);
   if (period.periodType === "month") {
     const shifted = new Date(Date.UTC(year, month - 1 + amount, 1));
-    return resolveAnalyticsPeriod(
-      period.periodType,
-      fromUtcDate(shifted),
-      period.timezone,
-    );
+    return resolveAnalyticsPeriod(period.periodType, fromUtcDate(shifted), period.timezone);
   }
 
   return resolveAnalyticsPeriod(
@@ -208,7 +208,10 @@ export function buildAnalyticsSummary(
     return isWithinPeriod(toLocalDate(task.completedAt, period.timezone), period);
   });
 
-  const daily = new Map<LocalDate, { journalCount: number; characterCount: number; tasksCompleted: number }>();
+  const daily = new Map<
+    LocalDate,
+    { journalCount: number; characterCount: number; tasksCompleted: number }
+  >();
   for (let date = period.start; date <= period.end; date = shiftDate(date, 1)) {
     daily.set(date, { journalCount: 0, characterCount: 0, tasksCompleted: 0 });
   }

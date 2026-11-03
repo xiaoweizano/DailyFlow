@@ -2,10 +2,7 @@
 
 import "./setup-dom.js";
 
-import type {
-  AnalyticsPeriod,
-  AnalyticsSummary,
-} from "@dailyflow/application";
+import type { AnalyticsPeriod, AnalyticsSummary } from "@dailyflow/application";
 import {
   createContentDocument,
   createReport as createDomainReport,
@@ -25,6 +22,7 @@ import { AnalyticsPage } from "../src/analytics/analytics-page.js";
 import type { AnalyticsRuntimeServices } from "../src/analytics/analytics-services.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
+import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 
@@ -136,7 +134,7 @@ function createAnalyticsServices(
   const report = options.report ?? null;
   return {
     getSummary: vi.fn(async () => options.summary ?? summary),
-    getReport: vi.fn(async (_period: AnalyticsPeriod) => report),
+    getReport: vi.fn(async () => report),
     saveReport: vi.fn(async (input) =>
       ok({
         ...createStoredReport(summary.period),
@@ -171,6 +169,7 @@ function createServices(
 ): AppRuntimeServices {
   return {
     analytics,
+    backups: createBackupServicesStub(),
     exports: createExportServicesStub(),
     imports: createImportServicesStub(),
     knowledge: {

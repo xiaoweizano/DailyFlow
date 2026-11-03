@@ -21,11 +21,8 @@ import {
 import { useState } from "react";
 
 import { useAppServices } from "../app-services-hooks.js";
-import {
-  canSelectPreviewEntry,
-  formatByteCount,
-  ImportPreviewTable,
-} from "./import-preview-table.js";
+import { ImportPreviewTable } from "./import-preview-table.js";
+import { canSelectPreviewEntry, formatByteCount } from "./import-preview-utils.js";
 import { ImportResult } from "./import-result.js";
 
 type ImportStage = "select" | "scan" | "preview" | "strategy" | "commit" | "result";
@@ -38,12 +35,6 @@ const stageItems = [
   { id: "commit", label: "提交" },
   { id: "result", label: "结果" },
 ] as const satisfies ReadonlyArray<{ id: ImportStage; label: string }>;
-
-const conflictKindLabels: Partial<Record<NonNullable<ImportPreviewEntry["conflictKind"]>, string>> =
-  {
-    same_date_conflict: "同日期已有日志",
-    duplicate_date_in_batch: "本批内日期重复",
-  };
 
 function defaultSelectedPaths(entries: readonly ImportPreviewEntry[]): string[] {
   return entries.filter(canSelectPreviewEntry).map((entry) => entry.relativePath);

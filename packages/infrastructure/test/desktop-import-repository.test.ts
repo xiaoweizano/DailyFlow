@@ -92,8 +92,7 @@ function sessionDto(status: "scanning" | "preview_ready" | "committing") {
     invalidCount: session.invalidCount,
     entries: session.entries.map(({ rawBytes, ...entry }) => ({
       ...entry,
-      rawBytesBase64:
-        rawBytes === null ? null : Buffer.from(rawBytes).toString("base64"),
+      rawBytesBase64: rawBytes === null ? null : Buffer.from(rawBytes).toString("base64"),
     })),
     createdAt: session.createdAt,
     completedAt: session.completedAt,

@@ -173,9 +173,9 @@ describe("DexieReportRepository", () => {
       revision: 1,
     });
 
-    const conflict = repository.save({ ...saved, title: "Stale update" }, 0).catch(
-      (error: unknown) => error,
-    );
+    const conflict = repository
+      .save({ ...saved, title: "Stale update" }, 0)
+      .catch((error: unknown) => error);
     await expect(conflict).resolves.toBeInstanceOf(PortError);
     await expect(conflict).resolves.toMatchObject({ code: "CONFLICT" });
   });

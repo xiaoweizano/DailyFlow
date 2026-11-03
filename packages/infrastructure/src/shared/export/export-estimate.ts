@@ -37,8 +37,7 @@ export function estimateExportDataset(
       : 0;
   const importSessions = includeImports ? dataset.imports.sessions.length : 0;
   const importEntries = includeImports ? dataset.imports.entries.length : 0;
-  const entityCount =
-    journals + knowledge + tasks + attachments + importSessions + importEntries;
+  const entityCount = journals + knowledge + tasks + attachments + importSessions + importEntries;
   const dataBytes =
     dataset.attachments.reduce(
       (total, record) =>

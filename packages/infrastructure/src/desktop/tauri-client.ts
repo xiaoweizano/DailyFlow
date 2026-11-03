@@ -7,6 +7,12 @@ import {
   AttachmentSoftDeleteOwnerLinksDtoSchema,
   AnalyticsPeriodQueryDtoSchema,
   AnalyticsSourceDtoSchema,
+  BackupReadFileResultDtoSchema,
+  BackupRestoreCommandDtoSchema,
+  BackupRestoreResultDtoSchema,
+  BackupSnapshotDtoSchema,
+  BackupWriteFileInputDtoSchema,
+  BackupWriteFileResultDtoSchema,
   BeginImportCommitDtoSchema,
   ExportSnapshotDtoSchema,
   ExportWriteFileInputDtoSchema,
@@ -58,6 +64,12 @@ import {
   type AttachmentSoftDeleteOwnerLinksDto,
   type AnalyticsPeriodQueryDto,
   type AnalyticsSourceDto,
+  type BackupReadFileResultDto,
+  type BackupRestoreCommandDto,
+  type BackupRestoreResultDto,
+  type BackupSnapshotDto,
+  type BackupWriteFileInputDto,
+  type BackupWriteFileResultDto,
   type BeginImportCommitDto,
   type ExportSnapshotDto,
   type ExportWriteFileInputDto,
@@ -464,14 +476,43 @@ export class TauriCommandClient {
     return this.request(TAURI_COMMANDS.exportSnapshot, {}, ExportSnapshotDtoSchema);
   }
 
-  async writeExportFile(
-    input: ExportWriteFileInputDto,
-  ): Promise<ExportWriteFileResultDto> {
+  async writeExportFile(input: ExportWriteFileInputDto): Promise<ExportWriteFileResultDto> {
     return this.request(
       TAURI_COMMANDS.exportWriteFile,
       { input },
       ExportWriteFileResultDtoSchema,
       z.object({ input: ExportWriteFileInputDtoSchema }),
+    );
+  }
+
+  async backupSnapshot(): Promise<BackupSnapshotDto> {
+    return this.request(TAURI_COMMANDS.backupSnapshot, {}, BackupSnapshotDtoSchema);
+  }
+
+  async backupReadFile(sourcePath: string): Promise<BackupReadFileResultDto> {
+    return this.request(
+      TAURI_COMMANDS.backupReadFile,
+      { sourcePath },
+      BackupReadFileResultDtoSchema,
+      z.object({ sourcePath: z.string().min(1) }),
+    );
+  }
+
+  async backupWriteFile(input: BackupWriteFileInputDto): Promise<BackupWriteFileResultDto> {
+    return this.request(
+      TAURI_COMMANDS.backupWriteFile,
+      { input },
+      BackupWriteFileResultDtoSchema,
+      z.object({ input: BackupWriteFileInputDtoSchema }),
+    );
+  }
+
+  async backupRestore(command: BackupRestoreCommandDto): Promise<BackupRestoreResultDto> {
+    return this.request(
+      TAURI_COMMANDS.backupRestore,
+      { input: command },
+      BackupRestoreResultDtoSchema,
+      z.object({ input: BackupRestoreCommandDtoSchema }),
     );
   }
 

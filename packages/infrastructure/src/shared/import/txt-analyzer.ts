@@ -1,7 +1,4 @@
-import type {
-  ImportTxtAnalysis,
-  ImportTxtAnalyzer,
-} from "@dailyflow/application";
+import type { ImportTxtAnalysis, ImportTxtAnalyzer } from "@dailyflow/application";
 
 import { decodeTxt } from "./txt-decoder.js";
 

@@ -132,7 +132,10 @@ export function ReportEditor({
       </header>
 
       {errorMessage === null ? null : (
-        <p role="alert" className="border-b border-danger/25 bg-danger/5 px-4 py-2 text-sm text-danger">
+        <p
+          role="alert"
+          className="border-b border-danger/25 bg-danger/5 px-4 py-2 text-sm text-danger"
+        >
           {errorMessage}
         </p>
       )}

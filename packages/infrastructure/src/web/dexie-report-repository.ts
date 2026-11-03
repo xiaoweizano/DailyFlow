@@ -1,8 +1,4 @@
-import {
-  PortError,
-  type ReportPeriodKey,
-  type ReportRepository,
-} from "@dailyflow/application";
+import { PortError, type ReportPeriodKey, type ReportRepository } from "@dailyflow/application";
 import {
   createContentDocument,
   parseRevision,
@@ -12,11 +8,7 @@ import {
   type JsonObject,
   type Report,
 } from "@dailyflow/domain";
-import {
-  jsonToMarkdown,
-  jsonToPlainText,
-  type TiptapJsonNode,
-} from "@dailyflow/editor";
+import { jsonToMarkdown, jsonToPlainText, type TiptapJsonNode } from "@dailyflow/editor";
 import { stableStringify } from "@dailyflow/shared";
 
 import type { DailyFlowDb } from "./db.js";
@@ -74,11 +66,7 @@ function toRow(report: Report): ReportRow {
   };
 }
 
-function conflict(
-  id: EntityId,
-  expectedRevision: number | null,
-  actualRevision?: number,
-): never {
+function conflict(id: EntityId, expectedRevision: number | null, actualRevision?: number): never {
   throw new PortError("CONFLICT", {
     message: "Report revision conflict",
     entity: "report",

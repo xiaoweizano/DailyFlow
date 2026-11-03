@@ -914,37 +914,37 @@ docs/
 - Create: `packages/infrastructure/test/backup.test.ts`
 - Create: `apps/desktop/src-tauri/tests/backup_restore.rs`
 
-- [ ] **Step 1: 写归档失败测试**
+- [x] **Step 1: 写归档失败测试**
 
   覆盖 manifest 缺字段、schema 过新、实体 ID 重复、附件哈希错误、导入原始字节哈希错误、`../`/UNC/盘符路径、压缩炸弹和恢复到已存在数据时的安全快照。
 
-- [ ] **Step 2: 生成可移植备份**
+- [x] **Step 2: 生成可移植备份**
 
   写入正文、历史版本、结构化块、知识、任务、标签关系、报告、附件、导入条目和 `imports/raw/<hash前缀>/<sha256>.bin`。每个 captured 文件登记 checksum；`rawCaptureStatus`、可空哈希/大小必须一起导出，`cleaned` 与 `unavailable` 都写 `rawBlobPath: null`，不能伪造文件或混淆两种状态。
 
-- [ ] **Step 3: 实现一致性读取**
+- [x] **Step 3: 实现一致性读取**
 
   桌面可在逻辑只读事务中读取；另有快速备份时使用 `VACUUM INTO`，不得直接复制 WAL 活跃数据库。Web 用单个读事务或冻结写入的 staging 游标，避免备份期间混入不同 revision。
 
-- [ ] **Step 4: 实现校验与 staging**
+- [x] **Step 4: 实现校验与 staging**
 
   恢复先解包到受限临时目录或 staging stores，逐项校验 manifest、Schema、外键、日期唯一性、正文 JSON、附件和导入原始字节状态。`captured` 校验哈希与大小，`cleaned` 校验清理时间与保留哈希/大小，`unavailable` 校验读取错误且不得出现原始字节文件。限制总解压量、单文件大小和文件数量。
 
-- [ ] **Step 5: 实现可回滚切换**
+- [x] **Step 5: 实现可回滚切换**
 
   当前数据库非空时先自动创建安全快照，再在临时数据库/独立 stores 导入。校验成功后通过数据库替换或单事务切换；任何失败删除 staging 并保留当前数据。恢复后搜索标记 `stale`，由显式重建恢复。
 
-- [ ] **Step 6: 注册备份路由**
+- [x] **Step 6: 注册备份路由**
 
   在共享路由表注册 `/data/backup`，`BackupPage` 包装备份面板并接入两个组合根。恢复失败、取消和成功三种状态在桌面与 Web 都可观察，失败后仍可返回原有数据。
 
-- [ ] **Step 7: 运行验证**
+- [x] **Step 7: 运行验证**
 
   Run: `pnpm --filter @dailyflow/infrastructure test -- backup && pnpm --filter @dailyflow/web build && pnpm --filter @dailyflow/desktop build && cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml backup_restore`
 
   Expected: 备份后重开校验通过；在附件、原始字节和正文三类故障下当前库均可正常打开且实体计数不变。
 
-- [ ] **Step 8: 提交**
+- [x] **Step 8: 提交**
 
   Run: `git add packages apps/desktop apps/web && git commit -m "feat: add verified portable backup and rollback recovery"`
 

@@ -12,6 +12,7 @@ import type { ExportRuntimeServices } from "../src/data-management/export-servic
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createBackupServicesStub } from "./backup-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 
 const estimate: ExportEstimate = {
@@ -46,6 +47,7 @@ function createExports(overrides: Partial<ExportRuntimeServices> = {}): ExportRu
 function createServices(exports: ExportRuntimeServices): AppRuntimeServices {
   return {
     analytics: createAnalyticsServicesStub(),
+    backups: createBackupServicesStub(),
     exports,
     imports: createImportServicesStub(),
     knowledge: {

@@ -3,7 +3,6 @@ import type {
   EntityId,
   ImportConflictKind,
   ImportEncoding,
-  ImportEntryStatus,
   ImportNewlineStyle,
   ImportSession,
   LocalDate,
@@ -105,9 +104,6 @@ export interface TxtDocumentConverter {
 export interface ImportService {
   selectRoot(): Promise<ImportRoot | null>;
   scan(root: ImportRoot): Promise<AsyncIterable<RawImportFile>>;
-  createPreview(
-    root: ImportRoot,
-    files: AsyncIterable<RawImportFile>,
-  ): Promise<ImportPreview>;
+  createPreview(root: ImportRoot, files: AsyncIterable<RawImportFile>): Promise<ImportPreview>;
   commit(input: CommitImportInput): Promise<ImportCommitResult>;
 }

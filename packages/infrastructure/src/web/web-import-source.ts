@@ -124,11 +124,7 @@ async function pickDirectoryInputFiles(): Promise<readonly File[] | null> {
 
 function parseRoot(root: ImportRoot): WebRootHandle {
   if (typeof root.handle === "object" && root.handle !== null) {
-    if (
-      "kind" in root.handle &&
-      root.handle.kind === "directory" &&
-      "handle" in root.handle
-    ) {
+    if ("kind" in root.handle && root.handle.kind === "directory" && "handle" in root.handle) {
       return root.handle as WebRootHandle;
     }
     if ("kind" in root.handle && root.handle.kind === "files" && "files" in root.handle) {
@@ -142,7 +138,10 @@ function parseRoot(root: ImportRoot): WebRootHandle {
   });
 }
 
-function fallbackRelativePath(file: File): { readonly label: string; readonly relativePath: string } {
+function fallbackRelativePath(file: File): {
+  readonly label: string;
+  readonly relativePath: string;
+} {
   const normalized = normalizeImportRelativePath(
     file.webkitRelativePath.length === 0 ? file.name : file.webkitRelativePath,
   );

@@ -1,8 +1,4 @@
-import type {
-  ExportArtifact,
-  ExportSaveResult,
-  ExportTarget,
-} from "@dailyflow/application";
+import type { ExportArtifact, ExportSaveResult, ExportTarget } from "@dailyflow/application";
 import { parseContentHash } from "@dailyflow/domain";
 
 import type { TauriCommandClient } from "./tauri-client.js";
@@ -12,9 +8,7 @@ export interface DesktopExportPickerOptions {
   readonly extensions: readonly string[];
 }
 
-export type DesktopExportPicker = (
-  options: DesktopExportPickerOptions,
-) => Promise<string | null>;
+export type DesktopExportPicker = (options: DesktopExportPickerOptions) => Promise<string | null>;
 
 export interface DesktopExportTargetOptions {
   readonly client: Pick<TauriCommandClient, "writeExportFile">;
@@ -41,9 +35,7 @@ function bytesToBase64(bytes: Uint8Array): string {
   const chunkSize = 0x8000;
   for (let offset = 0; offset < bytes.length; offset += chunkSize) {
     chunks.push(
-      String.fromCharCode(
-        ...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length)),
-      ),
+      String.fromCharCode(...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length))),
     );
   }
   return btoa(chunks.join(""));

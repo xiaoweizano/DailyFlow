@@ -117,9 +117,7 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
             aria-autocomplete="list"
             aria-controls={listboxId}
             aria-expanded={results.length > 0}
-            aria-activedescendant={
-              selectedIndex < 0 ? undefined : `${optionId}-${selectedIndex}`
-            }
+            aria-activedescendant={selectedIndex < 0 ? undefined : `${optionId}-${selectedIndex}`}
             autoFocus
             value={query}
             placeholder="搜索日志、知识和待办"
@@ -150,7 +148,9 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
                   aria-label={result.title}
                   aria-selected={selectedIndex === index}
                   className={`cursor-pointer rounded-[var(--radius-control)] px-3 py-2.5 ${
-                    selectedIndex === index ? "bg-primary/8 text-foreground" : "text-muted-foreground"
+                    selectedIndex === index
+                      ? "bg-primary/8 text-foreground"
+                      : "text-muted-foreground"
                   }`}
                   onMouseEnter={() => setSelectedIndex(index)}
                   onMouseDown={(event) => {

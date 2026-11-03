@@ -13,10 +13,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { DailyFlowDb } from "../src/web/db.js";
 import { DexieImportRepository } from "../src/web/dexie-import-repository.js";
-import {
-  makeJournalSnapshot,
-  SequenceIdGenerator,
-} from "../src/testing/repository-contract.js";
+import { makeJournalSnapshot, SequenceIdGenerator } from "../src/testing/repository-contract.js";
 
 const SESSION_ID = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c41");
 const ENTRY_ID = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c42");
@@ -136,7 +133,9 @@ describe("Dexie ImportRepository", () => {
     await repository.savePreview(createPreviewSession());
 
     const stale = {
-      ...createPreviewSession([createEntry({ id: parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c44") })]),
+      ...createPreviewSession([
+        createEntry({ id: parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c44") }),
+      ]),
       revision: parseRevision(2),
     };
     const error = await repository.savePreview(stale).catch((reason: unknown) => reason);
@@ -209,9 +208,9 @@ describe("Dexie ImportRepository", () => {
     await expect(
       database.structuredBlocks.where("journalId").equals(JOURNAL_ID).count(),
     ).resolves.toBe(0);
-    await expect(
-      database.journalTags.where("journalId").equals(JOURNAL_ID).count(),
-    ).resolves.toBe(1);
+    await expect(database.journalTags.where("journalId").equals(JOURNAL_ID).count()).resolves.toBe(
+      1,
+    );
     await expect(
       database.searchDocs.where("ownerEntityId").equals(JOURNAL_ID).count(),
     ).resolves.toBe(1);

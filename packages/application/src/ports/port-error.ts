@@ -1,5 +1,10 @@
 export type PortErrorCode =
-  "VALIDATION_ERROR" | "NOT_FOUND" | "CONFLICT" | "STORAGE_UNAVAILABLE" | "QUOTA_EXCEEDED";
+  | "VALIDATION_ERROR"
+  | "NOT_FOUND"
+  | "CONFLICT"
+  | "STORAGE_UNAVAILABLE"
+  | "QUOTA_EXCEEDED"
+  | "BACKUP_INVALID";
 
 export interface PortErrorDetails {
   readonly message?: string;

@@ -10,6 +10,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
@@ -19,6 +20,7 @@ import { AppShell } from "../src/app-shell.js";
 function createServices(): AppRuntimeServices {
   return {
     analytics: createAnalyticsServicesStub(),
+    backups: createBackupServicesStub(),
     exports: createExportServicesStub(),
     imports: createImportServicesStub(),
     knowledge: {
@@ -70,9 +72,7 @@ function renderShell(): void {
     <MemoryRouter initialEntries={["/"]}>
       <AppServicesProvider services={createServices()}>
         <Routes>
-          <Route
-            element={<AppShell platform="web" storageLabel="IndexedDB" version="0.1.0" />}
-          >
+          <Route element={<AppShell platform="web" storageLabel="IndexedDB" version="0.1.0" />}>
             <Route index element={<p>工作台</p>} />
           </Route>
         </Routes>

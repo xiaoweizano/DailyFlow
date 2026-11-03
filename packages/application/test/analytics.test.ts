@@ -14,10 +14,7 @@ import {
   type AnalyticsSource,
 } from "../src/queries/analytics-query.js";
 import type { ReportRepository } from "../src/ports/report-repository.js";
-import {
-  createAppServices,
-  type ApplicationDependencies,
-} from "../src/services/app-services.js";
+import { createAppServices, type ApplicationDependencies } from "../src/services/app-services.js";
 import { generateReportDraft } from "../src/use-cases/generate-report-draft.js";
 import { saveReportDraft } from "../src/use-cases/save-report-draft.js";
 import { NOW, clock } from "./support.js";
@@ -199,12 +196,14 @@ describe("analytics summary", () => {
       solutionsCreated: 1,
       knowledgeItems: 2,
     });
-    expect(summary.activeTags).toEqual([
-      { name: "review", count: 2 },
-      { name: "deploy", count: 1 },
-      { name: "incident", count: 2 },
-      { name: "release", count: 2 },
-    ].sort((left, right) => right.count - left.count || left.name.localeCompare(right.name)));
+    expect(summary.activeTags).toEqual(
+      [
+        { name: "review", count: 2 },
+        { name: "deploy", count: 1 },
+        { name: "incident", count: 2 },
+        { name: "release", count: 2 },
+      ].sort((left, right) => right.count - left.count || left.name.localeCompare(right.name)),
+    );
     expect(summary.dailyActivity.find((day) => day.date === "2026-11-01")?.tasksCompleted).toBe(1);
     expect(summary.dailyActivity).toHaveLength(7);
   });
@@ -346,12 +345,13 @@ describe("report drafts", () => {
 describe("analytics application wiring", () => {
   it("exposes analytics queries and report draft saves through app services", async () => {
     const analytics = {
-      getSummary: async () => buildAnalyticsSummary(EMPTY_SOURCE, {
-        periodType: "week" as const,
-        start: parseLocalDate("2026-10-26"),
-        end: parseLocalDate("2026-11-01"),
-        timezone: "Asia/Shanghai",
-      }),
+      getSummary: async () =>
+        buildAnalyticsSummary(EMPTY_SOURCE, {
+          periodType: "week" as const,
+          start: parseLocalDate("2026-10-26"),
+          end: parseLocalDate("2026-11-01"),
+          timezone: "Asia/Shanghai",
+        }),
     };
     const reports = new FakeReportRepository();
     const services = createAppServices({

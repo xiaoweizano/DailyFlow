@@ -2,11 +2,7 @@
 
 import "./setup-dom.js";
 
-import type {
-  SavedJournalSnapshot,
-  SearchHit,
-  SearchResultPage,
-} from "@dailyflow/application";
+import type { SavedJournalSnapshot, SearchHit, SearchResultPage } from "@dailyflow/application";
 import { parseEntityId, parseLocalDate, parseUtcTimestamp } from "@dailyflow/domain";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -15,6 +11,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
@@ -42,6 +39,7 @@ function createServices(
 ): AppRuntimeServices {
   return {
     analytics: createAnalyticsServicesStub(),
+    backups: createBackupServicesStub(),
     exports: createExportServicesStub(),
     imports: createImportServicesStub(),
     knowledge: {
@@ -88,10 +86,7 @@ function createServices(
   };
 }
 
-function renderSearch(
-  services: AppRuntimeServices,
-  initialEntry = "/search?q=rollback",
-): void {
+function renderSearch(services: AppRuntimeServices, initialEntry = "/search?q=rollback"): void {
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <AppServicesProvider services={services}>
@@ -147,10 +142,7 @@ describe("global search", () => {
       { ...hit, entityType: "knowledge_item" as const, localDate: null },
       `/knowledge/${hit.entityId}`,
     ],
-    [
-      { ...hit, entityType: "task" as const, localDate: null },
-      `/tasks?task=${hit.entityId}`,
-    ],
+    [{ ...hit, entityType: "task" as const, localDate: null }, `/tasks?task=${hit.entityId}`],
     [
       { ...hit, entityType: "structured_block" as const },
       `/journal/2026-10-30?block=${hit.entityId}`,

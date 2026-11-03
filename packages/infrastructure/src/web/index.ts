@@ -4,6 +4,17 @@ export {
   type WebServices,
 } from "./web-services.js";
 export { WebAttachmentStore, type WebAttachmentStoreOptions } from "./web-attachment-store.js";
+export { WebBackupService, type WebBackupServiceOptions } from "./web-backup-service.js";
+export {
+  WebBackupSource,
+  type WebBackupFilePicker,
+  type WebBackupSourceOptions,
+} from "./web-backup-source.js";
+export {
+  WebBackupTarget,
+  type WebBackupFileSaver,
+  type WebBackupTargetOptions,
+} from "./web-backup-target.js";
 export {
   WebImportSource,
   type WebDirectoryHandle,
@@ -12,10 +23,7 @@ export {
   type WebFileHandle,
   type WebImportSourceOptions,
 } from "./web-import-source.js";
-export {
-  DexieAnalyticsQuery,
-  type DexieAnalyticsQueryOptions,
-} from "./dexie-analytics-query.js";
+export { DexieAnalyticsQuery, type DexieAnalyticsQueryOptions } from "./dexie-analytics-query.js";
 export {
   DexieReportRepository,
   type DexieReportRepositoryOptions,
@@ -26,10 +34,7 @@ export {
   type DexieKnowledgeRepositoryOptions,
 } from "./dexie-knowledge-repository.js";
 export { DexieTimelineQuery, type DexieTimelineQueryOptions } from "./dexie-timeline-query.js";
-export {
-  WebExportSource,
-  type WebExportSourceOptions,
-} from "./web-export-source.js";
+export { WebExportSource, type WebExportSourceOptions } from "./web-export-source.js";
 export {
   WebExportTarget,
   type WebArtifactDownload,

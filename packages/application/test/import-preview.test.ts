@@ -59,9 +59,7 @@ describe("TXT import date detection", () => {
   });
 
   it("normalizes Windows separators to a safe logical relative path", () => {
-    expect(normalizeImportRelativePath("202504\\2025-04-01.txt")).toBe(
-      "202504/2025-04-01.txt",
-    );
+    expect(normalizeImportRelativePath("202504\\2025-04-01.txt")).toBe("202504/2025-04-01.txt");
   });
 
   it.each([
@@ -71,12 +69,9 @@ describe("TXT import date detection", () => {
     "\\\\server\\logs\\20250401.txt",
     "C:\\logs\\20250401.txt",
     "202504/20250401.txt\0.txt",
-  ])(
-    "rejects path traversal or absolute path %s",
-    (relativePath) => {
-      expect(() => normalizeImportRelativePath(relativePath)).toThrow(RangeError);
-    },
-  );
+  ])("rejects path traversal or absolute path %s", (relativePath) => {
+    expect(() => normalizeImportRelativePath(relativePath)).toThrow(RangeError);
+  });
 });
 
 describe("TXT import sessions", () => {

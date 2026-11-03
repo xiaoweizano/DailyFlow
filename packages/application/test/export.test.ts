@@ -1,8 +1,4 @@
-import {
-  parseContentHash,
-  type Clock,
-  type UtcTimestamp,
-} from "@dailyflow/domain";
+import { parseContentHash, type Clock, type UtcTimestamp } from "@dailyflow/domain";
 import { describe, expect, it, vi } from "vitest";
 
 import {

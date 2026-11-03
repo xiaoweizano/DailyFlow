@@ -1,5 +1,8 @@
 import type {
   AppServices,
+  BackupService,
+  BackupSource,
+  BackupTarget,
   ExportSource,
   ExportTarget,
   ImportRepository,
@@ -14,18 +17,16 @@ import { TxtAnalyzer } from "../shared/import/txt-analyzer.js";
 import { TxtDocumentConverter } from "../shared/import/txt-document-converter.js";
 import { DesktopAttachmentStore } from "./desktop-attachment-store.js";
 import { DesktopAnalyticsQuery } from "./desktop-analytics-query.js";
+import { DesktopBackupService } from "./desktop-backup-service.js";
 import {
-  DesktopExportSource,
-} from "./desktop-export-source.js";
-import {
-  DesktopExportTarget,
-  type DesktopExportPicker,
-} from "./desktop-export-target.js";
+  DesktopBackupSource,
+  type DesktopBackupPicker as DesktopBackupSourcePicker,
+} from "./desktop-backup-source.js";
+import { DesktopBackupTarget, type DesktopBackupTargetPicker } from "./desktop-backup-target.js";
+import { DesktopExportSource } from "./desktop-export-source.js";
+import { DesktopExportTarget, type DesktopExportPicker } from "./desktop-export-target.js";
 import { DesktopImportRepository } from "./desktop-import-repository.js";
-import {
-  DesktopImportSource,
-  type DesktopDirectoryPicker,
-} from "./desktop-import-source.js";
+import { DesktopImportSource, type DesktopDirectoryPicker } from "./desktop-import-source.js";
 import { DesktopJournalRepository } from "./desktop-journal-repository.js";
 import { DesktopKnowledgeRepository } from "./desktop-knowledge-repository.js";
 import { DesktopSearchPort } from "./desktop-search-port.js";
@@ -38,6 +39,11 @@ export type DesktopServices = Pick<
   AppServices,
   "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > & {
+  readonly backupStorage: {
+    readonly service: BackupService;
+    readonly source: BackupSource;
+    readonly target: BackupTarget;
+  };
   readonly importStorage: {
     readonly analyzer: ImportTxtAnalyzer;
     readonly converter: TxtDocumentConverterPort;
@@ -57,6 +63,8 @@ export interface CreateDesktopServicesOptions {
   readonly clock?: Clock;
   readonly importPicker?: DesktopDirectoryPicker;
   readonly exportPicker?: DesktopExportPicker;
+  readonly backupSourcePicker?: DesktopBackupSourcePicker;
+  readonly backupTargetPicker?: DesktopBackupTargetPicker;
 }
 
 const systemClock: Clock = {
@@ -75,10 +83,23 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
     client,
     ...(options.exportPicker === undefined ? {} : { picker: options.exportPicker }),
   });
+  const backupSource = new DesktopBackupSource({
+    client,
+    ...(options.backupSourcePicker === undefined ? {} : { picker: options.backupSourcePicker }),
+  });
+  const backupTarget = new DesktopBackupTarget({
+    client,
+    ...(options.backupTargetPicker === undefined ? {} : { picker: options.backupTargetPicker }),
+  });
 
   return {
     analytics: new DesktopAnalyticsQuery({ client }),
     attachments: new DesktopAttachmentStore({ client, clock }),
+    backupStorage: {
+      service: new DesktopBackupService({ client, clock }),
+      source: backupSource,
+      target: backupTarget,
+    },
     importStorage: {
       analyzer: new TxtAnalyzer(),
       converter: new TxtDocumentConverter(),

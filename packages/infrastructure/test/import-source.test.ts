@@ -146,8 +146,9 @@ describe("DesktopImportSource", () => {
 
     const root = await source.selectRoot();
     const consume = async () => {
-      for await (const _file of source.scan(root!)) {
+      for await (const file of source.scan(root!)) {
         // Consume the stream so the validation path executes.
+        void file;
       }
     };
 
@@ -195,10 +196,7 @@ describe("WebImportSource", () => {
   it("recursively streams TXT files from a File System Access directory", async () => {
     const rootHandle = directory("logs", [
       file("ignore.md", "ignored"),
-      directory("202504", [
-        file("20250401.txt", "日志"),
-        file("nested", "ignored"),
-      ]),
+      directory("202504", [file("20250401.txt", "日志"), file("nested", "ignored")]),
     ]);
     const source = new WebImportSource({
       pickDirectory: async () => rootHandle,

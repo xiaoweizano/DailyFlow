@@ -21,6 +21,11 @@ import { createKnowledgeRuntimeServices } from "./knowledge/knowledge-services.j
 import { createSaveLifecycle, type SaveLifecycle } from "./lifecycle/save-lifecycle.js";
 import { createTaskRuntimeServices } from "./tasks/task-services.js";
 import {
+  createBackupRuntimeServices,
+  type BackupRuntimeServices,
+  type BackupStorageServices,
+} from "./data-management/backup-services.js";
+import {
   createExportRuntimeServices,
   type ExportRuntimeServices,
 } from "./data-management/export-services.js";
@@ -29,6 +34,7 @@ export interface CreateAppRuntimeServicesOptions extends Pick<
   AppServices,
   "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > {
+  readonly backupStorage: BackupStorageServices;
   readonly importStorage: ImportStorageServices;
   readonly exportStorage: ExportStorageServices;
   readonly timeline: TimelineQuery;
@@ -85,6 +91,10 @@ export function createAppRuntimeServices(
       clock,
       ids,
     }),
+    backups: createBackupRuntimeServices({
+      ...options.backupStorage,
+      clock,
+    }),
     attachments: createAttachmentRuntimeServices({
       attachments: options.attachments,
     }),
@@ -128,4 +138,4 @@ export function createAppRuntimeServices(
   };
 }
 
-export type { ExportRuntimeServices };
+export type { BackupRuntimeServices, ExportRuntimeServices };

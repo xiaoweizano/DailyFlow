@@ -25,10 +25,16 @@ async function loadTagNames(
   const [journalLinks, knowledgeLinks] = await Promise.all([
     journalIds.length === 0
       ? Promise.resolve([])
-      : database.journalTags.where("journalId").anyOf([...journalIds]).toArray(),
+      : database.journalTags
+          .where("journalId")
+          .anyOf([...journalIds])
+          .toArray(),
     knowledgeIds.length === 0
       ? Promise.resolve([])
-      : database.knowledgeTags.where("knowledgeItemId").anyOf([...knowledgeIds]).toArray(),
+      : database.knowledgeTags
+          .where("knowledgeItemId")
+          .anyOf([...knowledgeIds])
+          .toArray(),
   ]);
   const tagIds = new Set<EntityId>();
   for (const link of journalLinks) {
@@ -37,8 +43,7 @@ async function loadTagNames(
   for (const link of knowledgeLinks) {
     tagIds.add(link.tagId);
   }
-  const tagRows =
-    tagIds.size === 0 ? [] : await database.tags.bulkGet([...tagIds]);
+  const tagRows = tagIds.size === 0 ? [] : await database.tags.bulkGet([...tagIds]);
   const names = new Map<EntityId, string>();
   for (const tag of tagRows) {
     if (tag !== undefined) {
@@ -110,16 +115,14 @@ export class DexieAnalyticsQuery implements AnalyticsQuery {
         completedAt: task.completedAt,
         deletedAt: task.deletedAt,
       })),
-      knowledge: knowledge.map(
-        (item): AnalyticsKnowledgeSource => ({
-          id: item.id,
-          kind: item.kind,
-          title: item.title,
-          createdAt: item.createdAt,
-          tags: tags.knowledgeTags.get(item.id) ?? [],
-          deletedAt: item.deletedAt,
-        }),
-      ),
+      knowledge: knowledge.map((item): AnalyticsKnowledgeSource => ({
+        id: item.id,
+        kind: item.kind,
+        title: item.title,
+        createdAt: item.createdAt,
+        tags: tags.knowledgeTags.get(item.id) ?? [],
+        deletedAt: item.deletedAt,
+      })),
     };
 
     return buildAnalyticsSummary(source, period);

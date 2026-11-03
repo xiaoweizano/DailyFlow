@@ -116,18 +116,13 @@ function toImportEntry(row: ImportEntryRow): ImportEntry {
     errorDetail: row.errorDetail,
     journalId: row.journalId,
     previousJournalRevision:
-      row.previousJournalRevision === null
-        ? null
-        : parseRevision(row.previousJournalRevision),
+      row.previousJournalRevision === null ? null : parseRevision(row.previousJournalRevision),
     createdAt: row.createdAt,
     committedAt: row.committedAt,
   };
 }
 
-function toImportSession(
-  row: ImportSessionRow,
-  entries: readonly ImportEntryRow[],
-): ImportSession {
+function toImportSession(row: ImportSessionRow, entries: readonly ImportEntryRow[]): ImportSession {
   return {
     id: row.id,
     rootLabel: row.rootLabel,
@@ -211,12 +206,7 @@ export class DexieImportRepository implements ImportRepository {
           return notFound("import_session", session.id);
         }
         if (current.status !== "scanning" || current.revision !== session.revision - 1) {
-          return conflict(
-            "import_session",
-            session.id,
-            session.revision - 1,
-            current.revision,
-          );
+          return conflict("import_session", session.id, session.revision - 1, current.revision);
         }
         if (session.status !== "preview_ready") {
           throw new PortError("VALIDATION_ERROR", {
@@ -307,10 +297,7 @@ export class DexieImportRepository implements ImportRepository {
         if (current === undefined) {
           return notFound("import_session", input.sessionId);
         }
-        if (
-          current.status !== "preview_ready" ||
-          current.revision !== input.expectedRevision
-        ) {
+        if (current.status !== "preview_ready" || current.revision !== input.expectedRevision) {
           return conflict(
             "import_session",
             input.sessionId,
@@ -369,9 +356,7 @@ export class DexieImportRepository implements ImportRepository {
         ]);
         if (
           selectedIds.size !==
-          input.entries.length +
-            input.skippedEntryIds.length +
-            input.failedEntryIds.length
+          input.entries.length + input.skippedEntryIds.length + input.failedEntryIds.length
         ) {
           throw new PortError("VALIDATION_ERROR", {
             message: "An import entry cannot be selected for multiple outcomes",
@@ -392,11 +377,7 @@ export class DexieImportRepository implements ImportRepository {
             );
           }
 
-          await saveJournalSnapshotInTransaction(
-            this.database,
-            entry.snapshot,
-            this.ids,
-          );
+          await saveJournalSnapshotInTransaction(this.database, entry.snapshot, this.ids);
           await this.database.importEntries.put({
             ...row,
             status: "imported",

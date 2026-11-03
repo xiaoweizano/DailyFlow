@@ -1,45 +1,61 @@
-import type { EntityId, UtcTimestamp } from "@dailyflow/domain";
+import type { UtcTimestamp } from "@dailyflow/domain";
+
+import type { BackupArtifact, BackupManifest, InspectedBackup } from "./backup-archive.js";
+
+export type {
+  BackupArchiveFile,
+  BackupArchiveLimits,
+  BackupArtifact,
+  BackupAttachmentRecord,
+  BackupDataset,
+  BackupManifest,
+  BackupRow,
+  BackupValidationErrorCode,
+  BuildBackupArchiveOptions,
+  InspectedBackup,
+} from "./backup-archive.js";
+
+export interface BackupSaveResult {
+  readonly filename: string;
+  readonly bytesWritten: number;
+}
+
+export interface BackupTarget {
+  save(artifact: BackupArtifact): Promise<BackupSaveResult | null>;
+}
+
+export interface BackupSourceFile {
+  readonly filename: string;
+  readonly bytes: Uint8Array;
+}
 
 export interface BackupSource {
-  readonly kind: "file" | "directory" | "web-file";
-  readonly handle: unknown;
+  select(): Promise<BackupSourceFile | null>;
 }
 
-export interface BackupManifest {
-  readonly schemaVersion: number;
-  readonly dataSchemaVersion: number;
-  readonly appVersion: string;
+export interface BackupCreateOptions {
+  readonly fileName: string;
   readonly createdAt: UtcTimestamp;
-  readonly deviceId: EntityId;
-  readonly entityCounts: Readonly<Record<string, number>>;
-  readonly attachmentCount: number;
-  readonly rawImportFileCount: number;
-  readonly totalBytes: number;
-  readonly sha256: string;
 }
 
-export interface BackupOptions {
-  readonly destination: BackupSource;
-  readonly includeImportRawBytes?: boolean;
+export interface BackupRestoreOptions {
+  readonly expectedContentDigest: string;
+  readonly replaceExisting: true;
 }
 
-export interface BackupResult {
-  readonly manifest: BackupManifest;
-  readonly completedAt: UtcTimestamp;
+export interface BackupSafetySnapshot {
+  readonly fileName: string;
+  readonly contentDigest: string;
 }
 
-export interface RestoreOptions {
-  readonly replaceExisting: boolean;
-  readonly expectedSha256: string;
-}
-
-export interface RestoreResult {
+export interface BackupRestoreResult {
   readonly manifest: BackupManifest;
   readonly restoredAt: UtcTimestamp;
+  readonly safetySnapshot?: BackupSafetySnapshot;
 }
 
 export interface BackupService {
-  create(options: BackupOptions): Promise<BackupResult>;
-  inspect(source: BackupSource): Promise<BackupManifest>;
-  restore(source: BackupSource, options: RestoreOptions): Promise<RestoreResult>;
+  create(options: BackupCreateOptions): Promise<BackupArtifact>;
+  inspect(bytes: Uint8Array): Promise<InspectedBackup>;
+  restore(bytes: Uint8Array, options: BackupRestoreOptions): Promise<BackupRestoreResult>;
 }

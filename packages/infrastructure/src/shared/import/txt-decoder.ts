@@ -11,8 +11,7 @@ const UTF8_BOM = Uint8Array.from([0xef, 0xbb, 0xbf]);
 
 export function decodeTxt(bytes: Uint8Array): DecodedTxt {
   const hasUtf8Bom =
-    bytes.length >= UTF8_BOM.length &&
-    UTF8_BOM.every((value, index) => bytes[index] === value);
+    bytes.length >= UTF8_BOM.length && UTF8_BOM.every((value, index) => bytes[index] === value);
 
   if (hasUtf8Bom) {
     const text = decodeStrict(bytes.subarray(UTF8_BOM.length), "utf-8");

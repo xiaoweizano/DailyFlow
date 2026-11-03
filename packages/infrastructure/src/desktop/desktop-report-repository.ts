@@ -7,11 +7,7 @@ import {
   type JsonObject,
   type Report,
 } from "@dailyflow/domain";
-import {
-  jsonToMarkdown,
-  jsonToPlainText,
-  type TiptapJsonNode,
-} from "@dailyflow/editor";
+import { jsonToMarkdown, jsonToPlainText, type TiptapJsonNode } from "@dailyflow/editor";
 import { stableStringify } from "@dailyflow/shared";
 
 import type { TauriCommandClient } from "./tauri-client.js";

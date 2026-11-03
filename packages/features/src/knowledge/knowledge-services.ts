@@ -7,13 +7,7 @@ import {
   type KnowledgeSummary,
   type Page,
 } from "@dailyflow/application";
-import type {
-  Clock,
-  EntityId,
-  IdGenerator,
-  KnowledgeItem,
-  LocalDate,
-} from "@dailyflow/domain";
+import type { Clock, EntityId, IdGenerator, KnowledgeItem, LocalDate } from "@dailyflow/domain";
 import type { AppError, Result } from "@dailyflow/shared";
 
 export interface KnowledgeDetail {

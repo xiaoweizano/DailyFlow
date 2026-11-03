@@ -1,5 +1,4 @@
 import {
-  createContentDocument,
   createImportSession,
   detectImportDate,
   nextEntityId,
@@ -27,7 +26,6 @@ import type {
 import type {
   CommitImportInput,
   ImportCommitResult,
-  ImportConflictPolicy,
   ImportPreview,
   ImportPreviewEntry,
   ImportRoot,
@@ -116,7 +114,22 @@ export class TxtImportService implements ImportService {
     };
     await this.dependencies.repository.savePreview(previewSession);
 
-    const { entries: _entries, ...sessionSummary } = previewSession;
+    const sessionSummary: Omit<ImportSession, "entries"> = {
+      id: previewSession.id,
+      rootLabel: previewSession.rootLabel,
+      status: previewSession.status,
+      options: previewSession.options,
+      revision: previewSession.revision,
+      scannedCount: previewSession.scannedCount,
+      readyCount: previewSession.readyCount,
+      importedCount: previewSession.importedCount,
+      skippedCount: previewSession.skippedCount,
+      conflictCount: previewSession.conflictCount,
+      invalidCount: previewSession.invalidCount,
+      createdAt: previewSession.createdAt,
+      completedAt: previewSession.completedAt,
+      errorSummary: previewSession.errorSummary,
+    };
     return {
       session: sessionSummary,
       entries: previewEntries,
@@ -128,9 +141,7 @@ export class TxtImportService implements ImportService {
         invalid: previewSession.invalidCount,
       },
       estimatedBytes: entries.reduce((total, entry) => total + (entry.rawSize ?? 0), 0),
-      warnings: previewEntries.flatMap((entry) =>
-        entry.issue === null ? [] : [entry.issue],
-      ),
+      warnings: previewEntries.flatMap((entry) => (entry.issue === null ? [] : [entry.issue])),
     };
   }
 
@@ -187,8 +198,7 @@ export class TxtImportService implements ImportService {
       try {
         await this.dependencies.repository.recordFailure({
           sessionId: input.sessionId,
-          expectedRevision:
-            committingSession?.revision ?? input.expectedSessionRevision,
+          expectedRevision: committingSession?.revision ?? input.expectedSessionRevision,
           failedAt: input.committedAt,
           errorSummary: errorMessage(error),
           failedEntryIds,
@@ -205,9 +215,7 @@ export class TxtImportService implements ImportService {
             ? 0
             : committingSession.entries.length - selectedEntries.length,
         failedCount:
-          committingSession === null
-            ? input.selectedPaths.length
-            : failedEntryIds.length,
+          committingSession === null ? input.selectedPaths.length : failedEntryIds.length,
       };
     }
   }
@@ -217,8 +225,7 @@ export class TxtImportService implements ImportService {
     const createdAt = nowUtc(this.dependencies.clock);
     const entryId = nextEntityId(this.dependencies.ids);
     const dateDetection = detectImportDate(normalizedPath);
-    const detectedDate =
-      dateDetection.kind === "resolved" ? dateDetection.date : null;
+    const detectedDate = dateDetection.kind === "resolved" ? dateDetection.date : null;
     const dateIssue: ImportIssue | null =
       dateDetection.kind === "resolved"
         ? null
@@ -335,9 +342,7 @@ export class TxtImportService implements ImportService {
         updatedAt: committedAt,
       },
     });
-    const expectedRevision = isExistingVersion
-      ? (entry.previousJournalRevision ?? null)
-      : null;
+    const expectedRevision = isExistingVersion ? (entry.previousJournalRevision ?? null) : null;
 
     return {
       entryId: entry.id,
@@ -439,16 +444,13 @@ function classifyExistingConflict(
   }
 
   const dateMatches = matches.filter(
-    (match) =>
-      match.detectedDate !== null &&
-      match.detectedDate === candidate.entry.detectedDate,
+    (match) => match.detectedDate !== null && match.detectedDate === candidate.entry.detectedDate,
   );
   if (dateMatches.length === 0) {
     return candidate;
   }
   const contentMatch = dateMatches.find(
-    (match) =>
-      match.fileSha256 !== null && match.fileSha256 === candidate.entry.fileSha256,
+    (match) => match.fileSha256 !== null && match.fileSha256 === candidate.entry.fileSha256,
   );
   if (contentMatch !== undefined) {
     return withConflict(
@@ -474,8 +476,7 @@ function withConflict(
   existingRevision: number | null,
 ): PreviewCandidate {
   const status =
-    conflictKind === "same_date_conflict" ||
-    conflictKind === "duplicate_date_in_batch"
+    conflictKind === "same_date_conflict" || conflictKind === "duplicate_date_in_batch"
       ? "conflict"
       : "skipped";
   return {
@@ -540,9 +541,7 @@ function createExcerpt(text: string | null): string {
 async function sha256Bytes(bytes: Uint8Array): Promise<string> {
   const source = new Uint8Array(bytes).buffer;
   const digest = await crypto.subtle.digest("SHA-256", source);
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function importTitle(entry: ImportEntry): string {

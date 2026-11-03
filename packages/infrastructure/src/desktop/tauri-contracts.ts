@@ -52,6 +52,10 @@ export const TAURI_COMMANDS = {
   importRecordFailure: "import_record_failure",
   exportSnapshot: "export_snapshot",
   exportWriteFile: "export_write_file",
+  backupSnapshot: "backup_snapshot",
+  backupReadFile: "backup_read_file",
+  backupWriteFile: "backup_write_file",
+  backupRestore: "backup_restore",
 } as const;
 
 export type TauriCommandName = (typeof TAURI_COMMANDS)[keyof typeof TAURI_COMMANDS];
@@ -792,6 +796,91 @@ export const ExportWriteFileResultDtoSchema = z
   })
   .strict();
 
+const BackupRowDtoSchema = z.record(z.unknown());
+
+const BackupDatasetRowsDtoSchema = z
+  .object({
+    journals: z.array(BackupRowDtoSchema),
+    journalVersions: z.array(BackupRowDtoSchema),
+    structuredBlocks: z.array(BackupRowDtoSchema),
+    knowledgeItems: z.array(BackupRowDtoSchema),
+    knowledgeLinks: z.array(BackupRowDtoSchema),
+    tasks: z.array(BackupRowDtoSchema),
+    tags: z.array(BackupRowDtoSchema),
+    journalTags: z.array(BackupRowDtoSchema),
+    knowledgeTags: z.array(BackupRowDtoSchema),
+    reports: z.array(BackupRowDtoSchema),
+    importSessions: z.array(BackupRowDtoSchema),
+    importEntries: z.array(BackupRowDtoSchema),
+  })
+  .strict();
+
+export const BackupSnapshotDtoSchema = BackupDatasetRowsDtoSchema.extend({
+  deviceId: UuidV7Schema,
+  dataSchemaVersion: z.number().int().positive(),
+  appVersion: z.string().min(1),
+  attachments: z.array(
+    z
+      .object({
+        link: BackupRowDtoSchema,
+        blob: BackupRowDtoSchema,
+        bytesBase64: z.string(),
+      })
+      .strict(),
+  ),
+}).strict();
+
+export const BackupReadFileResultDtoSchema = z
+  .object({
+    bytesBase64: z.string(),
+  })
+  .strict();
+
+export const BackupWriteFileInputDtoSchema = z
+  .object({
+    targetPath: z.string().min(1),
+    bytesBase64: z.string(),
+    expectedSha256: ContentHashSchema,
+  })
+  .strict();
+
+export const BackupWriteFileResultDtoSchema = z
+  .object({
+    bytesWritten: z.number().int().nonnegative(),
+  })
+  .strict();
+
+export const BackupRestoreCommandDtoSchema = z
+  .object({
+    expectedContentDigest: z.string().regex(/^[0-9a-f]{64}$/u),
+    dataSchemaVersion: z.number().int().positive(),
+    restoredAt: UtcTimestampSchema,
+    dataset: BackupDatasetRowsDtoSchema,
+    attachments: z.array(
+      z
+        .object({
+          link: BackupRowDtoSchema,
+          blob: BackupRowDtoSchema,
+          bytesBase64: z.string(),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+
+export const BackupRestoreResultDtoSchema = z
+  .object({
+    restoredAt: UtcTimestampSchema,
+    safetySnapshot: z
+      .object({
+        fileName: z.string().min(1),
+        contentDigest: ContentHashSchema,
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
 export const StorageErrorDtoSchema = z.object({
   code: z.enum([
     "MIGRATION_FAILED",
@@ -915,7 +1004,15 @@ export type ImportCommitSummaryDto = z.infer<typeof ImportCommitSummaryDtoSchema
 export type RecordImportFailureDto = z.infer<typeof RecordImportFailureDtoSchema>;
 export type ExportAttachmentDto = z.infer<typeof ExportAttachmentDtoSchema>;
 export type ExportKnowledgeRecordDto = z.infer<typeof ExportKnowledgeRecordDtoSchema>;
-export type ExportImportEntryDto = z.infer<typeof ExportSnapshotDtoSchema>["imports"]["entries"][number];
+export type ExportImportEntryDto = z.infer<
+  typeof ExportSnapshotDtoSchema
+>["imports"]["entries"][number];
 export type ExportSnapshotDto = z.infer<typeof ExportSnapshotDtoSchema>;
 export type ExportWriteFileInputDto = z.infer<typeof ExportWriteFileInputDtoSchema>;
 export type ExportWriteFileResultDto = z.infer<typeof ExportWriteFileResultDtoSchema>;
+export type BackupSnapshotDto = z.infer<typeof BackupSnapshotDtoSchema>;
+export type BackupReadFileResultDto = z.infer<typeof BackupReadFileResultDtoSchema>;
+export type BackupWriteFileInputDto = z.infer<typeof BackupWriteFileInputDtoSchema>;
+export type BackupWriteFileResultDto = z.infer<typeof BackupWriteFileResultDtoSchema>;
+export type BackupRestoreCommandDto = z.infer<typeof BackupRestoreCommandDtoSchema>;
+export type BackupRestoreResultDto = z.infer<typeof BackupRestoreResultDtoSchema>;

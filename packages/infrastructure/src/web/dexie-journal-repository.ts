@@ -348,18 +348,9 @@ export async function saveJournalSnapshotInTransaction(
   const revision = (current?.revision ?? 0) + 1;
   const versionCreated = input.checkpoint !== "autosave";
   await database.journals.put(toJournalRow(input, current, revision));
-  await replaceStructuredBlocks(
-    database,
-    input.journalId,
-    input.structuredBlocks,
-    input.savedAt,
-  );
+  await replaceStructuredBlocks(database, input.journalId, input.structuredBlocks, input.savedAt);
   await replaceTags(database, input.journalId, input.tags, input.savedAt, ids);
-  await replaceSearchDocumentsInTransaction(
-    database,
-    input.journalId,
-    input.searchDocuments,
-  );
+  await replaceSearchDocumentsInTransaction(database, input.journalId, input.searchDocuments);
 
   if (versionCreated) {
     await database.journalVersions.put(
@@ -608,5 +599,4 @@ export class DexieJournalRepository implements JournalRepository {
       },
     );
   }
-
 }

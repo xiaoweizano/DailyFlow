@@ -7,19 +7,11 @@ import type {
   ImportRepository,
   RecordImportFailureInput,
 } from "@dailyflow/application";
-import {
-  parseRevision,
-  type ImportEntry,
-  type ImportSession,
-} from "@dailyflow/domain";
+import { parseRevision, type ImportEntry, type ImportSession } from "@dailyflow/domain";
 
 import { toSaveSnapshotDto } from "./desktop-journal-repository.js";
 import type { TauriCommandClient } from "./tauri-client.js";
-import type {
-  ImportCommitEntryDto,
-  ImportEntryDto,
-  ImportSessionDto,
-} from "./tauri-contracts.js";
+import type { ImportCommitEntryDto, ImportEntryDto, ImportSessionDto } from "./tauri-contracts.js";
 
 export interface DesktopImportRepositoryOptions {
   readonly client: TauriCommandClient;
@@ -43,9 +35,7 @@ export class DesktopImportRepository implements ImportRepository {
   async findExistingMatches(
     entries: readonly ImportEntry[],
   ): Promise<readonly ImportExistingMatch[]> {
-    const matches = await this.client.findImportExistingMatches(
-      entries.map(toImportEntryDto),
-    );
+    const matches = await this.client.findImportExistingMatches(entries.map(toImportEntryDto));
     return matches.map((match) => ({
       relativePath: match.relativePath,
       detectedDate: match.detectedDate,
@@ -117,8 +107,7 @@ function toImportEntryDto(entry: ImportEntry): ImportEntryDto {
     fileSha256: entry.fileSha256,
     rawSize: entry.rawSize,
     rawCaptureStatus: entry.rawCaptureStatus,
-    rawBytesBase64:
-      entry.rawBytes === null ? null : bytesToBase64(entry.rawBytes),
+    rawBytesBase64: entry.rawBytes === null ? null : bytesToBase64(entry.rawBytes),
     rawCleanedAt: entry.rawCleanedAt,
     status: entry.status,
     conflictKind: entry.conflictKind,
@@ -171,10 +160,7 @@ function toImportEntry(dto: ImportEntryDto): ImportEntry {
     fileSha256: dto.fileSha256,
     rawSize: dto.rawSize,
     rawCaptureStatus: dto.rawCaptureStatus,
-    rawBytes:
-      dto.rawBytesBase64 === null
-        ? null
-        : base64ToBytes(dto.rawBytesBase64),
+    rawBytes: dto.rawBytesBase64 === null ? null : base64ToBytes(dto.rawBytesBase64),
     rawCleanedAt: dto.rawCleanedAt,
     status: dto.status,
     conflictKind: dto.conflictKind,
@@ -182,9 +168,7 @@ function toImportEntry(dto: ImportEntryDto): ImportEntry {
     errorDetail: dto.errorDetail,
     journalId: dto.journalId,
     previousJournalRevision:
-      dto.previousJournalRevision === null
-        ? null
-        : parseRevision(dto.previousJournalRevision),
+      dto.previousJournalRevision === null ? null : parseRevision(dto.previousJournalRevision),
     createdAt: dto.createdAt,
     committedAt: dto.committedAt,
   };
@@ -195,9 +179,7 @@ function bytesToBase64(bytes: Uint8Array): string {
   const chunkSize = 0x8000;
   for (let offset = 0; offset < bytes.length; offset += chunkSize) {
     chunks.push(
-      String.fromCharCode(
-        ...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length)),
-      ),
+      String.fromCharCode(...bytes.subarray(offset, Math.min(offset + chunkSize, bytes.length))),
     );
   }
   return btoa(chunks.join(""));

@@ -9,7 +9,6 @@ import type {
 import {
   createContentDocument,
   parseRevision,
-  parseUtcTimestamp,
   type AttachmentRef,
   type ImportEntry,
   type ImportSession,
@@ -19,10 +18,7 @@ import {
   type Task,
 } from "@dailyflow/domain";
 
-import {
-  buildExportArchive,
-  createExportArtifact,
-} from "../shared/export/export-archive.js";
+import { buildExportArchive, createExportArtifact } from "../shared/export/export-archive.js";
 import { estimateExportDataset } from "../shared/export/export-estimate.js";
 import type { DailyFlowDb } from "./db.js";
 import type {
@@ -75,10 +71,7 @@ function toJournal(row: JournalRow): Journal {
     journalDate: row.journalDate,
     timezone: row.timezone,
     title: row.title,
-    content: createContentDocument(
-      row.editorSchemaVersion,
-      parseJson<JsonObject>(row.contentJson),
-    ),
+    content: createContentDocument(row.editorSchemaVersion, parseJson<JsonObject>(row.contentJson)),
     contentMarkdown: row.contentMarkdown,
     contentPlainText: row.contentPlainText,
     contentHash: row.contentHash,
@@ -98,10 +91,7 @@ function toKnowledgeItem(row: KnowledgeItemRow): KnowledgeItem {
     kind: row.kind,
     status: row.status,
     title: row.title,
-    content: createContentDocument(
-      row.editorSchemaVersion,
-      parseJson<JsonObject>(row.contentJson),
-    ),
+    content: createContentDocument(row.editorSchemaVersion, parseJson<JsonObject>(row.contentJson)),
     contentHash: row.contentHash,
     projectionVersion: row.projectionVersion,
     summary: row.summary,
@@ -175,9 +165,7 @@ function toImportEntry(row: ImportEntryRow): ImportEntry {
     errorDetail: row.errorDetail,
     journalId: row.journalId,
     previousJournalRevision:
-      row.previousJournalRevision === null
-        ? null
-        : parseRevision(row.previousJournalRevision),
+      row.previousJournalRevision === null ? null : parseRevision(row.previousJournalRevision),
     createdAt: row.createdAt,
     committedAt: row.committedAt,
   };
@@ -225,10 +213,7 @@ export class WebExportSource implements ExportSource {
       options,
       generatedAt: options.generatedAt,
     });
-    return createExportArtifact(
-      bundle,
-      `dailyflow-export-${options.generatedAt.slice(0, 10)}.zip`,
-    );
+    return createExportArtifact(bundle, `dailyflow-export-${options.generatedAt.slice(0, 10)}.zip`);
   }
 
   private async readSnapshot(): Promise<ExportDataset> {
@@ -312,9 +297,7 @@ export class WebExportSource implements ExportSource {
               tags: knowledgeTagNames.get(row.id) ?? [],
             }))
             .sort((left, right) => compareText(left.item.id, right.item.id)),
-          tasks: tasks
-            .map(toTask)
-            .sort((left, right) => compareText(left.id, right.id)),
+          tasks: tasks.map(toTask).sort((left, right) => compareText(left.id, right.id)),
           attachments,
           imports: {
             sessions: importSessions

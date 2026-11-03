@@ -1,9 +1,23 @@
 export { createDesktopServices, type DesktopServices } from "./desktop-services.js";
 export { DesktopAttachmentStore } from "./desktop-attachment-store.js";
 export {
-  DesktopExportSource,
-  type DesktopExportSourceOptions,
-} from "./desktop-export-source.js";
+  DesktopBackupService,
+  type DesktopBackupClient,
+  type DesktopBackupRestoreCommand,
+  type DesktopBackupServiceOptions,
+} from "./desktop-backup-service.js";
+export {
+  DesktopBackupSource,
+  type DesktopBackupPicker,
+  type DesktopBackupSourceOptions,
+} from "./desktop-backup-source.js";
+export {
+  DesktopBackupTarget,
+  type DesktopBackupPickerOptions,
+  type DesktopBackupTargetOptions,
+  type DesktopBackupTargetPicker,
+} from "./desktop-backup-target.js";
+export { DesktopExportSource, type DesktopExportSourceOptions } from "./desktop-export-source.js";
 export {
   DesktopExportTarget,
   type DesktopExportPicker,

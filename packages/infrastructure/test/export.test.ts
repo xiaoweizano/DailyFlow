@@ -25,9 +25,7 @@ const fixedTime = "2026-10-30T08:00:00.000Z" as UtcTimestamp;
 async function sha256BytesHex(bytes: Uint8Array): Promise<string> {
   const ownedBytes = Uint8Array.from(bytes);
   const digest = await crypto.subtle.digest("SHA-256", ownedBytes.buffer);
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
-  );
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 const projector: ContentProjector = {
@@ -214,9 +212,7 @@ describe("export archive", () => {
     expect(first.files.map((file) => file.path)).toEqual(second.files.map((file) => file.path));
     expect(first.sha256).toBe(second.sha256);
 
-    const journal = first.files.find(
-      (file) => file.path === "journals/2026/10/2026-10-30.md",
-    );
+    const journal = first.files.find((file) => file.path === "journals/2026/10/2026-10-30.md");
     expect(new TextDecoder().decode(journal?.bytes)).toContain("Projected 发布清单");
     expect(new TextDecoder().decode(journal?.bytes)).not.toContain("STALE");
 
@@ -228,7 +224,10 @@ describe("export archive", () => {
     const knowledgeNdjson = new TextDecoder().decode(
       first.files.find((file) => file.path === "knowledge.ndjson")?.bytes,
     );
-    const knowledgeLines = knowledgeNdjson.trim().split("\n").map((line) => JSON.parse(line));
+    const knowledgeLines = knowledgeNdjson
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
     expect(knowledgeLines).toHaveLength(1);
     expect(knowledgeLines[0]).toMatchObject({
       entityType: "knowledge_item",
@@ -241,7 +240,13 @@ describe("export archive", () => {
     const taskLine = JSON.parse(
       new TextDecoder().decode(first.files.find((file) => file.path === "tasks.ndjson")?.bytes),
     );
-    expect(Object.keys(taskLine)).toEqual(["entityType", "schemaVersion", "id", "deletedAt", "data"]);
+    expect(Object.keys(taskLine)).toEqual([
+      "entityType",
+      "schemaVersion",
+      "id",
+      "deletedAt",
+      "data",
+    ]);
 
     const attachmentText = new TextDecoder().decode(
       first.files.find((file) => file.path === "attachments.ndjson")?.bytes,
@@ -270,9 +275,7 @@ describe("export archive", () => {
         },
       ],
       attachments: base.attachments.map((record, index) =>
-        index === 0
-          ? { ...record, bytes: new Uint8Array([0, 255, 128, 13, 10]) }
-          : record,
+        index === 0 ? { ...record, bytes: new Uint8Array([0, 255, 128, 13, 10]) } : record,
       ),
     };
 

@@ -5,13 +5,7 @@ import type {
   ExportArchiveOptions,
   ExportArtifact,
 } from "@dailyflow/application";
-import {
-  parseContentHash,
-  parseEntityId,
-  parseRevision,
-  parseUtcTimestamp,
-  type EntityId,
-} from "@dailyflow/domain";
+import { parseContentHash, parseEntityId, parseUtcTimestamp } from "@dailyflow/domain";
 import { unzipSync } from "fflate";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -209,9 +203,7 @@ async function seedDatabase(database: DailyFlowDb): Promise<void> {
   });
 }
 
-function archiveOptions(
-  overrides: Partial<ExportArchiveOptions> = {},
-): ExportArchiveOptions {
+function archiveOptions(overrides: Partial<ExportArchiveOptions> = {}): ExportArchiveOptions {
   return {
     scope: "all",
     includeDeleted: false,
@@ -246,9 +238,11 @@ describe("WebExportSource", () => {
     expect(attachments).toContain(ATTACHMENT_ID);
     expect(attachments).not.toContain("storageKey");
     expect(imports).toContain("imports/raw/019a3c10-0000-7000-8000-000000000009-20261030.txt.bin");
-    expect(new TextDecoder().decode(files["imports/raw/019a3c10-0000-7000-8000-000000000009-20261030.txt.bin"])).toBe(
-      "hello",
-    );
+    expect(
+      new TextDecoder().decode(
+        files["imports/raw/019a3c10-0000-7000-8000-000000000009-20261030.txt.bin"],
+      ),
+    ).toBe("hello");
   });
 
   it("includes soft-deleted records only when requested", async () => {

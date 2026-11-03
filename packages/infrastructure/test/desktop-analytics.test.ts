@@ -1,10 +1,5 @@
 import { resolveAnalyticsPeriod } from "@dailyflow/application";
-import {
-  createReport,
-  parseEntityId,
-  parseLocalDate,
-  parseUtcTimestamp,
-} from "@dailyflow/domain";
+import { createReport, parseEntityId, parseLocalDate, parseUtcTimestamp } from "@dailyflow/domain";
 import { describe, expect, it, vi } from "vitest";
 
 import { DesktopAnalyticsQuery } from "../src/desktop/desktop-analytics-query.js";

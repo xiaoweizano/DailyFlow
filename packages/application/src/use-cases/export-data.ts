@@ -1,8 +1,4 @@
-import {
-  parseUtcTimestamp,
-  type Clock,
-  type UtcTimestamp,
-} from "@dailyflow/domain";
+import { parseUtcTimestamp, type Clock, type UtcTimestamp } from "@dailyflow/domain";
 import { err, ok, type AppError, type Result } from "@dailyflow/shared";
 import { z } from "zod";
 
@@ -62,8 +58,7 @@ export async function exportData(
   };
 
   try {
-    const generatedAt =
-      input.generatedAt ?? parseUtcTimestamp(dependencies.clock.nowUtc());
+    const generatedAt = input.generatedAt ?? parseUtcTimestamp(dependencies.clock.nowUtc());
     const archiveOptions: ExportArchiveOptions = {
       ...options,
       generatedAt,

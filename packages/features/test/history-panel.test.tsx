@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { createImportServicesStub } from "./import-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
@@ -37,6 +38,7 @@ const firstPage: readonly JournalVersionSummary[] = [
 function createServices() {
   return {
     analytics: createAnalyticsServicesStub(),
+    backups: createBackupServicesStub(),
     exports: createExportServicesStub(),
     imports: createImportServicesStub(),
     knowledge: {

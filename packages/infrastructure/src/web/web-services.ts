@@ -1,5 +1,8 @@
 import type {
   AppServices,
+  BackupService,
+  BackupSource,
+  BackupTarget,
   ExportSource,
   ExportTarget,
   ImportRepository,
@@ -20,6 +23,9 @@ import { DexieTaskRepository } from "./dexie-task-repository.js";
 import { DexieTimelineQuery } from "./dexie-timeline-query.js";
 import { DexieReportRepository } from "./dexie-report-repository.js";
 import { WebAttachmentStore } from "./web-attachment-store.js";
+import { WebBackupService } from "./web-backup-service.js";
+import { WebBackupSource } from "./web-backup-source.js";
+import { WebBackupTarget } from "./web-backup-target.js";
 import { WebExportSource } from "./web-export-source.js";
 import { WebExportTarget } from "./web-export-target.js";
 import { WebImportSource } from "./web-import-source.js";
@@ -30,6 +36,11 @@ export type WebServices = Pick<
   AppServices,
   "journals" | "knowledge" | "tasks" | "attachments" | "search" | "analytics" | "reports"
 > & {
+  readonly backupStorage: {
+    readonly service: BackupService;
+    readonly source: BackupSource;
+    readonly target: BackupTarget;
+  };
   readonly importStorage: {
     readonly analyzer: ImportTxtAnalyzer;
     readonly converter: TxtDocumentConverterPort;
@@ -62,6 +73,12 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
   const clock = options.clock ?? systemClock;
   const ids = options.ids ?? systemIds;
   const search = new DexieSearchPort({ database, clock });
+  const backupService = new WebBackupService({
+    database,
+    clock,
+    ids,
+    appVersion: "0.1.0",
+  });
 
   return {
     analytics: new DexieAnalyticsQuery({ database }),
@@ -70,6 +87,11 @@ export function createWebServices(options: CreateWebServicesOptions = {}): WebSe
       clock,
       ids,
     }),
+    backupStorage: {
+      service: backupService,
+      source: new WebBackupSource(),
+      target: new WebBackupTarget(),
+    },
     importStorage: {
       analyzer: new TxtAnalyzer(),
       converter: new TxtDocumentConverter(),

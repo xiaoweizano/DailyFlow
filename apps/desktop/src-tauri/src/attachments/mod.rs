@@ -105,6 +105,10 @@ impl AttachmentStore {
         Ok(Self { root })
     }
 
+    pub(crate) fn root_path(&self) -> &Path {
+        &self.root
+    }
+
     pub fn put(
         &self,
         database: &Database,
@@ -424,7 +428,7 @@ impl AttachmentStore {
         }
     }
 
-    fn resolve_path(&self, storage_key: &str) -> Result<PathBuf, StorageError> {
+    pub(crate) fn resolve_path(&self, storage_key: &str) -> Result<PathBuf, StorageError> {
         if storage_key.is_empty()
             || storage_key.contains('\\')
             || Path::new(storage_key).is_absolute()

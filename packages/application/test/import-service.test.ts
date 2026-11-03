@@ -8,7 +8,6 @@ import {
   type ContentDocument,
   type EntityId,
   type ImportSession,
-  type LocalDate,
 } from "@dailyflow/domain";
 import { describe, expect, it } from "vitest";
 
@@ -25,12 +24,7 @@ import {
   type TxtDocumentConverter,
 } from "../src/index.js";
 
-import {
-  FakeProjector,
-  JOURNAL_ID,
-  SequenceIds,
-  clock,
-} from "./support.js";
+import { FakeProjector, JOURNAL_ID, SequenceIds, clock } from "./support.js";
 
 const SESSION_ID = "0198e2f4-7e33-7c70-a8b2-18c1520f9c31";
 const ENTRY_ONE_ID = "0198e2f4-7e33-7c70-a8b2-18c1520f9c32";
@@ -53,9 +47,7 @@ class PlainTextConverter implements TxtDocumentConverter {
       type: "doc",
       content: text.split("\n").map((line) => ({
         type: "paragraph",
-        ...(line.length === 0
-          ? {}
-          : { content: [{ type: "text", text: line }] }),
+        ...(line.length === 0 ? {} : { content: [{ type: "text", text: line }] }),
       })),
     });
   }
@@ -142,9 +134,7 @@ function file(relativePath: string, text: string): RawImportFile {
 
 async function hash(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 async function* files(...items: readonly RawImportFile[]): AsyncIterable<RawImportFile> {
@@ -300,16 +290,10 @@ describe("TXT import preview", () => {
 
     const preview = await service.createPreview(
       root,
-      files(
-        file("202504/01 morning.txt", "morning"),
-        file("202504/01 evening.txt", "evening"),
-      ),
+      files(file("202504/01 morning.txt", "morning"), file("202504/01 evening.txt", "evening")),
     );
 
-    expect(preview.entries.map((entry) => entry.status)).toEqual([
-      "conflict",
-      "conflict",
-    ]);
+    expect(preview.entries.map((entry) => entry.status)).toEqual(["conflict", "conflict"]);
     expect(preview.entries.map((entry) => entry.conflictKind)).toEqual([
       "duplicate_date_in_batch",
       "duplicate_date_in_batch",
@@ -362,10 +346,7 @@ describe("TXT import commit", () => {
     ];
     const preview = await service.createPreview(
       root,
-      files(
-        file("202504/20250401.txt", "imported"),
-        file("202504/20250402.txt", "conflict"),
-      ),
+      files(file("202504/20250401.txt", "imported"), file("202504/20250402.txt", "conflict")),
     );
 
     const result = await service.commit({

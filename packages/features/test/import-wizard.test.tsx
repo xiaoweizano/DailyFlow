@@ -3,7 +3,6 @@
 import "./setup-dom.js";
 
 import type {
-  CommitImportInput,
   ImportCommitResult,
   ImportPreview,
   ImportPreviewEntry,
@@ -14,13 +13,14 @@ import type {
   StoredAttachment,
 } from "@dailyflow/application";
 import { parseEntityId, parseLocalDate, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
-import { ok, type AppError, type Result } from "@dailyflow/shared";
+import { type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
+import { createBackupServicesStub } from "./backup-stub.js";
 import { createExportServicesStub } from "./export-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
@@ -133,7 +133,7 @@ function createImportService(overrides: Partial<ImportService> = {}): ImportServ
       })(),
     ),
     createPreview: vi.fn(async () => preview),
-    commit: vi.fn(async (_input: CommitImportInput): Promise<ImportCommitResult> => ({
+    commit: vi.fn(async (): Promise<ImportCommitResult> => ({
       sessionId: SESSION_ID,
       status: "completed",
       importedCount: 2,
@@ -147,6 +147,7 @@ function createImportService(overrides: Partial<ImportService> = {}): ImportServ
 function createServices(imports: ImportService): AppRuntimeServices {
   return {
     analytics: createAnalyticsServicesStub(),
+    backups: createBackupServicesStub(),
     exports: createExportServicesStub(),
     imports,
     knowledge: {

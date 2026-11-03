@@ -1,9 +1,5 @@
 import type { ContentProjector } from "@dailyflow/application";
-import {
-  parseContentHash,
-  parseEntityId,
-  parseUtcTimestamp,
-} from "@dailyflow/domain";
+import { parseContentHash, parseEntityId, parseUtcTimestamp } from "@dailyflow/domain";
 import { unzipSync } from "fflate";
 import { describe, expect, it, vi } from "vitest";
 

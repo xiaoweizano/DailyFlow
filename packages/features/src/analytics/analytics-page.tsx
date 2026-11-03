@@ -93,7 +93,10 @@ function ActivityChart({
   );
 
   return (
-    <section aria-labelledby="analytics-trend-title" className="border border-border bg-surface p-4">
+    <section
+      aria-labelledby="analytics-trend-title"
+      className="border border-border bg-surface p-4"
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase text-muted-foreground">Activity</p>
@@ -332,7 +335,10 @@ export function AnalyticsPage({
                 正在加载周期报告
               </div>
             ) : reportError === null ? null : (
-              <p role="alert" className="border border-danger/25 bg-danger/5 p-4 text-sm text-danger">
+              <p
+                role="alert"
+                className="border border-danger/25 bg-danger/5 p-4 text-sm text-danger"
+              >
                 {reportError}
               </p>
             )}
@@ -351,10 +357,7 @@ export function AnalyticsPage({
           </>
         ) : (
           <div className="flex flex-wrap items-center gap-2 border border-border bg-surface px-4 py-3">
-            <Button
-              size="sm"
-              onClick={() => navigate(analyticsPath(period, true))}
-            >
+            <Button size="sm" onClick={() => navigate(analyticsPath(period, true))}>
               <FileText aria-hidden="true" className="size-4" />
               打开周期报告
             </Button>
@@ -368,7 +371,9 @@ export function AnalyticsPage({
               <CircleHelp aria-hidden="true" className="size-4" />
               AI 辅助
             </Button>
-            <p className="ml-auto text-xs text-muted-foreground">报告保存在本地，可随时继续编辑。</p>
+            <p className="ml-auto text-xs text-muted-foreground">
+              报告保存在本地，可随时继续编辑。
+            </p>
           </div>
         )}
 
@@ -410,7 +415,10 @@ export function AnalyticsPage({
               )}
             </section>
 
-            <section className="border border-border bg-surface p-4" aria-labelledby="task-review-title">
+            <section
+              className="border border-border bg-surface p-4"
+              aria-labelledby="task-review-title"
+            >
               <h2 id="task-review-title" className="text-sm font-semibold text-foreground">
                 任务与沉淀
               </h2>

@@ -101,14 +101,42 @@ export {
   type TxtImportServiceDependencies,
 } from "./imports/txt-import-service.js";
 export type {
+  BackupArchiveFile,
+  BackupArchiveLimits,
+  BackupArtifact,
+  BackupAttachmentRecord,
+  BackupDataset,
   BackupManifest,
-  BackupOptions,
-  BackupResult,
+  BackupRow,
+  BackupCreateOptions,
+  BackupRestoreOptions,
+  BackupRestoreResult,
+  BackupSafetySnapshot,
+  BackupSaveResult,
   BackupService,
   BackupSource,
-  RestoreOptions,
-  RestoreResult,
+  BackupSourceFile,
+  BackupTarget,
+  BackupValidationErrorCode,
+  BuildBackupArchiveOptions,
+  InspectedBackup,
 } from "./ports/backup-service.js";
+export {
+  CreateBackupInputSchema,
+  createBackup,
+  type CreateBackupDependencies,
+  type CreateBackupOutcome,
+} from "./use-cases/create-backup.js";
+export {
+  InspectBackupInputSchema,
+  inspectBackup,
+  type InspectBackupDependencies,
+} from "./use-cases/inspect-backup.js";
+export {
+  RestoreBackupInputSchema,
+  restoreBackup,
+  type RestoreBackupDependencies,
+} from "./use-cases/restore-backup.js";
 export {
   EXPORT_SCOPES,
   type ExportArtifact,

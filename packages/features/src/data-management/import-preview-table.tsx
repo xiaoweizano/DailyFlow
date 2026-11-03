@@ -1,6 +1,8 @@
 import type { ImportPreviewEntry } from "@dailyflow/application";
 import { AlertCircle, CheckCircle2, FileWarning, ShieldAlert } from "lucide-react";
 
+import { canSelectPreviewEntry, formatByteCount } from "./import-preview-utils.js";
+
 export interface ImportPreviewTableProps {
   readonly entries: readonly ImportPreviewEntry[];
   readonly selectedPaths: ReadonlySet<string>;
@@ -41,17 +43,6 @@ const newlineLabels: Record<ImportPreviewEntry["newlineStyle"], string> = {
   mixed: "混合",
   unknown: "未知",
 };
-
-export function formatByteCount(bytes: number): string {
-  return `${new Intl.NumberFormat("zh-CN").format(bytes)} B`;
-}
-
-export function canSelectPreviewEntry(entry: ImportPreviewEntry): boolean {
-  return (
-    entry.status === "ready" ||
-    (entry.status === "conflict" && entry.conflictKind === "same_date_conflict")
-  );
-}
 
 function EntryStatusIcon({
   status,

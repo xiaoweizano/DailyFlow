@@ -12,16 +12,9 @@ import { z } from "zod";
 
 import { mapApplicationError, validationError } from "../errors.js";
 import type { ReportRepository } from "../ports/report-repository.js";
-import {
-  EntityIdSchema,
-  JsonObjectSchema,
-  LocalDateSchema,
-  PositiveIntegerSchema,
-} from "../validation.js";
+import { JsonObjectSchema, LocalDateSchema, PositiveIntegerSchema } from "../validation.js";
 
-const UtcTimestampSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u);
+const UtcTimestampSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u);
 
 export const SaveReportDraftInputSchema = z.object({
   periodType: z.enum(["week", "month", "year"]),

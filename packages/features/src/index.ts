@@ -19,6 +19,7 @@ export { ReportEditor, type ReportEditorProps } from "./analytics/report-editor.
 export { StatTile, type StatTileProps } from "./analytics/stat-tile.js";
 export {
   createAppRuntimeServices,
+  type BackupRuntimeServices,
   type CreateAppRuntimeServicesOptions,
   type ExportRuntimeServices,
   type ExportStorageServices,
@@ -28,6 +29,16 @@ export { ActivityHeatmap, type ActivityHeatmapProps } from "./dashboard/activity
 export { ImportPage } from "./data-management/import-page.js";
 export { ExportPage } from "./data-management/export-page.js";
 export { ExportPanel } from "./data-management/export-panel.js";
+export { BackupPage } from "./data-management/backup-page.js";
+export { BackupPanel } from "./data-management/backup-panel.js";
+export {
+  createBackupRuntimeServices,
+  type BackupRuntimeDependencies,
+  type BackupRuntimeServices as BackupServices,
+  type BackupSource,
+  type BackupSourceFile,
+  type BackupStorageServices,
+} from "./data-management/backup-services.js";
 export {
   createExportRuntimeServices,
   type ExportRuntimeDependencies,

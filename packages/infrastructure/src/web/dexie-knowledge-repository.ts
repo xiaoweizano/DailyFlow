@@ -94,11 +94,7 @@ function isAfterCursor(row: KnowledgeItemRow, cursor: KnowledgeCursor): boolean 
   return row.updatedAt === cursor.updatedAt ? row.id < cursor.id : row.updatedAt < cursor.updatedAt;
 }
 
-function conflict(
-  id: EntityId,
-  expectedRevision: number | null,
-  actualRevision?: number,
-): never {
+function conflict(id: EntityId, expectedRevision: number | null, actualRevision?: number): never {
   throw new PortError("CONFLICT", {
     message: "Knowledge item revision conflict",
     entity: "knowledge_item",
@@ -137,13 +133,8 @@ export class DexieKnowledgeRepository implements KnowledgeRepository {
     const records = (await this.database.knowledgeItems.toArray())
       .filter((row) => row.deletedAt === null && row.status === status)
       .filter((row) => query.kind === undefined || row.kind === query.kind)
-      .filter(
-        (row) =>
-          query.fromDate === undefined || row.updatedAt.slice(0, 10) >= query.fromDate,
-      )
-      .filter(
-        (row) => query.toDate === undefined || row.updatedAt.slice(0, 10) <= query.toDate,
-      )
+      .filter((row) => query.fromDate === undefined || row.updatedAt.slice(0, 10) >= query.fromDate)
+      .filter((row) => query.toDate === undefined || row.updatedAt.slice(0, 10) <= query.toDate)
       .filter((row) => cursor === null || isAfterCursor(row, cursor))
       .sort(compareRows);
     const selected = records.slice(0, limit + 1);

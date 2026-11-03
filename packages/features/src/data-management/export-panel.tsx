@@ -60,9 +60,7 @@ function OptionToggle({
       />
       <span className="min-w-0">
         <span className="block text-sm font-medium text-foreground">{label}</span>
-        <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">
-          {description}
-        </span>
+        <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">{description}</span>
       </span>
     </label>
   );
@@ -178,14 +176,7 @@ export function ExportPanel(): React.JSX.Element {
     return () => {
       active = false;
     };
-  }, [
-    exports,
-    scope,
-    includeDeleted,
-    includeAttachments,
-    includeImportRawBytes,
-    estimateRevision,
-  ]);
+  }, [exports, scope, includeDeleted, includeAttachments, includeImportRawBytes, estimateRevision]);
 
   async function createExport(): Promise<void> {
     setRunning(true);
@@ -200,8 +191,7 @@ export function ExportPanel(): React.JSX.Element {
     }
   }
 
-  const selectedScope =
-    scopeOptions.find((option) => option.value === scope) ?? scopeOptions[0]!;
+  const selectedScope = scopeOptions.find((option) => option.value === scope) ?? scopeOptions[0]!;
 
   return (
     <section aria-labelledby="export-panel-title" className="grid gap-4">
@@ -298,7 +288,10 @@ export function ExportPanel(): React.JSX.Element {
           )}
 
           {estimateError === null ? null : (
-            <p role="alert" className="border border-danger/25 bg-danger/5 px-3 py-2 text-xs text-danger">
+            <p
+              role="alert"
+              className="border border-danger/25 bg-danger/5 px-3 py-2 text-xs text-danger"
+            >
               {estimateError}
             </p>
           )}

@@ -1,7 +1,4 @@
-import {
-  parseLocalDate,
-  type LocalDate,
-} from "../shared/value-objects.js";
+import { parseLocalDate, type LocalDate } from "../shared/value-objects.js";
 
 const FULL_DATE_COMPACT_PATTERN = /^(\d{4})(\d{2})(\d{2})(?:\D|$)/u;
 const FULL_DATE_SEPARATED_PATTERN = /^(\d{4})[-._](\d{2})[-._](\d{2})(?:\D|$)/u;
@@ -50,9 +47,7 @@ export function normalizeImportRelativePath(relativePath: string): string {
     throw new RangeError("Import path cannot traverse outside the selected root");
   }
 
-  const normalizedSegments = segments.filter(
-    (segment) => segment.length > 0 && segment !== ".",
-  );
+  const normalizedSegments = segments.filter((segment) => segment.length > 0 && segment !== ".");
   if (normalizedSegments.length === 0) {
     throw new RangeError("Import path must identify a file");
   }
@@ -70,8 +65,7 @@ export function detectImportDate(relativePath: string): ImportDateDetection {
 
   const baseName = stripFinalExtension(fileName);
   const fullDateMatch =
-    FULL_DATE_SEPARATED_PATTERN.exec(baseName) ??
-    FULL_DATE_COMPACT_PATTERN.exec(baseName);
+    FULL_DATE_SEPARATED_PATTERN.exec(baseName) ?? FULL_DATE_COMPACT_PATTERN.exec(baseName);
 
   if (fullDateMatch !== null) {
     return resolveDateParts(
@@ -85,9 +79,7 @@ export function detectImportDate(relativePath: string): ImportDateDetection {
 
   const monthDirectory = segments.at(-2);
   const monthMatch =
-    monthDirectory === undefined
-      ? null
-      : MONTH_DIRECTORY_PATTERN.exec(monthDirectory);
+    monthDirectory === undefined ? null : MONTH_DIRECTORY_PATTERN.exec(monthDirectory);
   if (monthMatch === null) {
     return unresolvedDate();
   }
@@ -96,24 +88,12 @@ export function detectImportDate(relativePath: string): ImportDateDetection {
   const month = monthMatch[2];
   const monthDayMatch = MONTH_DAY_PATTERN.exec(baseName);
   if (monthDayMatch !== null) {
-    return resolveDateParts(
-      year,
-      monthDayMatch[1],
-      monthDayMatch[2],
-      "month-directory",
-      false,
-    );
+    return resolveDateParts(year, monthDayMatch[1], monthDayMatch[2], "month-directory", false);
   }
 
   const dayOnlyMatch = DAY_ONLY_PATTERN.exec(baseName);
   if (dayOnlyMatch !== null) {
-    return resolveDateParts(
-      year,
-      month,
-      dayOnlyMatch[1],
-      "month-directory",
-      true,
-    );
+    return resolveDateParts(year, month, dayOnlyMatch[1], "month-directory", true);
   }
 
   return unresolvedDate();

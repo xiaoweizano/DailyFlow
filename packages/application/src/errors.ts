@@ -53,6 +53,11 @@ export function mapApplicationError(error: unknown, fallbackEntity: string): App
           code: "STORAGE_UNAVAILABLE",
           retryable: error.details.retryable ?? true,
         };
+      case "BACKUP_INVALID":
+        return {
+          code: "BACKUP_INVALID",
+          reason: error.details.message ?? "The backup archive is invalid.",
+        };
     }
   }
 
