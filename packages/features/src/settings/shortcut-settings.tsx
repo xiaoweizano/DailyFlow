@@ -49,9 +49,7 @@ export function ShortcutHelpPanel({
             <AlertTriangle aria-hidden="true" className="size-3.5 text-warning" />
             快捷键冲突
           </span>
-          <p className="mt-1 text-muted-foreground">
-            冲突命令已暂停触发，请调整绑定后再使用。
-          </p>
+          <p className="mt-1 text-muted-foreground">冲突命令已暂停触发，请调整绑定后再使用。</p>
         </div>
       ) : null}
 
@@ -59,17 +57,15 @@ export function ShortcutHelpPanel({
         {commands.map((command) => (
           <div
             key={command.id}
-            className="flex items-start justify-between gap-4 border-t border-border pt-3 first:border-t-0 first:pt-0"
+            className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 border-t border-border pt-3 first:border-t-0 first:pt-0"
           >
-            <div className="min-w-0">
-              <dt className="text-sm font-medium text-foreground">{command.label}</dt>
-              {command.description === undefined ? null : (
-                <dd className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                  {command.description}
-                </dd>
-              )}
-            </div>
-            <dd className="shrink-0 font-mono text-xs text-foreground">
+            <dt className="min-w-0 text-sm font-medium text-foreground">{command.label}</dt>
+            {command.description === undefined ? null : (
+              <dd className="col-start-1 mt-0.5 text-xs leading-5 text-muted-foreground">
+                {command.description}
+              </dd>
+            )}
+            <dd className="col-start-2 row-span-2 row-start-1 shrink-0 font-mono text-xs text-foreground">
               {formatShortcut(command.shortcut, platform).join("+")}
             </dd>
           </div>

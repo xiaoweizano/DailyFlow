@@ -1,6 +1,7 @@
 import type { AppError, Result } from "@dailyflow/shared";
 
 export type SaveCoordinatorStatus = "idle" | "dirty" | "saving" | "saved" | "conflict" | "error";
+export type SaveReason = "autosave" | "explicit";
 
 export interface SaveCoordinatorState<TDraft, TSaved> {
   readonly draft: TDraft | null;
@@ -11,7 +12,7 @@ export interface SaveCoordinatorState<TDraft, TSaved> {
 }
 
 export interface SaveCoordinatorOptions<TDraft, TSaved> {
-  readonly save: (draft: TDraft) => Promise<Result<TSaved, AppError>>;
+  readonly save: (draft: TDraft, reason: SaveReason) => Promise<Result<TSaved, AppError>>;
   readonly debounceMs?: number;
   readonly now?: () => Date;
 }
@@ -80,14 +81,14 @@ export class SaveCoordinator<TDraft, TSaved> {
     }
   }
 
-  async flush(): Promise<void> {
+  async flush(reason: SaveReason = "autosave"): Promise<void> {
     this.clearTimer();
 
     while (!this.disposed) {
       if (this.inFlight !== null) {
         await this.inFlight;
       } else if (this.draft !== null && this.status === "dirty") {
-        await this.startSave();
+        await this.startSave(reason);
       } else {
         break;
       }
@@ -106,11 +107,11 @@ export class SaveCoordinator<TDraft, TSaved> {
     this.clearTimer();
     this.timer = setTimeout(() => {
       this.timer = null;
-      void this.startSave();
+      void this.startSave("autosave");
     }, this.debounceMs);
   }
 
-  private async startSave(): Promise<void> {
+  private async startSave(reason: SaveReason): Promise<void> {
     if (this.disposed || this.inFlight !== null || this.draft === null) {
       return;
     }
@@ -120,7 +121,7 @@ export class SaveCoordinator<TDraft, TSaved> {
     this.status = "saving";
     this.emit();
 
-    const request = Promise.resolve(this.save(capturedDraft))
+    const request = Promise.resolve(this.save(capturedDraft, reason))
       .then((result) => {
         if (this.disposed) {
           return;

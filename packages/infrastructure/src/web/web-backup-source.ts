@@ -40,7 +40,7 @@ async function pickBackupFile(): Promise<File | null> {
     input.addEventListener("change", onChange, { once: true });
     input.addEventListener("cancel", onCancel, { once: true });
     try {
-      input.showPicker();
+      input.click();
     } catch (error) {
       cleanup();
       if (isAbortError(error)) {

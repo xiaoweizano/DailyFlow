@@ -1,10 +1,6 @@
 export type ShortcutPlatform = "windows" | "macos" | "web";
 
-export type ShortcutCommandId =
-  | "global-search"
-  | "open-settings"
-  | "shortcut-help"
-  | (string & {});
+export type ShortcutCommandId = "global-search" | "open-settings" | "shortcut-help" | (string & {});
 
 export interface ShortcutCommand {
   readonly id: ShortcutCommandId;
@@ -63,8 +59,9 @@ export const defaultShortcutCommands = [
 export function detectShortcutPlatform(source: ShortcutPlatformSource = {}): ShortcutPlatform {
   const navigatorPlatform =
     source.navigatorPlatform ??
-    (typeof navigator === "undefined" ? "" : (navigator.platform || navigator.userAgent));
-  const userAgent = source.userAgent ?? (typeof navigator === "undefined" ? "" : navigator.userAgent);
+    (typeof navigator === "undefined" ? "" : navigator.platform || navigator.userAgent);
+  const userAgent =
+    source.userAgent ?? (typeof navigator === "undefined" ? "" : navigator.userAgent);
   const platformText = `${navigatorPlatform} ${userAgent}`;
 
   if (/mac|iphone|ipad|ipod/iu.test(platformText)) {
@@ -109,11 +106,7 @@ export function isShortcutBlockedTarget(target: EventTarget | null): boolean {
   );
 }
 
-function chordMatches(
-  event: KeyboardEvent,
-  shortcut: string,
-  platform: ShortcutPlatform,
-): boolean {
+function chordMatches(event: KeyboardEvent, shortcut: string, platform: ShortcutPlatform): boolean {
   const parts = shortcut
     .split("+")
     .map((part) => part.trim().toLowerCase())

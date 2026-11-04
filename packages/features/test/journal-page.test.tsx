@@ -11,6 +11,7 @@ import { createJournal, parseEntityId, parseRevision, parseUtcTimestamp } from "
 import { ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -111,6 +112,7 @@ function createServices() {
     },
     tasks: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      create: vi.fn(),
       complete: vi.fn(),
       reopen: vi.fn(),
       update: vi.fn(),
@@ -122,14 +124,16 @@ function createServices() {
   };
 }
 
-function renderJournalPage(services: ReturnType<typeof createServices>) {
-  return render(
+function renderJournalPage(services: ReturnType<typeof createServices>, strict = false) {
+  const page = (
     <MemoryRouter initialEntries={["/journal/2026-10-30"]}>
       <AppServicesProvider services={services}>
         <JournalPage date="2026-10-30" />
       </AppServicesProvider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+
+  return render(strict ? <StrictMode>{page}</StrictMode> : page);
 }
 
 afterEach(() => {
@@ -187,6 +191,21 @@ describe("JournalPage", () => {
     expect(await screen.findByText(/已保存/u)).toBeTruthy();
   });
 
+  it("creates an explicit checkpoint when saving from the toolbar", async () => {
+    const services = createServices();
+    const user = userEvent.setup();
+    renderJournalPage(services);
+
+    const title = await screen.findByRole("textbox", { name: "日志标题" });
+    await user.type(title, "显式保存版本");
+    await user.click(screen.getByRole("button", { name: "立即保存" }));
+
+    await waitFor(() => expect(services.journal.save).toHaveBeenCalledTimes(1));
+    expect(services.journal.save.mock.calls[0]?.[0]).toMatchObject({
+      checkpoint: "explicit",
+    });
+  });
+
   it("shows save errors without discarding the current draft", async () => {
     const services = createServices();
     const user = userEvent.setup();
@@ -217,6 +236,20 @@ describe("JournalPage", () => {
 
     expect((title as HTMLInputElement).value).toBe("发布复盘");
     expect(screen.getByRole("status").textContent).toMatch(/未保存|正在保存|已保存/u);
+  });
+
+  it("tracks title changes when mounted in StrictMode", async () => {
+    const services = createServices();
+    const user = userEvent.setup();
+    renderJournalPage(services, true);
+
+    const title = await screen.findByRole("textbox", { name: "日志标题" });
+    await user.type(title, "发布复盘");
+
+    expect(await screen.findByText("有未保存更改")).toBeTruthy();
+    await waitFor(() => expect(services.journal.save).toHaveBeenCalledOnce(), {
+      timeout: 2_000,
+    });
   });
 
   it("stores an uploaded image and inserts only its stable attachment ID", async () => {

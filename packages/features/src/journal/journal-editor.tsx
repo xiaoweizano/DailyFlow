@@ -73,6 +73,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const tagsTextRef = useRef(tagsText);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
   const storeRef = useRef<JournalEditorStore | null>(null);
+  const lifecycleMountsRef = useRef(0);
 
   if (storeRef.current === null) {
     storeRef.current = createJournalEditorStore(isPersisted ? journal.revision : 0);
@@ -88,7 +89,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   if (coordinatorRef.current === null) {
     coordinatorRef.current = new SaveCoordinator<JournalDraft, SavedJournalSnapshot>({
       debounceMs: preferences.autosaveIntervalMs,
-      save: (draft) =>
+      save: (draft, reason) =>
         services.journal.save({
           journalId: journal.id,
           journalDate: journal.journalDate,
@@ -98,7 +99,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           editorSchemaVersion: journal.content.schemaVersion,
           projectionVersion: journal.projectionVersion,
           expectedRevision: store.getState().expectedRevision,
-          checkpoint: "autosave",
+          checkpoint: reason,
           tags: draft.tags,
         }),
     });
@@ -202,11 +203,17 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   }, [coordinator, store]);
 
   useEffect(() => {
+    lifecycleMountsRef.current += 1;
     const unregister = services.lifecycle.register(flushNow);
     return () => {
       unregister();
+      lifecycleMountsRef.current -= 1;
       void coordinator.flush().finally(() => {
-        coordinator.dispose();
+        queueMicrotask(() => {
+          if (lifecycleMountsRef.current === 0) {
+            coordinator.dispose();
+          }
+        });
       });
     };
   }, [coordinator, services.lifecycle]);
@@ -253,7 +260,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   function handleKeyDown(event: React.KeyboardEvent<HTMLElement>): void {
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
       event.preventDefault();
-      void coordinator.flush();
+      void coordinator.flush("explicit");
     }
   }
 
@@ -280,7 +287,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           size="sm"
           aria-label="立即保存"
           onClick={() => {
-            void coordinator.flush();
+            void coordinator.flush("explicit");
           }}
         >
           <Save aria-hidden="true" className="size-4" />

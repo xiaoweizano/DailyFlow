@@ -1076,33 +1076,33 @@ docs/
 - Create: `scripts/run-desktop-smoke.ps1`
 - Create: `scripts/run-desktop-smoke.sh`
 
-- [ ] **Step 1: 建立可重复种子数据**
+- [x] **Step 1: 建立可重复种子数据**
 
   每个测试使用独立 origin/数据目录，通过公开 Application 用例写入固定日志、任务、知识、冲突日期和编码 fixture；不得直接改 IndexedDB 或 SQLite 绕过业务规则。
 
-- [ ] **Step 2: 写 Web 关键工作流**
+- [x] **Step 2: 写 Web 关键工作流**
 
   覆盖首次启动、今日记录、800ms 自动保存、版本恢复、TXT 目录导入、预览冲突、搜索、导出、备份与恢复失败。断言数据库无部分写入和 UI 保存状态一致。
 
-- [ ] **Step 3: 写布局与可访问性**
+- [x] **Step 3: 写布局与可访问性**
 
   在 375x812、1024x700、1440x900 截图和检查无重叠、无横向溢出。使用 axe 检查主要页面，键盘完成新建日志、保存、搜索、创建任务和打开 Data Management。
 
-- [ ] **Step 4: 建立桌面自动化**
+- [x] **Step 4: 建立桌面自动化**
 
   Windows CI 使用 Tauri WebDriver 可自动化部分执行启动、编辑、导入、关闭保存和备份冒烟；macOS 没有可靠的同级 WebDriver 时，执行 Rust 集成测试、应用构建和签名产物启动冒烟，并在发布清单记录人工验收项。共享 UI 行为继续由 Web E2E 覆盖。
 
-- [ ] **Step 5: 设置稳定性门槛**
+- [x] **Step 5: 设置稳定性门槛**
 
   固定时区和区域设置；测试等待可观察状态，不使用任意 sleep。失败保留 trace、截图和视频；重试不能掩盖持续失败。
 
-- [ ] **Step 6: 运行验证**
+- [x] **Step 6: 运行验证**
 
   Run: `pnpm e2e`
 
   Expected: Chromium、Firefox、WebKit 的核心 Web 用例通过；Windows 桌面冒烟通过；无严重或致命可访问性告警。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
   Run: `git add . && git commit -m "test: add cross-platform e2e and accessibility coverage"`
 

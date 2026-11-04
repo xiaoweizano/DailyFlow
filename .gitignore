@@ -1,11 +1,16 @@
 node_modules/
 .codex-tmp/
+.tmp/
+.tools/
+.playwright-browsers/
 .turbo/
 .pnpm-store/
 dist/
 coverage/
 playwright-report/
 test-results/
+.task15-*.png
+.task22-logs/
 *.tsbuildinfo
 
 .env

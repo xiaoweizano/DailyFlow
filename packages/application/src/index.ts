@@ -240,6 +240,11 @@ export {
   type UserPreferencesSaveResult,
 } from "./use-cases/settings.js";
 export {
+  CreateTaskInputSchema,
+  createTask,
+  type CreateTaskDependencies,
+} from "./use-cases/create-task.js";
+export {
   CompleteTaskInputSchema,
   completeTask,
   type CompleteTaskDependencies,

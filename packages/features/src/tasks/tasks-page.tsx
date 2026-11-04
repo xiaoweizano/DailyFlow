@@ -19,6 +19,7 @@ import {
   Circle,
   Link2,
   ListChecks,
+  Plus,
   RotateCw,
   SquarePen,
 } from "lucide-react";
@@ -26,7 +27,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { currentLocalDate, isLocalDate } from "../date-utils.js";
-import type { TaskUpdate } from "./task-services.js";
+import type { TaskCreateInput, TaskUpdate } from "./task-services.js";
 
 export interface TasksPageProps {
   readonly today?: string;
@@ -45,6 +46,125 @@ const priorityClasses: Record<TaskPriority, string> = {
   high: "border-warning/30 bg-warning/10 text-foreground",
   urgent: "border-danger/30 bg-danger/10 text-danger",
 };
+
+interface NewTaskDialogProps {
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+  readonly onCreate: (input: TaskCreateInput) => Promise<boolean>;
+}
+
+function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): React.JSX.Element {
+  const [title, setTitle] = useState("");
+  const [descriptionText, setDescriptionText] = useState("");
+  const [priority, setPriority] = useState<TaskPriority>("normal");
+  const [dueDate, setDueDate] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setTitle("");
+      setDescriptionText("");
+      setPriority("normal");
+      setDueDate("");
+    }
+  }, [open]);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    if (title.trim() === "") {
+      return;
+    }
+    setSaving(true);
+    try {
+      const created = await onCreate({
+        title: title.trim(),
+        descriptionText,
+        priority,
+        ...(dueDate === "" ? {} : { dueDate: dueDate as LocalDate }),
+      });
+      if (created) {
+        onOpenChange(false);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent aria-describedby="new-task-description">
+        <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
+          <DialogHeader>
+            <DialogTitle>新建待办</DialogTitle>
+            <DialogDescription id="new-task-description">
+              记录需要跟进的工作，可稍后补充关联信息。
+            </DialogDescription>
+          </DialogHeader>
+          <label className="grid gap-1.5 text-xs font-medium text-foreground">
+            任务标题
+            <Input
+              value={title}
+              onChange={(event) => setTitle(event.currentTarget.value)}
+              maxLength={500}
+              autoFocus
+            />
+          </label>
+          <label className="grid gap-1.5 text-xs font-medium text-foreground">
+            任务备注
+            <textarea
+              value={descriptionText}
+              onChange={(event) => setDescriptionText(event.currentTarget.value)}
+              rows={3}
+              maxLength={20_000}
+              className="min-h-20 w-full resize-y rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15"
+              placeholder="补充上下文、验收条件或下一步"
+            />
+          </label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="grid gap-1.5 text-xs font-medium text-foreground">
+              优先级
+              <select
+                value={priority}
+                onChange={(event) => setPriority(event.currentTarget.value as TaskPriority)}
+                className="h-9 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-sm text-foreground shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+              >
+                {Object.entries(priorityLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-xs font-medium text-foreground">
+              截止日期
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="YYYY-MM-DD"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.currentTarget.value)}
+                className="font-mono text-xs"
+              />
+            </label>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+              取消
+            </Button>
+            <Button type="submit" disabled={saving || title.trim() === ""}>
+              {saving ? (
+                <RotateCw aria-hidden="true" className="size-4 animate-spin" />
+              ) : (
+                <Plus aria-hidden="true" className="size-4" />
+              )}
+              创建待办
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 interface TaskDetailDialogProps {
   readonly task: Task | null;
@@ -220,6 +340,7 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
   const [view, setView] = useState<TaskListView>("today");
   const [tasks, setTasks] = useState<readonly Task[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadVersion, setReloadVersion] = useState(0);
@@ -278,6 +399,16 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
     updateVisibleTask(result.value);
   }
 
+  async function handleCreate(input: TaskCreateInput): Promise<boolean> {
+    const result = await services.tasks.create(input);
+    if (!result.ok) {
+      setError("待办创建失败，请检查标题和日期后重试");
+      return false;
+    }
+    setReloadVersion((version) => version + 1);
+    return true;
+  }
+
   const overdue = tasks.filter(
     (task) =>
       task.dueDate !== null &&
@@ -297,17 +428,23 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
             {overdue > 0 ? ` · ${overdue} 项已逾期` : ""}
           </p>
         </div>
-        <SegmentedControl
-          label="待办视图"
-          options={[
-            { label: "今天", value: "today" },
-            { label: "即将到期", value: "upcoming" },
-            { label: "全部", value: "all" },
-            { label: "已完成", value: "completed" },
-          ]}
-          value={view}
-          onChange={setView}
-        />
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <Button size="sm" onClick={() => setNewTaskOpen(true)}>
+            <Plus aria-hidden="true" className="size-4" />
+            新建待办
+          </Button>
+          <SegmentedControl
+            label="待办视图"
+            options={[
+              { label: "今天", value: "today" },
+              { label: "即将到期", value: "upcoming" },
+              { label: "全部", value: "all" },
+              { label: "已完成", value: "completed" },
+            ]}
+            value={view}
+            onChange={setView}
+          />
+        </div>
       </header>
 
       {error === null ? null : (
@@ -435,6 +572,7 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
         onSave={handleSave}
         onUnlink={handleUnlink}
       />
+      <NewTaskDialog open={newTaskOpen} onOpenChange={setNewTaskOpen} onCreate={handleCreate} />
     </div>
   );
 }

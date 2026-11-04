@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --port 1420",
     "build": "vite build",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run test --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "tauri:dev": "tauri dev --features desktop-shell",
     "tauri:build": "tauri build --features desktop-shell"

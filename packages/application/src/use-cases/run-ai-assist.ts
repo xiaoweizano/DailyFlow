@@ -16,8 +16,7 @@ import type { AppError } from "@dailyflow/shared";
 const MAX_CONTEXT_CHARACTERS = 20_000;
 const DEFAULT_TIMEOUT_MS = 15_000;
 const MAX_TIMEOUT_MS = 60_000;
-const ENTITY_ID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+const ENTITY_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
 
 const AiAssistPartInputSchema = z.discriminatedUnion("kind", [
   z

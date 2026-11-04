@@ -92,6 +92,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
 
   return (
     <div className="flex min-h-full flex-col">
+      <h1 className="sr-only">每日日志 {journalDate}</h1>
       <nav
         aria-label="日志日期导航"
         className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface-raised px-3 py-2"

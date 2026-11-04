@@ -14,7 +14,9 @@ export function AiSettings({ providers, secretBackend }: AiSettingsProps): React
           <Bot aria-hidden="true" className="size-4" />
         </span>
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase text-muted-foreground">Optional extension</p>
+          <p className="font-mono text-[10px] uppercase text-muted-foreground">
+            Optional extension
+          </p>
           <h2 id="ai-settings-title" className="mt-0.5 text-base font-semibold text-foreground">
             AI 辅助
           </h2>
@@ -28,7 +30,9 @@ export function AiSettings({ providers, secretBackend }: AiSettingsProps): React
         <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 py-3">
           <div>
             <p className="text-sm font-medium text-foreground">当前 Provider</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">V1 不包含真实厂商配置或网络请求。</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              V1 不包含真实厂商配置或网络请求。
+            </p>
           </div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
             <span className="size-1.5 rounded-full bg-border-strong" aria-hidden="true" />

@@ -1,6 +1,7 @@
 import type { Page } from "@dailyflow/application";
 import {
   buildTaskListQuery,
+  createTask,
   isTaskOverdue,
   reopenTask,
   updateTask,
@@ -9,7 +10,7 @@ import {
 import { markTaskDone, parseLocalDate, parseRevision, type Task } from "@dailyflow/domain";
 import { describe, expect, it } from "vitest";
 
-import { FakeTaskRepository, NOW_TIMESTAMP, clock, makeTask } from "./support.js";
+import { FakeTaskRepository, NOW_TIMESTAMP, SequenceIds, clock, makeTask } from "./support.js";
 
 function task(overrides: Partial<Task> = {}): Task {
   return {
@@ -108,6 +109,41 @@ describe("task list query", () => {
 });
 
 describe("task mutations", () => {
+  it("creates a new open task through the repository without allowing lifecycle injection", async () => {
+    const repositories = new FakeTaskRepository();
+    const ids = new SequenceIds(["0198e2f4-7e33-7c70-a8b2-18c1520f9c2c"]);
+
+    const result = await createTask(
+      { tasks: repositories, clock, ids },
+      {
+        title: "  整理发布记录  ",
+        descriptionText: "补充安装包校验和。",
+        priority: "high",
+        dueDate: "2024-03-01",
+        status: "done",
+        revision: 99,
+        createdAt: "2020-01-01T00:00:00.000Z",
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) {
+      throw new Error("Expected createTask to succeed");
+    }
+    expect(result.value).toMatchObject({
+      title: "整理发布记录",
+      descriptionText: "补充安装包校验和。",
+      priority: "high",
+      dueDate: "2024-03-01",
+      status: "open",
+      revision: 0,
+      completedAt: null,
+      createdAt: NOW_TIMESTAMP,
+      updatedAt: NOW_TIMESTAMP,
+    });
+    expect(repositories.saved).toEqual([{ task: result.value, expectedRevision: null }]);
+  });
+
   it("reopens a completed task while preserving optimistic concurrency", async () => {
     const repositories = new FakeTaskRepository();
     const completed = task({

@@ -113,6 +113,7 @@ function ActivityChart({
           return (
             <div
               key={day.date}
+              role="img"
               aria-label={`${day.date}：${day.journalCount} 篇日志，${day.tasksCompleted} 个任务完成`}
               className="flex h-full min-w-0 flex-1 items-end justify-center gap-0.5"
             >

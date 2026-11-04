@@ -31,7 +31,7 @@ import { createImportServicesStub } from "./import-stub.js";
 import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
-import type { TaskRuntimeServices } from "../src/tasks/task-services.js";
+import type { TaskCreateInput, TaskRuntimeServices } from "../src/tasks/task-services.js";
 import { isLocalDate, shiftLocalDate } from "../src/date-utils.js";
 import { ActivityHeatmap } from "../src/timeline/activity-heatmap.js";
 import { MonthCalendar } from "../src/timeline/month-calendar.js";
@@ -90,6 +90,16 @@ function createTaskServices(initialTasks: readonly Task[] = [makeTask()]): TaskR
 
   return {
     list,
+    create: vi.fn(async (input: TaskCreateInput): Promise<Result<Task, AppError>> => {
+      const created = makeTask({
+        title: input.title,
+        descriptionText: input.descriptionText ?? "",
+        priority: input.priority ?? "normal",
+        dueDate: input.dueDate ?? null,
+      });
+      tasks.push(created);
+      return ok(created);
+    }),
     complete: vi.fn(async (item: Task): Promise<Result<Task, AppError>> => {
       const completed = {
         ...item,
@@ -209,9 +219,15 @@ describe("Timeline experience", () => {
 
   it("switches between calendar, chronological timeline, and heatmap views", async () => {
     const user = userEvent.setup();
-    renderPage(<TimelinePage today="2026-10-30" />);
+    const services = createServices();
+    renderPage(<TimelinePage today="2026-10-30" />, services);
 
     expect(await screen.findByRole("heading", { name: "2026 年 10 月" })).toBeTruthy();
+    expect(services.timeline.listEntries).toHaveBeenCalledWith({
+      fromDate: parseLocalDate("2026-10-01"),
+      toDate: parseLocalDate("2026-10-31"),
+      limit: 50,
+    });
     await user.click(screen.getByRole("button", { name: "时间线" }));
     expect(await screen.findByRole("link", { name: /发布复盘/u })).toHaveAttribute(
       "href",
@@ -233,6 +249,27 @@ describe("Timeline experience", () => {
 });
 
 describe("Tasks experience", () => {
+  it("creates a task from an accessible dialog and refreshes the list", async () => {
+    const taskServices = createTaskServices([]);
+    const user = userEvent.setup();
+    renderPage(<TasksPage today="2026-10-30" />, createServices({ taskServices }));
+
+    await user.click(await screen.findByRole("button", { name: "新建待办" }));
+    const dialog = screen.getByRole("dialog", { name: "新建待办" });
+    await user.type(within(dialog).getByLabelText("任务标题"), "整理发布记录");
+    await user.selectOptions(within(dialog).getByLabelText("优先级"), "high");
+    await user.type(within(dialog).getByLabelText("截止日期"), "2026-10-31");
+    await user.click(within(dialog).getByRole("button", { name: "创建待办" }));
+
+    expect(taskServices.create).toHaveBeenCalledWith({
+      title: "整理发布记录",
+      descriptionText: "",
+      priority: "high",
+      dueDate: "2026-10-31",
+    });
+    expect(await screen.findByRole("article", { name: "待办：整理发布记录" })).toBeTruthy();
+  });
+
   it.each<readonly [string, TaskListView]>([
     ["今天", "today"],
     ["即将到期", "upcoming"],

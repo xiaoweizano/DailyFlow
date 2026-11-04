@@ -1,11 +1,11 @@
 export { createDesktopServices, type DesktopServices } from "./desktop-services.js";
 export { DesktopAttachmentStore } from "./desktop-attachment-store.js";
 
+export { DesktopSecretStore, type DesktopSecretStoreOptions } from "./desktop-secret-store.js";
 export {
-  DesktopSecretStore,
-  type DesktopSecretStoreOptions,
-} from "./desktop-secret-store.js";
-export { DesktopSettingsStore, type DesktopSettingsStoreOptions } from "./desktop-settings-store.js";
+  DesktopSettingsStore,
+  type DesktopSettingsStoreOptions,
+} from "./desktop-settings-store.js";
 export { DesktopDataManagementPort } from "./desktop-data-management-port.js";
 export {
   DesktopBackupService,

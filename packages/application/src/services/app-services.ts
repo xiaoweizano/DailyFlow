@@ -17,6 +17,7 @@ import type { SearchPort } from "../ports/search-port.js";
 import type { TaskRepository } from "../ports/task-repository.js";
 import type { AnalyticsQuery } from "../queries/analytics-query.js";
 import { completeTask } from "../use-cases/complete-task.js";
+import { createTask } from "../use-cases/create-task.js";
 import { getJournal, type JournalLookup } from "../use-cases/get-journal.js";
 import { promoteToKnowledge } from "../use-cases/promote-to-knowledge.js";
 import { reopenTask } from "../use-cases/reopen-task.js";
@@ -47,6 +48,7 @@ export interface ApplicationUseCases {
     input: unknown,
   ) => Promise<Result<SavedJournalSnapshot, AppError>>;
   readonly promoteToKnowledge: (input: unknown) => Promise<Result<KnowledgeItem, AppError>>;
+  readonly createTask: (input: unknown) => Promise<Result<Task, AppError>>;
   readonly completeTask: (input: unknown) => Promise<Result<Task, AppError>>;
   readonly reopenTask: (input: unknown) => Promise<Result<Task, AppError>>;
   readonly updateTask: (input: unknown) => Promise<Result<Task, AppError>>;
@@ -95,6 +97,15 @@ export function createAppServices(dependencies: ApplicationDependencies): AppSer
             projector: dependencies.projector,
             ids: dependencies.ids,
             clock: dependencies.clock,
+          },
+          input,
+        ),
+      createTask: (input) =>
+        createTask(
+          {
+            tasks: dependencies.tasks,
+            clock: dependencies.clock,
+            ids: dependencies.ids,
           },
           input,
         ),

@@ -52,7 +52,11 @@ export function TimelinePage({ today = currentLocalDate() }: TimelinePageProps):
           from: range.from as LocalDate,
           to: range.to as LocalDate,
         }),
-        services.timeline.listEntries({ limit: 50 }),
+        services.timeline.listEntries({
+          fromDate: range.from as LocalDate,
+          toDate: range.to as LocalDate,
+          limit: 50,
+        }),
       ]);
       setCalendarDays(calendar);
       setTimelineDays(timeline.items);

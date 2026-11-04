@@ -22,9 +22,7 @@ const selectedTextRequest = {
   ],
 } as const;
 
-function createProvider(
-  overrides: Partial<AiProviderPort["descriptor"]> = {},
-): AiProviderPort {
+function createProvider(overrides: Partial<AiProviderPort["descriptor"]> = {}): AiProviderPort {
   return {
     descriptor: {
       id: "fixture-provider",
@@ -43,18 +41,14 @@ function createProvider(
 function createRegistry(provider: AiProviderPort | null): AiProviderRegistry {
   return {
     list: () => (provider === null ? [] : [provider.descriptor]),
-    resolve: (providerId) =>
-      provider?.descriptor.id === providerId ? provider : null,
+    resolve: (providerId) => (provider?.descriptor.id === providerId ? provider : null),
   };
 }
 
 describe("AI assist safety boundary", () => {
   it("reports an unavailable provider without calling a network replacement", async () => {
     const fetchReplacement = vi.fn();
-    const result = await prepareAiAssist(
-      { registry: createRegistry(null) },
-      selectedTextRequest,
-    );
+    const result = await prepareAiAssist({ registry: createRegistry(null) }, selectedTextRequest);
 
     expect(result).toEqual({
       ok: false,
@@ -199,9 +193,7 @@ describe("AI assist safety boundary", () => {
 
   it("times out a provider that does not settle", async () => {
     const provider = createProvider();
-    provider.complete = vi.fn(
-      async () => await new Promise<never>(() => undefined),
-    );
+    provider.complete = vi.fn(async () => await new Promise<never>(() => undefined));
     const prepared = await prepareAiAssist(
       { registry: createRegistry(provider) },
       selectedTextRequest,

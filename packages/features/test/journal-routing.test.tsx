@@ -100,6 +100,7 @@ function createServices(error?: AppError) {
     },
     tasks: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
+      create: vi.fn(),
       complete: vi.fn(),
       reopen: vi.fn(),
       update: vi.fn(),

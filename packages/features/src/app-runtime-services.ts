@@ -146,6 +146,7 @@ export function createAppRuntimeServices(
     tasks: createTaskRuntimeServices({
       tasks: options.tasks,
       clock,
+      ids,
       today: options.today ?? systemLocalDate,
     }),
     timeline: options.timeline,

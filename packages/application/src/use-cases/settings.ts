@@ -31,10 +31,7 @@ export type DensityPreference = z.infer<typeof DensityPreferenceSchema>;
 export type HistoryRetention = z.infer<typeof HistoryRetentionSchema>;
 export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 
-export type SettingsWarningCode =
-  | "invalid_value"
-  | "read_failed"
-  | "write_failed";
+export type SettingsWarningCode = "invalid_value" | "read_failed" | "write_failed";
 
 export interface SettingsWarning {
   readonly code: SettingsWarningCode;

@@ -41,9 +41,19 @@ describe("SaveCoordinator", () => {
 
     await vi.advanceTimersByTimeAsync(1);
     expect(save).toHaveBeenCalledTimes(1);
-    expect(save).toHaveBeenCalledWith({ text: "latest" });
+    expect(save).toHaveBeenCalledWith({ text: "latest" }, "autosave");
     expect(coordinator.getState().status).toBe("saved");
     expect(coordinator.getState().draft).toBeNull();
+  });
+
+  it("marks an immediate flush as an explicit checkpoint", async () => {
+    const save = vi.fn(async () => ok<Saved>({ revision: 1 }));
+    const coordinator = new SaveCoordinator<Draft, Saved>({ save });
+
+    coordinator.update({ text: "manual save" });
+    await coordinator.flush("explicit");
+
+    expect(save).toHaveBeenCalledWith({ text: "manual save" }, "explicit");
   });
 
   it("reschedules an existing dirty draft when the debounce interval changes", async () => {
@@ -95,7 +105,7 @@ describe("SaveCoordinator", () => {
     await vi.advanceTimersByTimeAsync(1);
 
     expect(save).toHaveBeenCalledTimes(2);
-    expect(save).toHaveBeenLastCalledWith({ text: "version two" });
+    expect(save).toHaveBeenLastCalledWith({ text: "version two" }, "autosave");
     expect(coordinator.getState().status).toBe("saved");
     expect(coordinator.getState().draft).toBeNull();
   });

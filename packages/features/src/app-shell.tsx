@@ -18,10 +18,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from "reac
 import { Input, SaveStatus } from "@dailyflow/ui";
 
 import { appModules, type AppModuleId, type AppRouteOptions } from "./app-modules.js";
-import {
-  createCommandRegistry,
-  detectShortcutPlatform,
-} from "./platform/command-registry.js";
+import { createCommandRegistry, detectShortcutPlatform } from "./platform/command-registry.js";
 import { SearchCommand } from "./search/search-command.js";
 
 export type AppShellProps = AppRouteOptions;
@@ -117,11 +114,10 @@ export function AppShell({ platform, storageLabel, version }: AppShellProps): Re
         跳到主要内容
       </a>
 
-      <aside className="df-sidebar" aria-label="主导航">
+      <aside className="df-sidebar">
         <div className="flex h-[var(--topbar-height)] items-center border-b border-border px-4 max-[899px]:justify-center max-[899px]:px-2">
           <Link
             to="/"
-            aria-label="DailyFlow 工作台"
             className="flex min-w-0 items-center gap-2.5 rounded-[var(--radius-control)] text-foreground"
           >
             <span
@@ -141,7 +137,7 @@ export function AppShell({ platform, storageLabel, version }: AppShellProps): Re
           </Link>
         </div>
 
-        <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-3">
+        <nav aria-label="主导航" className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-3">
           <p className="df-nav-section-label mb-2 px-2 font-mono text-[10px] uppercase text-muted-foreground">
             Workspace
           </p>
