@@ -1,0 +1,95 @@
+name: Build Windows Candidate
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: candidate-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  build-windows:
+    name: Windows x64 unsigned candidate
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows NSIS candidate
+        run: pnpm --filter @dailyflow/desktop tauri:build -- --target x86_64-pc-windows-msvc --bundles nsis
+
+      - name: Stage candidate artifacts
+        shell: pwsh
+        run: |
+          $version = (Get-Content -Raw "apps/desktop/src-tauri/tauri.conf.json" | ConvertFrom-Json).version
+          $targetRoot = "apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release"
+          $installer = Get-ChildItem `
+            -LiteralPath (Join-Path $targetRoot "bundle/nsis") `
+            -Filter "*.exe" |
+            Select-Object -First 1
+          $portable = Get-Item -LiteralPath (Join-Path $targetRoot "dailyflow-desktop.exe")
+          if ($null -eq $installer -or $null -eq $portable) {
+            throw "Expected Windows candidate artifacts were not produced."
+          }
+
+          $candidateDirectory = Join-Path $env:RUNNER_TEMP "candidate"
+          New-Item -ItemType Directory -Force -Path $candidateDirectory | Out-Null
+          $installerName = "DailyFlow_${version}_x64-unsigned-setup.exe"
+          $portableName = "DailyFlow_${version}_x64-portable.exe"
+          $installerTarget = Join-Path $candidateDirectory $installerName
+          $portableTarget = Join-Path $candidateDirectory $portableName
+          Copy-Item -LiteralPath $installer.FullName -Destination $installerTarget
+          Copy-Item -LiteralPath $portable.FullName -Destination $portableTarget
+
+          @(
+            "commit=${{ github.sha }}"
+            "ref=${{ github.ref_name }}"
+            "run=${{ github.run_id }}"
+            "signature=unsigned manual test candidate"
+          ) | Out-File `
+            -FilePath (Join-Path $candidateDirectory "BUILD-INFO.txt") `
+            -Encoding utf8
+
+          Get-ChildItem -LiteralPath $candidateDirectory -Filter "*.exe" |
+            Sort-Object Name |
+            ForEach-Object {
+              $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash.ToLowerInvariant()
+              "$hash  $($_.Name)"
+            } |
+            Out-File `
+              -FilePath (Join-Path $candidateDirectory "SHA256SUMS") `
+              -Encoding ascii
+
+          Get-Content -LiteralPath (Join-Path $candidateDirectory "SHA256SUMS")
+
+      - name: Upload Windows candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: dailyflow-windows-x64-unsigned-${{ github.sha }}
+          path: ${{ runner.temp }}/candidate/*
+          if-no-files-found: error
+          retention-days: 14
