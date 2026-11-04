@@ -16,7 +16,7 @@ export function createEditorExtensions(): Extensions {
       link: false,
     }),
     Link.configure({
-      autolink: false,
+      autolink: true,
       linkOnPaste: false,
       openOnClick: false,
       protocols: ["http", "https", "mailto"],

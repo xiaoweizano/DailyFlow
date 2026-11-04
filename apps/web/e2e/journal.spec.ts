@@ -72,3 +72,22 @@ test("supports the date navigator and explicit keyboard save", async ({ page }) 
   await page.getByRole("button", { name: "前一天" }).click();
   await expect(page.getByLabel("选择日志日期")).not.toHaveValue(todayInShanghai());
 });
+
+test("autolinks typed URLs and preserves the link after saving", async ({ page }) => {
+  await page.goto("/journal/2026-11-04");
+
+  const editor = page.getByLabel("日志正文");
+  await editor.click();
+  await page.keyboard.type("参考资料 https://example.com/docs ");
+
+  const link = editor.locator('a[href="https://example.com/docs"]');
+  await expect(link).toHaveText("https://example.com/docs");
+  await expect(page.getByRole("status").filter({ hasText: /^已保存/ })).toBeVisible({
+    timeout: 5_000,
+  });
+
+  await page.reload();
+  await expect(
+    page.getByLabel("日志正文").locator('a[href="https://example.com/docs"]'),
+  ).toHaveText("https://example.com/docs");
+});

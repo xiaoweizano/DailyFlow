@@ -354,6 +354,19 @@ async function fileRecord(path: string, bytes: Uint8Array): Promise<BackupArchiv
   };
 }
 
+async function appendContentFile(
+  files: BackupArchiveFile[],
+  paths: Set<string>,
+  path: string,
+  bytes: Uint8Array,
+): Promise<void> {
+  if (paths.has(path)) {
+    return;
+  }
+  files.push(await fileRecord(path, bytes));
+  paths.add(path);
+}
+
 async function archiveContentDigest(files: readonly BackupArchiveFile[]): Promise<string> {
   const content = files
     .filter((file) => file.path !== "manifest.json" && file.path !== "checksums.json")
@@ -405,10 +418,11 @@ export async function buildBackupArchive(
       ),
     ),
   );
+  const contentFilePaths = new Set<string>();
   for (const record of input.dataset.attachments) {
     const sha256 = asString(record.blob, "sha256");
     if (sha256 !== null) {
-      files.push(await fileRecord(attachmentPath(sha256), record.bytes));
+      await appendContentFile(files, contentFilePaths, attachmentPath(sha256), record.bytes);
     }
   }
   for (const entry of input.dataset.importEntries) {
@@ -417,7 +431,12 @@ export async function buildBackupArchive(
       entry.rawBytes instanceof Uint8Array &&
       typeof entry.fileSha256 === "string"
     ) {
-      files.push(await fileRecord(rawImportPath(entry.fileSha256), entry.rawBytes));
+      await appendContentFile(
+        files,
+        contentFilePaths,
+        rawImportPath(entry.fileSha256),
+        entry.rawBytes,
+      );
     }
   }
 

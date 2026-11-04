@@ -428,6 +428,29 @@ describe("backup archive", () => {
     expect(inspected.files.some((file) => file.path.startsWith("imports/raw/"))).toBe(true);
   });
 
+  it("stores shared raw import bytes once across captured entries", async () => {
+    const dataset = populatedDataset();
+    dataset.importEntries.push({
+      ...dataset.importEntries[0]!,
+      id: "019a3c10-0000-7000-8000-000000000012",
+      relativePath: "202611/20261104-copy.txt",
+      originalFileName: "20261104-copy.txt",
+      detectedDate: parseLocalDate("2026-11-04"),
+    });
+
+    const archive = await buildBackupArchive(options(dataset));
+    const inspected = await inspectBackupArchive(archive.bytes);
+
+    expect(archive.files.filter((file) => file.path.startsWith("imports/raw/"))).toHaveLength(1);
+    expect(inspected.manifest.rawImportFileCount).toBe(2);
+    expect(inspected.dataset.importEntries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ rawBlobPath: `imports/raw/2c/${RAW_IMPORT_HASH}.bin` }),
+        expect.objectContaining({ rawBlobPath: `imports/raw/2c/${RAW_IMPORT_HASH}.bin` }),
+      ]),
+    );
+  });
+
   it("accepts structured-block attachment owners and rejects task owners", async () => {
     const structuredBlock = populatedDataset();
     structuredBlock.structuredBlocks.push({

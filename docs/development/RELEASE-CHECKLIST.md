@@ -6,6 +6,40 @@
 
 发布工作流只创建草稿 GitHub Release。下列人工验收完成前，不得把草稿标记为正式版本，也不得创建或移动稳定版 tag 来绕过检查。
 
+## 1.1 2026-11-04 本地 Windows 候选验收记录
+
+本节只记录当前 Windows 候选构建在本地完成的验收，不代表正式 Release 已通过。产物来自提交 `ba775f7` 加当前工作区修复，尚未生成发布提交、tag 或 Draft Release。
+
+- [x] 根包、桌面端、Web 端、Tauri 配置和 Cargo 包版本均为 `0.1.0`。
+- [x] `pnpm install --frozen-lockfile` 通过，lockfile 未发生变化。
+- [x] `pnpm test` 通过；脚本级测试 9/9，工作区各包的测试任务全部成功。
+- [x] `pnpm typecheck`、`pnpm build`、`pnpm verify:artifacts` 和 `pnpm check:hardcoded-paths` 均通过。
+- [x] Journal E2E 在 Chromium、Firefox、WebKit 各 4 项，共 12/12 通过；包含 URL 自动链接保存和重载保留。
+- [x] 备份共享原始导入内容去重测试 12/12 通过；编辑器往返测试 4/4 通过。
+- [x] 全量浏览器 E2E 在单 worker 下完成：48 passed、1 skipped、0 failed。跳过项仅为缺少 WebDriver 环境的 `windows-desktop` 打包应用启动测试。
+- [x] Windows release 构建成功，生成可执行文件、MSI 和 NSIS 安装包。
+- [x] 最终应用启动、主窗口标题、关闭主窗口和进程退出检查通过；重启后应用数据仍可读取。
+- [x] 本地验收确认 13 篇日志、1 个附件、搜索索引 13/13、完整备份和恢复、NSIS 静默卸载及用户数据保留。
+- [x] `cargo test` 49/49 通过，`cargo fmt --check` 通过。
+
+当前 Windows 产物：
+
+- `dailyflow-desktop.exe`：16,707,584 bytes，SHA-256 `ca7e8e3de57b00a85897da952ae149e074055f9a7aae67ce52f2f824a66feb10`
+- `DailyFlow_0.1.0_x64_en-US.msi`：6,553,600 bytes，SHA-256 `ac129d8322be37c809fd3753dba3223b185d4a7d864af38988734489d0641ca5`
+- `DailyFlow_0.1.0_x64-setup.exe`：4,940,014 bytes，SHA-256 `98122b92a916c0006c30eb80e99e4d485d80edc5214a1a1d6f3dd3c766510b7c`
+
+当前明确未完成：
+
+- [ ] Windows WebDriver 冒烟。本机缺少匹配的 `tauri-driver` 和 `msedgedriver`，全量 E2E 中该项被跳过。
+- [ ] Windows Authenticode 签名及证书链验证。当前本地包未使用正式发布证书签名。
+- [ ] macOS Intel 和 Apple Silicon 的真实安装、启动、升级及数据保留验收。
+- [ ] macOS Developer ID 签名、Gatekeeper 和 Apple 公证。
+- [ ] GitHub Release 工作流、Draft Release 下载、SHA-256 核对和覆盖升级验收。
+- [ ] Chrome、Edge、Safari 正式稳定版矩阵验收。
+- [ ] 发布提交、远程 push、tag、Draft Release 和正式 Release。
+
+SQLite FTS 的当前分词边界仍需保留：单词和部分中文词可以命中，但完整中文短语及多词组合不能作为已保证能力对外宣称。
+
 ## 2. 版本与仓库准备
 
 - [ ] `package.json`、Tauri 配置、Cargo 包和发布 tag 的版本一致。

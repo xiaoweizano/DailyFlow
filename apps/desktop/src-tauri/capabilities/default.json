@@ -3,5 +3,10 @@
   "identifier": "desktop",
   "description": "DailyFlow desktop permissions",
   "windows": ["main"],
-  "permissions": ["core:default", "dialog:allow-open"]
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "dialog:allow-open"
+  ]
 }
