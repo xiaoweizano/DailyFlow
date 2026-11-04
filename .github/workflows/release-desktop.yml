@@ -1,0 +1,395 @@
+name: Release Desktop
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-desktop-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  build-desktop:
+    name: Build ${{ matrix.artifact }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    environment:
+      name: release
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: windows-x64
+            arch: x64
+            target: x86_64-pc-windows-msvc
+            bundle: nsis
+          - os: macos-15-intel
+            artifact: macos-x86_64
+            arch: x86_64
+            target: x86_64-apple-darwin
+            bundle: dmg
+          - os: macos-15
+            artifact: macos-arm64
+            arch: arm64
+            target: aarch64-apple-darwin
+            bundle: dmg
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate tag and application version
+        shell: bash
+        run: |
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const config = JSON.parse(
+              readFileSync("apps/desktop/src-tauri/tauri.conf.json", "utf8"),
+            );
+            const packageManifest = JSON.parse(readFileSync("package.json", "utf8"));
+            const cargoManifest = readFileSync(
+              "apps/desktop/src-tauri/Cargo.toml",
+              "utf8",
+            );
+            const cargoVersion = cargoManifest.match(/^version = "([^"]+)"/m)?.[1];
+            const versions = new Set([
+              config.version,
+              packageManifest.version,
+              cargoVersion,
+            ]);
+            if (versions.size !== 1 || !cargoVersion) {
+              throw new Error(
+                `Application versions must match: package=${packageManifest.version}, tauri=${config.version}, cargo=${cargoVersion}`,
+              );
+            }
+            const expectedTag = `v${config.version}`;
+            if (process.env.RELEASE_TAG !== expectedTag) {
+              throw new Error(
+                `Release tag ${process.env.RELEASE_TAG} does not match application version ${config.version}`,
+              );
+            }
+            console.log(`Release version ${config.version}`);
+          '
+
+      - name: Import Windows Authenticode certificate
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          $required = @(
+            "WINDOWS_CERTIFICATE_BASE64",
+            "WINDOWS_CERTIFICATE_PASSWORD"
+          )
+          foreach ($name in $required) {
+            if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+              throw "Missing required release secret: $name"
+            }
+          }
+
+          $certificatePath = Join-Path $env:RUNNER_TEMP "dailyflow-authenticode.pfx"
+          try {
+            [IO.File]::WriteAllBytes(
+              $certificatePath,
+              [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64)
+            )
+            $password = ConvertTo-SecureString `
+              -String $env:WINDOWS_CERTIFICATE_PASSWORD `
+              -AsPlainText `
+              -Force
+            $certificate = Import-PfxCertificate `
+              -FilePath $certificatePath `
+              -CertStoreLocation "Cert:\CurrentUser\My" `
+              -Password $password
+            "WINDOWS_CERTIFICATE_THUMBPRINT=$($certificate.Thumbprint)" |
+              Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          } finally {
+            Remove-Item -LiteralPath $certificatePath -Force -ErrorAction SilentlyContinue
+          }
+
+          $releaseConfig = @{
+            bundle = @{
+              windows = @{
+                certificateThumbprint = $certificate.Thumbprint
+                digestAlgorithm = "sha256"
+                timestampUrl = "http://timestamp.digicert.com"
+              }
+            }
+          } | ConvertTo-Json -Depth 5 -Compress
+          $configPath = Join-Path $env:RUNNER_TEMP "tauri.release.conf.json"
+          [IO.File]::WriteAllText($configPath, $releaseConfig, [Text.Encoding]::ASCII)
+          "TAURI_RELEASE_CONFIG=$configPath" |
+            Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Import macOS Developer ID certificate
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for name in \
+            APPLE_CERTIFICATE \
+            APPLE_CERTIFICATE_PASSWORD \
+            APPLE_SIGNING_IDENTITY \
+            APPLE_ID \
+            APPLE_PASSWORD \
+            APPLE_TEAM_ID
+          do
+            if [[ -z "${!name:-}" ]]; then
+              echo "Missing required release secret: $name" >&2
+              exit 1
+            fi
+          done
+
+          certificate_path="$RUNNER_TEMP/dailyflow-developer-id.p12"
+          keychain_path="$RUNNER_TEMP/dailyflow-signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          printf '%s' "$APPLE_CERTIFICATE" | base64 -D > "$certificate_path"
+
+          security create-keychain -p "$keychain_password" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$keychain_password" "$keychain_path"
+          security import "$certificate_path" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$keychain_path"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$keychain_password" \
+            "$keychain_path"
+          security list-keychains -d user -s "$keychain_path"
+          security find-identity -v -p codesigning "$keychain_path"
+          rm -f "$certificate_path"
+
+          {
+            echo "APPLE_SIGNING_IDENTITY=$APPLE_SIGNING_IDENTITY"
+            echo "APPLE_ID=$APPLE_ID"
+            echo "APPLE_PASSWORD=$APPLE_PASSWORD"
+            echo "APPLE_TEAM_ID=$APPLE_TEAM_ID"
+            echo "KEYCHAIN_PATH=$keychain_path"
+          } >> "$GITHUB_ENV"
+
+      - name: Build Windows NSIS installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          pnpm --filter @dailyflow/desktop tauri:build -- `
+            --target ${{ matrix.target }} `
+            --bundles ${{ matrix.bundle }} `
+            --config "$env:TAURI_RELEASE_CONFIG"
+          if ($LASTEXITCODE -ne 0) {
+            throw "Tauri Windows build failed."
+          }
+
+      - name: Verify Windows installer and checksum
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = (Get-Content `
+            -Raw "apps/desktop/src-tauri/tauri.conf.json" |
+            ConvertFrom-Json).version
+          $bundleDirectory = Join-Path `
+            "apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/nsis" `
+            ""
+          $installer = Get-ChildItem `
+            -LiteralPath $bundleDirectory `
+            -Filter "*.exe" |
+            Select-Object -First 1
+          if ($null -eq $installer) {
+            throw "No NSIS installer was produced in $bundleDirectory"
+          }
+
+          $releaseDirectory = Join-Path $env:RUNNER_TEMP "release"
+          New-Item -ItemType Directory -Force -Path $releaseDirectory | Out-Null
+          $artifactName = "DailyFlow_${version}_${{ matrix.arch }}-setup.exe"
+          $artifactPath = Join-Path $releaseDirectory $artifactName
+          Copy-Item -LiteralPath $installer.FullName -Destination $artifactPath
+
+          $signature = Get-AuthenticodeSignature -LiteralPath $artifactPath
+          if ($signature.Status -ne "Valid") {
+            throw "Authenticode validation failed: $($signature.Status)"
+          }
+
+          $digest = (Get-FileHash -Algorithm SHA256 -LiteralPath $artifactPath).Hash.ToLowerInvariant()
+          "$digest  $artifactName" |
+            Out-File `
+              -FilePath (Join-Path $releaseDirectory "SHA256SUMS") `
+              -Encoding ascii
+
+          node scripts/verify-artifacts.mjs `
+            --scope release `
+            --release-dir $releaseDirectory `
+            --version $version `
+            --arch ${{ matrix.arch }}
+          if ($LASTEXITCODE -ne 0) {
+            throw "Release artifact verification failed."
+          }
+          Move-Item `
+            -LiteralPath (Join-Path $releaseDirectory "SHA256SUMS") `
+            -Destination (Join-Path $releaseDirectory "SHA256SUMS-${{ matrix.artifact }}")
+
+      - name: Build macOS DMG
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          pnpm --filter @dailyflow/desktop tauri:build -- \
+            --target ${{ matrix.target }} \
+            --bundles ${{ matrix.bundle }}
+
+      - name: Verify macOS signature, notarization, architecture, and checksum
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          version="$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")"
+          target_root="apps/desktop/src-tauri/target/${{ matrix.target }}/release"
+          app_path="$target_root/bundle/macos/DailyFlow.app"
+          dmg_path="$(find "$target_root/bundle/dmg" -maxdepth 1 -name '*.dmg' -print -quit)"
+
+          test -d "$app_path"
+          test -n "$dmg_path"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+          codesign -dv --verbose=4 "$app_path" 2>&1
+          spctl --assess --type execute --verbose=2 "$app_path"
+          xcrun stapler validate "$app_path"
+          xcrun stapler validate "$dmg_path"
+          spctl --assess \
+            --type open \
+            --context context:primary-signature \
+            --verbose=2 \
+            "$dmg_path"
+
+          app_binary="$app_path/Contents/MacOS/dailyflow-desktop"
+          if [[ ! -f "$app_binary" ]]; then
+            app_binary="$(find "$app_path/Contents/MacOS" -maxdepth 1 -type f -print -quit)"
+          fi
+          lipo -archs "$app_binary" | grep -qw "${{ matrix.arch }}"
+
+          release_directory="$RUNNER_TEMP/release"
+          mkdir -p "$release_directory"
+          artifact_name="DailyFlow_${version}_${{ matrix.arch }}.dmg"
+          artifact_path="$release_directory/$artifact_name"
+          cp "$dmg_path" "$artifact_path"
+          shasum -a 256 "$artifact_path" |
+            sed "s#  $release_directory/#  #" \
+            > "$release_directory/SHA256SUMS"
+
+          node scripts/verify-artifacts.mjs \
+            --scope release \
+            --release-dir "$release_directory" \
+            --version "$version" \
+            --arch "${{ matrix.arch }}"
+          mv \
+            "$release_directory/SHA256SUMS" \
+            "$release_directory/SHA256SUMS-${{ matrix.artifact }}"
+
+      - name: Upload signed installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.artifact }}
+          path: ${{ runner.temp }}/release/*
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Remove Windows signing certificate
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_THUMBPRINT)) {
+            Remove-Item `
+              -LiteralPath "Cert:\CurrentUser\My\$env:WINDOWS_CERTIFICATE_THUMBPRINT" `
+              -Force `
+              -ErrorAction SilentlyContinue
+          }
+
+      - name: Remove macOS signing keychain
+        if: always() && runner.os == 'macOS'
+        shell: bash
+        run: |
+          if [[ -n "${KEYCHAIN_PATH:-}" && -f "$KEYCHAIN_PATH" ]]; then
+            security delete-keychain "$KEYCHAIN_PATH"
+          fi
+
+  publish:
+    name: Draft GitHub release
+    needs: build-desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: release
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Download signed installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+
+      - name: Create combined SHA-256 manifest
+        shell: bash
+        run: |
+          find release -maxdepth 1 -type f \
+            \( -name '*.exe' -o -name '*.dmg' \) \
+            -print0 |
+            sort -z |
+            xargs -0 shasum -a 256 |
+            sed 's#  release/#  #' \
+            > release/SHA256SUMS
+          test -s release/SHA256SUMS
+          cat release/SHA256SUMS
+
+      - name: Create draft GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: DailyFlow ${{ env.RELEASE_TAG }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          draft: true
+          prerelease: ${{ contains(inputs.tag || github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            release/*.exe
+            release/*.dmg
+            release/SHA256SUMS
+            release/SHA256SUMS-*

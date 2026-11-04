@@ -12,14 +12,17 @@
     "dev:web": "pnpm --filter @dailyflow/web dev",
     "dev:desktop": "pnpm --filter @dailyflow/desktop dev",
     "build": "turbo run build",
-    "test": "node scripts/check-dto-fixtures.mjs && turbo run test",
+    "test": "node scripts/check-dto-fixtures.mjs && node --test scripts/test/*.test.mjs && turbo run test",
+    "test:scripts": "node --test scripts/test/*.test.mjs",
     "check:dto-fixtures": "node scripts/check-dto-fixtures.mjs",
     "test:watch": "turbo run test:watch",
     "typecheck": "turbo run typecheck",
     "lint": "eslint . --max-warnings=0",
     "format:check": "prettier --check .",
     "depcruise": "depcruise apps packages --config .dependency-cruiser.cjs",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "verify:artifacts": "node scripts/verify-artifacts.mjs",
+    "check:hardcoded-paths": "node scripts/check-no-hardcoded-paths.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

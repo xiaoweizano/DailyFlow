@@ -4,7 +4,7 @@
 
 本文面向实现 DailyFlow V1 的开发者，覆盖本地工具链、Windows/macOS/Web 开发环境、存储调试、测试矩阵、CI、签名准备和常见故障。
 
-当前仓库只包含设计文档，尚未初始化 Monorepo。实际命令和版本约束在 Task 1 落盘后，以根 `package.json`、`.node-version`、`pnpm-lock.yaml`、`Cargo.lock` 和 CI 配置为准。本文描述计划中的开发入口，不代表这些文件已经存在。
+仓库已经完成 Monorepo、核心业务和自动化质量门禁的初始化。实际命令和版本约束以根 `package.json`、`.node-version`、`pnpm-lock.yaml`、`Cargo.lock`、`.github/workflows/` 和本文为准。
 
 实现前先阅读：
 
@@ -18,7 +18,7 @@
 | 工具 | 基线 | 用途 |
 | --- | --- | --- |
 | Node.js | 当前维护中的 LTS，固定到 `.node-version` | Vite、React、测试和脚本 |
-| pnpm | 使用 Task 1 固定的 `packageManager` 版本，通过 Corepack 启用 | workspace 依赖管理 |
+| pnpm | 使用根 `package.json` 的 `packageManager` 版本，通过 Corepack 启用 | workspace 依赖管理 |
 | Rust | stable toolchain，提交 `rust-toolchain.toml` 后以其为准 | Tauri 2 与 SQLite 适配层 |
 | Tauri CLI | 与 `@tauri-apps/*`、Rust crate 和配置保持一致 | 桌面开发与构建 |
 | SQLite | Rust 侧可控制的版本，必须启用 FTS5 | 桌面端数据与全文搜索 |
@@ -102,17 +102,20 @@ File System Access API 只在安全上下文可用。`localhost` 可作为开发
 
 ## 4. 初始化与常用命令
 
-Task 1 完成后：
+首次安装和质量门禁：
 
 ```bash
 corepack enable
-pnpm install
-pnpm typecheck
+pnpm install --frozen-lockfile
+pnpm format:check
 pnpm lint
+pnpm depcruise
+pnpm check:hardcoded-paths
+pnpm typecheck
 pnpm test
 ```
 
-计划中的日常入口：
+日常入口：
 
 ```bash
 # 共享包监听与测试
@@ -126,14 +129,18 @@ pnpm --filter @dailyflow/web build
 # 桌面，需要完整 Tauri 平台依赖
 pnpm dev:desktop
 pnpm --filter @dailyflow/desktop build
-pnpm tauri build
+pnpm --filter @dailyflow/desktop tauri:build
 
 # Rust
 cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
-cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 
-# Browser E2E
+# 浏览器和桌面 E2E
 pnpm e2e
+
+# 构建两个前端并验证产物
+pnpm build
+pnpm verify:artifacts
 ```
 
 共享页面、功能组件和 Zustand 功能状态位于 `packages/features`。`apps/web` 与 `apps/desktop` 只负责平台能力、具体 adapter 和路由入口装配，不复制业务页面。目录职责、完整依赖方向和组合根规则见 [系统架构](../architecture/SYSTEM-ARCHITECTURE.md)。排查 import 错误前，先确认 `packages/features` 没有导入 `@dailyflow/infrastructure/desktop` 或 `@dailyflow/infrastructure/web`，也没有任何核心包从 Domain 导入 React、Tauri 或 Dexie。
@@ -288,7 +295,7 @@ Rust command 是安全与事务边界，不是 UI 的通用数据库代理。
 | DTO parity | fixture 脚本 | 所有平台 | 同一字段和枚举 |
 | React UI | Vitest + Testing Library | Ubuntu | 可见状态、键盘、空/错/加载 |
 | Web E2E | Chromium/Firefox/WebKit | 专用 e2e workflow | 固定 TZ 和 locale |
-| Windows desktop | Tauri WebDriver 冒烟 | Windows runner | 启动、编辑、导入、备份、关闭保存 |
+| Windows desktop | Tauri WebDriver 冒烟 | Windows runner | 应用启动、窗口标题与根节点加载；业务全流程由人工发布验收覆盖 |
 | macOS desktop | Rust 集成 + 构建/启动冒烟 + 人工清单 | macOS runners | WKWebView 无同级可靠 WebDriver 时以人工验收补足 |
 
 固定测试环境：
@@ -314,6 +321,15 @@ cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
 ### 10.1 PR 质量门
 
+仓库包含四个工作流：
+
+| 工作流 | 触发 | 作用 |
+| --- | --- | --- |
+| `ci.yml` | PR、main push、手动 | 冻结安装、格式、Lint、依赖边界、硬编码路径、类型、测试、前端构建、产物校验、三平台 Rust 测试 |
+| `e2e.yml` | PR、main push、手动 | Chromium/Firefox/WebKit 浏览器回归与 Windows Tauri WebDriver 冒烟 |
+| `deploy-web.yml` | main push、手动 | 使用 `/DailyFlow/` 基路径构建 Web，并发布 GitHub Pages |
+| `release-desktop.yml` | `v*.*.*` tag、手动 | 受保护环境中的 Windows x64、macOS Intel 与 Apple Silicon 签名构建，创建草稿 Release |
+
 PR 必须执行：
 
 - pnpm 冻结 lockfile 安装。
@@ -321,8 +337,8 @@ PR 必须执行：
 - TypeScript 测试、Editor round-trip、Rust 测试。
 - 包边界和硬编码 Windows/macOS 路径扫描。
 - DTO fixture 一致性。
-- Web 构建与 core Playwright。
-- 文档内部链接检查。
+- Web/桌面前端构建、产物 CSP 与打包元数据校验。
+- Chromium/Firefox/WebKit E2E 和 Windows 桌面冒烟。
 
 缓存 key 包含 lockfile 哈希。迁移和 FTS5 测试不能被缓存跳过。
 
@@ -339,6 +355,15 @@ PR 必须执行：
 签名密钥只放在受保护发布环境或 GitHub Secrets，不写入 `.env`、仓库、诊断包或构建缓存。PR 构建不要求密钥，发布 tag 缺少密钥时必须失败，而不是产出看似正式的未签名包。
 
 Windows 准备 Authenticode 证书和时间戳服务。macOS 准备 Developer ID Application 证书、Apple Team ID 和公证凭据，使用 hardened runtime。证书轮换和过期时间写入发布运维记录。
+
+发布环境 `release` 使用以下 Secrets：
+
+| 平台 | Secrets |
+| --- | --- |
+| Windows | `WINDOWS_CERTIFICATE_BASE64`、`WINDOWS_CERTIFICATE_PASSWORD` |
+| macOS | `APPLE_CERTIFICATE`、`APPLE_CERTIFICATE_PASSWORD`、`APPLE_SIGNING_IDENTITY`、`APPLE_ID`、`APPLE_PASSWORD`、`APPLE_TEAM_ID` |
+
+发布 tag 必须等于 `v` 加 Tauri 配置中的版本，例如应用版本 `0.1.0` 只能使用 `v0.1.0`。工作流只创建草稿 Release，完成[发布验收清单](RELEASE-CHECKLIST.md)后再人工发布。
 
 ## 11. 常见故障排查
 
@@ -368,6 +393,6 @@ Windows 准备 Authenticode 证书和时间戳服务。macOS 准备 Developer ID
 - 不通过手工 SQL 修改当前正文；派生字段和搜索索引应从权威 JSON 重建。
 - 恢复和迁移失败时保留当前库与 staging，先诊断，再决定清理。
 
-## 13. 首个开发任务
+## 13. 后续执行入口
 
-从 [开发计划](DEVELOPMENT-PLAN.md) 的 Task 1 开始：初始化 Monorepo、固定工具版本、创建空包和基础脚本、验证依赖图，再初始化 Git。Task 1 完成前不要提前实现业务页面或数据库表。
+从 [开发计划](DEVELOPMENT-PLAN.md) 查看已完成任务和剩余验收项。自动化任务完成后，先运行本地质量门禁；需要正式发布时，严格按[发布验收清单](RELEASE-CHECKLIST.md)完成真实硬件、签名、安装升级和浏览器验收。

@@ -16,7 +16,7 @@
 - 不在 V1 建立云端后端、账号、同步服务或 AI 必需依赖。
 - 不修改已发布数据库迁移，修正通过新迁移完成。
 - 每个任务完成后运行本任务指定测试、`pnpm typecheck` 和相关 lint。
-- 当前工作区尚未初始化 Git；Task 1 完成后再执行提交步骤。
+- 当前工作区已初始化 Git，后续任务继续按小步提交并保持工作区可审查。
 
 ## 1. 里程碑
 
@@ -1120,19 +1120,19 @@ docs/
 - Create: `scripts/check-no-hardcoded-paths.mjs`
 - Create: `docs/development/RELEASE-CHECKLIST.md`
 
-- [ ] **Step 1: 配置 PR 质量门**
+- [x] **Step 1: 配置 PR 质量门**
 
   CI 安装冻结 lockfile，依次执行 lint、typecheck、共享测试、Rust 格式/测试、Web 构建和依赖边界检查。缓存 key 包含 lockfile 哈希，不允许缓存跳过迁移测试。
 
-- [ ] **Step 2: 配置三平台矩阵**
+- [x] **Step 2: 配置三平台矩阵**
 
   Web 在 Ubuntu 构建并发布静态产物；Windows 构建 `x86_64-pc-windows-msvc`；macOS 分别构建 Intel `x86_64-apple-darwin` 与 Apple Silicon `aarch64-apple-darwin`。若后续发布 Universal 2，在签名前用 lipo 合并并单独验证，不改变 V1 两种架构覆盖。
 
-- [ ] **Step 3: 配置签名与公证**
+- [x] **Step 3: 配置签名与公证**
 
   PR 构建不要求签名密钥。发布工作流仅在受保护 tag 上读取 GitHub Secrets：Windows Authenticode 证书、macOS Developer ID、Apple ID/公证凭据。缺失密钥时发布失败，不生成“看似正式”的未签名包。
 
-- [ ] **Step 4: 校验产物**
+- [x] **Step 4: 校验产物**
 
   构建后检查 Web CSP、Tauri identifier/版本、Windows WebView2 安装提示、macOS 最低版本、架构、签名和安装包哈希。禁止产物包含绝对开发路径、私钥、SQLite 测试库或用户数据。
 
@@ -1140,16 +1140,16 @@ docs/
 
   在一台真实 Windows 10 22H2/11、Intel macOS 和 Apple Silicon macOS 上安装并完成启动、记录、关闭重开、TXT 导入、搜索、备份、恢复和卸载后数据保留检查。Web 在 Chrome/Edge 最新两个稳定版完成正式验收；Safari 当前稳定版完成兼容冒烟并记录目录导入的文件选择器降级，不把 Safari 的同级目录访问能力作为发布阻断项。
 
-- [ ] **Step 6: 运行验证**
+- [x] **Step 6: 运行验证**
 
   Run: `pnpm build && pnpm e2e && pnpm verify:artifacts`
 
-  Expected: 所有质量门通过；Web 静态包可离线启动；Windows 与两种 macOS 安装包签名有效且校验和与 manifest 一致。
+  Expected: 本地质量门与 Web 静态包检查通过；发布工作流在受保护 tag 且 Secrets 齐备时构建 Windows 与两种 macOS 安装包，并校验签名、架构和 manifest。本地验证不替代 Step 5 的真实设备验收。
 
-- [ ] **Step 7: 提交并打候选标签**
+- [x] **Step 7: 提交发布工程配置**
 
-  Run: `git add . && git commit -m "chore: add release pipelines and cross-platform gates" && git tag v1.0.0-rc.1`
+  Run: 显式暂存发布工作流、验证脚本和相关文档，然后提交 `chore: add release pipelines and cross-platform gates`
 
-  Expected: 标签触发发布候选构建；在发布清单全部勾选前不得标记稳定版。
+  Expected: 候选构建配置进入版本库。只有 Step 5 的真实设备验收全部完成后，才由维护者按应用版本人工创建 `v<semver>` 标签并触发正式候选构建；不得自动打标签，也不得在发布清单未完成时标记稳定版。
 
 

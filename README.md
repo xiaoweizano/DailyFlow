@@ -11,7 +11,9 @@ DailyFlow 不是在线协作平台，也不是 Obsidian 的替代品。V1 的核
 
 ## 当前状态
 
-当前仓库处于第一阶段，只包含产品、技术架构、数据库、编辑器、导入导出、搜索、同步预留、UI 和开发计划文档，尚未创建业务应用或脚手架。
+仓库已经包含可运行的 Monorepo、共享领域与应用层、每日日志核心功能、SQLite/Tauri 与 IndexedDB/Dexie 存储适配、TXT 导入、搜索、备份恢复、自动化测试和跨平台构建配置。
+
+V1 自动化交付门禁已经覆盖 Windows、macOS 与 Web 的构建验证。真实 Windows/macOS 安装、签名发布和 Safari 兼容验收仍需按[发布验收清单](docs/development/RELEASE-CHECKLIST.md)在对应环境执行。
 
 文档入口：
 
@@ -26,6 +28,7 @@ DailyFlow 不是在线协作平台，也不是 Obsidian 的替代品。V1 的核
 - [开发计划](docs/development/DEVELOPMENT-PLAN.md)
 - [编码规范](docs/development/CODING-STANDARDS.md)
 - [开发指南](docs/development/DEVELOPMENT-GUIDE.md)
+- [发布验收清单](docs/development/RELEASE-CHECKLIST.md)
 - [架构决策记录](docs/decisions/ADR/README.md)
 
 ## 技术栈
@@ -61,7 +64,7 @@ React UI
 
 正文的权威表示是 Tiptap JSON。Markdown 和纯文本是由编辑器序列化器生成的派生物，用于搜索、导出和兼容；任何外部 Markdown 都只从转换入口进入，不能绕过保存管线直接改写权威正文。
 
-## 计划中的目录结构
+## 目录结构
 
 ```text
 dailyflow/
@@ -90,24 +93,44 @@ dailyflow/
 
 ## 本地开发方式
 
-当前阶段没有可运行应用。完成脚手架任务后，预期使用以下命令：
+工具版本以 `.node-version`、根 `package.json` 的 `packageManager` 和 `Cargo.lock` 为准。首次安装：
 
 ```bash
 corepack enable
-pnpm install
+pnpm install --frozen-lockfile
+```
 
-# 共享包测试与类型检查
-pnpm test
-pnpm typecheck
+常用开发与质量门禁：
 
+```bash
 # Web 开发
 pnpm dev:web
 
 # 桌面开发，需要 Rust、Tauri 2 平台依赖，以及 Windows WebView2 或 macOS Xcode 工具链
 pnpm dev:desktop
+
+# 静态检查与测试
+pnpm format:check
+pnpm lint
+pnpm depcruise
+pnpm check:hardcoded-paths
+pnpm typecheck
+pnpm test
+
+# 浏览器 E2E；首次运行前安装所需浏览器
+pnpm exec playwright install chromium firefox webkit
+pnpm e2e
+
+# 两端前端构建，然后校验 CSP、Tauri 打包元数据和构建产物
+pnpm build
+pnpm verify:artifacts
+
+# Rust
+cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
+cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 ```
 
-实际脚本以脚手架任务落盘后的 `package.json` 为准。开发环境、测试矩阵和故障排查见 [开发指南](docs/development/DEVELOPMENT-GUIDE.md)。
+Web 和桌面数据是两套独立的本地存储；跨端迁移使用导出、备份和恢复，不要让 Web 直接读取 SQLite。开发环境、测试矩阵和故障排查见[开发指南](docs/development/DEVELOPMENT-GUIDE.md)，正式发布步骤见[发布验收清单](docs/development/RELEASE-CHECKLIST.md)。
 
 ## V1 边界
 
