@@ -25,7 +25,7 @@ describe("TxtDocumentConverter", () => {
       "# 问题\n\n```ts\nconst answer = 42;\n```",
     );
 
-    expect(content.schemaVersion).toBe(1);
+    expect(content.schemaVersion).toBe(2);
     expect(content.doc).toMatchObject({
       type: "doc",
       content: [

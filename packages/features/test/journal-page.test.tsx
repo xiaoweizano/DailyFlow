@@ -159,8 +159,7 @@ describe("JournalPage", () => {
       timeout: 2_000,
     });
     const saveInput = services.journal.save.mock.calls[0]?.[0] as
-      | { contentJson: { content?: readonly unknown[] } }
-      | undefined;
+      { contentJson: { content?: readonly unknown[] } } | undefined;
     expect(saveInput?.contentJson.content?.[0]).toMatchObject({
       type: "heading",
       attrs: { level: 2 },
@@ -212,6 +211,7 @@ describe("JournalPage", () => {
       journalId,
       journalDate: "2026-10-30",
       timezone: "Asia/Shanghai",
+      editorSchemaVersion: 2,
       expectedRevision: null,
       checkpoint: "autosave",
     });

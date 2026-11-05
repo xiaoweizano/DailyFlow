@@ -1,6 +1,13 @@
 import type { JournalLookup, SavedJournalSnapshot } from "@dailyflow/application";
 import type { JsonObject } from "@dailyflow/domain";
-import type { AttachmentAttrs } from "@dailyflow/editor";
+import {
+  CURRENT_EDITOR_SCHEMA_VERSION,
+  documentFromEditorContent,
+  editorContentFromDocument,
+  migrateDocument,
+  type AttachmentAttrs,
+  type TiptapJsonNode,
+} from "@dailyflow/editor";
 import { Button, Input, SaveStatus, type SaveState } from "@dailyflow/ui";
 import type { AppError } from "@dailyflow/shared";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -74,6 +81,11 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
   const storeRef = useRef<JournalEditorStore | null>(null);
   const lifecycleMountsRef = useRef(0);
+  const [initialEditorContent] = useState<TiptapJsonNode>(() =>
+    editorContentFromDocument(
+      migrateDocument(journal.content.doc as TiptapJsonNode, journal.content.schemaVersion).doc,
+    ),
+  );
 
   if (storeRef.current === null) {
     storeRef.current = createJournalEditorStore(isPersisted ? journal.revision : 0);
@@ -96,7 +108,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           timezone: journal.timezone,
           title: draft.title,
           contentJson: draft.contentJson,
-          editorSchemaVersion: journal.content.schemaVersion,
+          editorSchemaVersion: CURRENT_EDITOR_SCHEMA_VERSION,
           projectionVersion: journal.projectionVersion,
           expectedRevision: store.getState().expectedRevision,
           checkpoint: reason,
@@ -107,9 +119,10 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const coordinator = coordinatorRef.current;
 
   function currentDraft(): JournalDraft {
+    const editorContent = editorRef.current?.getJSON() ?? initialEditorContent;
     return {
       title: titleRef.current,
-      contentJson: (editorRef.current?.getJSON() ?? journal.content.doc) as JsonObject,
+      contentJson: documentFromEditorContent(editorContent as TiptapJsonNode),
       tags: parseTags(tagsTextRef.current),
     };
   }
@@ -122,7 +135,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
 
   const editor = useEditor({
     extensions: createJournalEditorExtensions(),
-    content: journal.content.doc,
+    content: initialEditorContent,
     immediatelyRender: false,
     editorProps: {
       attributes: {

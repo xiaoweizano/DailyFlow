@@ -1,6 +1,7 @@
 export { Attachment } from "./extensions/attachment.js";
 export { MarkdownShortcuts } from "./extensions/markdown-shortcuts.js";
 export { StructuredBlock } from "./extensions/structured-block.js";
+export { UnknownBlock, UnknownInline } from "./extensions/unknown-content.js";
 export {
   extractStructuredBlocks,
   type EditorStructuredBlockProjection,
@@ -22,4 +23,9 @@ export type {
 export { jsonToMarkdown, isSafeMarkdownHref } from "./serialization/json-to-markdown.js";
 export { jsonToPlainText, structuredDataToPlainText } from "./serialization/json-to-plain-text.js";
 export { markdownToJson } from "./serialization/markdown-to-json.js";
+export { migrateDocument } from "./serialization/migrate-document.js";
 export { cloneJsonObject, normalizeDocument } from "./serialization/normalize-document.js";
+export {
+  documentFromEditorContent,
+  editorContentFromDocument,
+} from "./serialization/unknown-content.js";

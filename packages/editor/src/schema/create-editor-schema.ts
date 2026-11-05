@@ -7,6 +7,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { Attachment } from "../extensions/attachment.js";
 import { MarkdownShortcuts } from "../extensions/markdown-shortcuts.js";
 import { StructuredBlock } from "../extensions/structured-block.js";
+import { UnknownBlock, UnknownInline } from "../extensions/unknown-content.js";
 
 export function createEditorExtensions(): Extensions {
   return [
@@ -29,6 +30,8 @@ export function createEditorExtensions(): Extensions {
     }),
     Attachment,
     StructuredBlock,
+    UnknownBlock,
+    UnknownInline,
   ];
 }
 
