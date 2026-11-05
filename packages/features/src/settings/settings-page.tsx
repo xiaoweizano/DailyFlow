@@ -35,21 +35,24 @@ export function SettingsPage({
   const { ai } = useAppServices();
   const { preferences, warning, loading, save: savePreferences } = useUserPreferences();
   const location = useLocation();
-  const [draft, setDraft] = useState<UserPreferences>(preferences);
+  const [draft, setDraft] = useState<UserPreferences | null>(null);
   const [failureWarning, setFailureWarning] = useState<SettingsWarning | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
+  const effectiveDraft = draft ?? preferences;
 
   useEffect(() => {
-    setDraft(preferences);
-  }, [preferences]);
+    if (!loading) {
+      setDraft(preferences);
+    }
+  }, [loading, preferences]);
 
   useEffect(() => {
-    applyVisualPreferences(draft);
+    applyVisualPreferences(effectiveDraft);
     return () => {
       applyVisualPreferences(preferences);
     };
-  }, [draft, preferences]);
+  }, [effectiveDraft, preferences]);
 
   useEffect(() => {
     if (location.hash !== "#shortcut-help" || loading) {
@@ -59,7 +62,7 @@ export function SettingsPage({
   }, [loading, location.hash]);
 
   function updateDraft(patch: Partial<UserPreferences>): void {
-    setDraft((current) => ({ ...current, ...patch }));
+    setDraft((current) => ({ ...(current ?? preferences), ...patch }));
     setSaveStatus("idle");
   }
 
@@ -68,7 +71,7 @@ export function SettingsPage({
     setSaveStatus("idle");
     setFailureWarning(null);
     try {
-      const result = await savePreferences(draft);
+      const result = await savePreferences(effectiveDraft);
       setDraft(result.preferences);
       setSaveStatus(result.persisted ? "saved" : "idle");
     } catch {
@@ -124,7 +127,7 @@ export function SettingsPage({
         </div>
       </header>
 
-      {warningIsVisible(draft, failureWarning ?? warning) ? (
+      {warningIsVisible(effectiveDraft, failureWarning ?? warning) ? (
         <div role="alert" className="mt-4 border border-warning/35 bg-warning/10 px-3 py-2.5">
           <p className="text-sm font-medium text-foreground">设置未能完全保存</p>
           <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
@@ -164,7 +167,7 @@ export function SettingsPage({
                 </div>
                 <SegmentedControl
                   label="主题"
-                  value={draft.theme}
+                  value={effectiveDraft.theme}
                   options={[
                     { label: "系统", value: "system" },
                     { label: "浅色", value: "light" },
@@ -182,7 +185,7 @@ export function SettingsPage({
                 </div>
                 <SegmentedControl
                   label="密度"
-                  value={draft.density}
+                  value={effectiveDraft.density}
                   options={[
                     { label: "舒适", value: "comfortable" },
                     { label: "紧凑", value: "compact" },
@@ -220,7 +223,7 @@ export function SettingsPage({
                   min={200}
                   max={10_000}
                   step={100}
-                  value={draft.autosaveIntervalMs}
+                  value={effectiveDraft.autosaveIntervalMs}
                   onChange={(event) =>
                     updateDraft({ autosaveIntervalMs: Number(event.currentTarget.value) })
                   }
@@ -233,7 +236,7 @@ export function SettingsPage({
               <label className="grid gap-1.5 text-sm font-medium text-foreground">
                 每周起始日
                 <select
-                  value={draft.weekStartsOn}
+                  value={effectiveDraft.weekStartsOn}
                   onChange={(event) =>
                     updateDraft({ weekStartsOn: Number(event.currentTarget.value) })
                   }
@@ -261,11 +264,11 @@ export function SettingsPage({
               <button
                 type="button"
                 aria-label="显示设置提示"
-                aria-pressed={draft.showWarnings}
-                onClick={() => updateDraft({ showWarnings: !draft.showWarnings })}
+                aria-pressed={effectiveDraft.showWarnings}
+                onClick={() => updateDraft({ showWarnings: !effectiveDraft.showWarnings })}
                 className={[
                   "relative h-6 w-11 rounded-full border transition-colors",
-                  draft.showWarnings
+                  effectiveDraft.showWarnings
                     ? "border-primary bg-primary"
                     : "border-border-strong bg-surface-muted",
                 ].join(" ")}
@@ -274,7 +277,7 @@ export function SettingsPage({
                   aria-hidden="true"
                   className={[
                     "absolute top-0.5 size-4 rounded-full bg-white shadow-sm transition-transform",
-                    draft.showWarnings ? "translate-x-5" : "translate-x-0.5",
+                    effectiveDraft.showWarnings ? "translate-x-5" : "translate-x-0.5",
                   ].join(" ")}
                 />
               </button>
@@ -310,11 +313,11 @@ export function SettingsPage({
                   type="number"
                   min={10}
                   max={1000}
-                  value={draft.historyRetention.maxVersions}
+                  value={effectiveDraft.historyRetention.maxVersions}
                   onChange={(event) =>
                     updateDraft({
                       historyRetention: {
-                        ...draft.historyRetention,
+                        ...effectiveDraft.historyRetention,
                         maxVersions: Number(event.currentTarget.value),
                       },
                     })
@@ -327,11 +330,11 @@ export function SettingsPage({
                   type="number"
                   min={7}
                   max={3650}
-                  value={draft.historyRetention.maxAgeDays}
+                  value={effectiveDraft.historyRetention.maxAgeDays}
                   onChange={(event) =>
                     updateDraft({
                       historyRetention: {
-                        ...draft.historyRetention,
+                        ...effectiveDraft.historyRetention,
                         maxAgeDays: Number(event.currentTarget.value),
                       },
                     })

@@ -131,6 +131,62 @@ describe("settings page", () => {
     expect(load).toHaveBeenCalledOnce();
   });
 
+  it("never reveals default controls after persisted preferences finish loading", async () => {
+    let resolveLoad: (result: UserPreferencesLoadResult) => void = () => undefined;
+    const load = vi.fn(
+      () =>
+        new Promise<UserPreferencesLoadResult>((resolve) => {
+          resolveLoad = resolve;
+        }),
+    );
+    const save = vi.fn(async () => ({
+      preferences: DEFAULT_USER_PREFERENCES,
+      persisted: true,
+      warning: null,
+    }));
+    const themeStates: string[] = [];
+    const observer = new MutationObserver(() => {
+      const theme = screen.queryByRole("group", { name: "主题" });
+      if (theme === null) {
+        return;
+      }
+      themeStates.push(
+        within(theme).getByRole("button", { name: "深色" }).getAttribute("aria-pressed") ?? "",
+      );
+    });
+
+    renderSettings(createSettingsServices({ load, save }));
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ["aria-pressed"],
+      childList: true,
+      subtree: true,
+    });
+
+    try {
+      expect(screen.getByRole("status")).toHaveTextContent("正在读取本机设置");
+      resolveLoad(
+        loaded({
+          ...DEFAULT_USER_PREFERENCES,
+          theme: "dark",
+          density: "compact",
+        }),
+      );
+
+      await vi.waitFor(() => {
+        expect(
+          within(screen.getByRole("group", { name: "主题" })).getByRole("button", {
+            name: "深色",
+          }),
+        ).toHaveAttribute("aria-pressed", "true");
+      });
+
+      expect(themeStates).not.toContain("false");
+    } finally {
+      observer.disconnect();
+    }
+  });
+
   it("saves edited preferences only after an explicit action", async () => {
     const user = userEvent.setup();
     const load = vi.fn(async () => loaded());

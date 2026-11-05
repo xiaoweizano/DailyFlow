@@ -119,6 +119,7 @@ jobs:
           path: |
             playwright-report
             test-results
+            ${{ runner.temp }}/dailyflow-tauri-driver
           if-no-files-found: warn
           retention-days: 7
 # Workflow registration refresh: 2026-11-05.
