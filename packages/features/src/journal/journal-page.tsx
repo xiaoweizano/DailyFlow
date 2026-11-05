@@ -91,7 +91,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
   const navigationDate = isLocalDate(journalDate) ? journalDate : currentLocalDate();
 
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="df-journal-page flex h-full min-h-0 flex-col">
       <h1 className="sr-only">每日日志 {journalDate}</h1>
       <nav
         aria-label="日志日期导航"
@@ -186,7 +186,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
               {lookup.isPersisted ? `r${lookup.journal.revision}` : "未保存"}
             </span>
           </header>
-          <div className="min-h-0 flex-1">
+          <div className="flex min-h-0 flex-1 flex-col">
             <JournalEditor
               key={`${lookup.journal.id}:${lookup.journal.revision}:${reloadVersion}`}
               lookup={lookup}

@@ -25,7 +25,7 @@ import { JournalPage } from "../src/journal/journal-page.js";
 
 const journalId = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c26");
 
-function createServices() {
+function createServices(initialText = "原有内容") {
   const journal = createJournal(
     {
       journalDate: "2026-10-30",
@@ -35,7 +35,12 @@ function createServices() {
         schemaVersion: 1,
         doc: {
           type: "doc",
-          content: [{ type: "paragraph", content: [{ type: "text", text: "原有内容" }] }],
+          content: [
+            {
+              type: "paragraph",
+              ...(initialText ? { content: [{ type: "text" as const, text: initialText }] } : {}),
+            },
+          ],
         },
       },
       projectionVersion: 1,
@@ -141,6 +146,28 @@ afterEach(() => {
 });
 
 describe("JournalPage", () => {
+  it("turns typed Markdown headings into heading nodes before autosave", async () => {
+    const services = createServices("");
+    const user = userEvent.setup();
+    renderJournalPage(services);
+
+    const editor = await screen.findByLabelText("日志正文");
+    await user.click(editor);
+    await user.keyboard("## 标题");
+
+    await waitFor(() => expect(services.journal.save).toHaveBeenCalledOnce(), {
+      timeout: 2_000,
+    });
+    const saveInput = services.journal.save.mock.calls[0]?.[0] as
+      | { contentJson: { content?: readonly unknown[] } }
+      | undefined;
+    expect(saveInput?.contentJson.content?.[0]).toMatchObject({
+      type: "heading",
+      attrs: { level: 2 },
+      content: [{ type: "text", text: "标题" }],
+    });
+  });
+
   it("uses the persisted autosave interval for journal edits", async () => {
     const services = createServices();
     services.settings.load = vi.fn(async () => ({

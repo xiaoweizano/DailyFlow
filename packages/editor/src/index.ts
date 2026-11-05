@@ -1,4 +1,5 @@
 export { Attachment } from "./extensions/attachment.js";
+export { MarkdownShortcuts } from "./extensions/markdown-shortcuts.js";
 export { StructuredBlock } from "./extensions/structured-block.js";
 export {
   extractStructuredBlocks,
