@@ -1,6 +1,7 @@
 import type { ContentProjector } from "@dailyflow/application";
 import { parseContentHash, parseEntityId, parseUtcTimestamp } from "@dailyflow/domain";
 import { unzipSync } from "fflate";
+import { readFile } from "node:fs/promises";
 import { describe, expect, it, vi } from "vitest";
 
 import { DesktopExportSource } from "../src/desktop/desktop-export-source.js";
@@ -215,6 +216,18 @@ describe("DesktopExportSource", () => {
 });
 
 describe("DesktopExportTarget", () => {
+  it("grants save dialogs without broad filesystem permissions", async () => {
+    const capability = JSON.parse(
+      await readFile(
+        new URL("../../../apps/desktop/src-tauri/capabilities/default.json", import.meta.url),
+        "utf8",
+      ),
+    ) as { permissions: string[] };
+
+    expect(capability.permissions).toContain("dialog:allow-save");
+    expect(capability.permissions).not.toContain("fs:allow-all");
+  });
+
   it("writes the exact ZIP bytes and SHA-256 to the selected absolute path", async () => {
     const writeExportFile = vi.fn().mockResolvedValue({ bytesWritten: 4 });
     const picker = vi.fn().mockResolvedValue("F:\\backup\\dailyflow.zip");
