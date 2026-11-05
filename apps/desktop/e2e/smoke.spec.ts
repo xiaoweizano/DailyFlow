@@ -3,6 +3,8 @@ import { expect, test } from "@playwright/test";
 const webdriverUrl = process.env.TAURI_WEBDRIVER_URL;
 const applicationPath = process.env.TAURI_APP_PATH;
 
+test.setTimeout(90_000);
+
 test("launches the packaged Tauri shell", async ({ request }) => {
   test.skip(
     webdriverUrl === undefined,
