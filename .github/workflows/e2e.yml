@@ -94,10 +94,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build desktop application
-        run: pnpm --filter @dailyflow/desktop exec tauri build --features desktop-shell --no-bundle
+        run: pnpm --filter @dailyflow/desktop exec tauri build --features desktop-shell --no-bundle --config src-tauri/tauri.e2e.conf.json
 
       - name: Run desktop smoke test
         shell: pwsh
+        env:
+          TAURI_WEBVIEW2_CDP_URL: http://127.0.0.1:9222
         run: ./scripts/run-desktop-smoke.ps1
 
       - name: Upload failure diagnostics
