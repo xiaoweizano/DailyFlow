@@ -6,8 +6,11 @@ export const SETTINGS_KEYS = {
   userPreferences: "user-preferences",
 } as const;
 
+export const LocalePreferenceSchema = z.enum(["zh-CN", "en-US"]);
 export const ThemePreferenceSchema = z.enum(["light", "dark", "system"]);
-export const DensityPreferenceSchema = z.enum(["comfortable", "compact"]);
+export const AccentPreferenceSchema = z.enum(["blue", "green", "amber", "rose", "neutral"]);
+export const DensityPreferenceSchema = z.enum(["comfortable", "compact", "spacious"]);
+export const EditorWidthPreferenceSchema = z.enum(["focused", "wide"]);
 
 export const HistoryRetentionSchema = z.object({
   maxVersions: z.number().int().min(10).max(1000).default(100),
@@ -15,19 +18,35 @@ export const HistoryRetentionSchema = z.object({
 });
 
 export const UserPreferencesSchema = z.object({
+  schemaVersion: z
+    .union([z.literal(1), z.literal(2)])
+    .transform(() => 2 as const)
+    .default(2),
+  locale: LocalePreferenceSchema.default("zh-CN"),
   theme: ThemePreferenceSchema.default("system"),
+  accent: AccentPreferenceSchema.default("blue"),
   density: DensityPreferenceSchema.default("comfortable"),
+  editorFontSize: z.number().int().min(13).max(20).default(15),
+  editorWidth: EditorWidthPreferenceSchema.default("wide"),
+  showOutline: z.boolean().default(true),
   autosaveIntervalMs: z.number().int().min(200).max(10_000).default(800),
   weekStartsOn: z.number().int().min(0).max(6).default(1),
   showWarnings: z.boolean().default(true),
+  closeToTray: z.boolean().default(true),
+  autostart: z.boolean().default(false),
+  silentStart: z.boolean().default(false),
+  customDataDirectory: z.string().min(1).nullable().default(null),
   historyRetention: HistoryRetentionSchema.default({
     maxVersions: 100,
     maxAgeDays: 180,
   }),
 });
 
+export type LocalePreference = z.infer<typeof LocalePreferenceSchema>;
 export type ThemePreference = z.infer<typeof ThemePreferenceSchema>;
+export type AccentPreference = z.infer<typeof AccentPreferenceSchema>;
 export type DensityPreference = z.infer<typeof DensityPreferenceSchema>;
+export type EditorWidthPreference = z.infer<typeof EditorWidthPreferenceSchema>;
 export type HistoryRetention = z.infer<typeof HistoryRetentionSchema>;
 export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 
@@ -54,11 +73,21 @@ export interface UserPreferencesDependencies {
 }
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = Object.freeze({
+  schemaVersion: 2,
+  locale: "zh-CN",
   theme: "system",
+  accent: "blue",
   density: "comfortable",
+  editorFontSize: 15,
+  editorWidth: "wide",
+  showOutline: true,
   autosaveIntervalMs: 800,
   weekStartsOn: 1,
   showWarnings: true,
+  closeToTray: true,
+  autostart: false,
+  silentStart: false,
+  customDataDirectory: null,
   historyRetention: Object.freeze({
     maxVersions: 100,
     maxAgeDays: 180,

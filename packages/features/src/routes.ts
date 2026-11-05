@@ -101,7 +101,10 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
         },
         {
           path: "settings",
-          element: createElement(SettingsPage),
+          element: createElement(SettingsPage, {
+            storageLabel: shellOptions.storageLabel,
+            version: shellOptions.version,
+          }),
         },
         {
           path: "*",

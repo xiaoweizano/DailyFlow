@@ -27,6 +27,11 @@
     --statusbar-height: 32px;
     --radius-control: 6px;
     --radius-panel: 8px;
+    --control-height: 2.25rem;
+    --settings-row-gap: 1rem;
+    --panel-padding: 1.25rem;
+    --editor-font-size: 15px;
+    --editor-content-width: min(100%, 96ch);
     --font-ui:
       "Avenir Next", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
     --font-mono:
@@ -63,6 +68,82 @@
   :root[data-density="compact"] {
     --topbar-height: 50px;
     --statusbar-height: 28px;
+    --control-height: 2rem;
+    --settings-row-gap: 0.5rem;
+    --panel-padding: 0.875rem;
+  }
+
+  :root[data-density="spacious"] {
+    --topbar-height: 60px;
+    --statusbar-height: 34px;
+    --control-height: 2.75rem;
+    --settings-row-gap: 1.25rem;
+    --panel-padding: 1.5rem;
+  }
+
+  :root[data-accent="blue"] {
+    --primary: 210 72% 45%;
+    --primary-hover: 210 72% 39%;
+    --focus: 210 78% 50%;
+  }
+
+  :root[data-accent="green"] {
+    --primary: 151 55% 36%;
+    --primary-hover: 151 58% 30%;
+    --focus: 151 60% 40%;
+  }
+
+  :root[data-accent="amber"] {
+    --primary: 32 82% 40%;
+    --primary-hover: 32 84% 34%;
+    --focus: 32 88% 45%;
+  }
+
+  :root[data-accent="rose"] {
+    --primary: 344 62% 46%;
+    --primary-hover: 344 64% 39%;
+    --focus: 344 70% 52%;
+  }
+
+  :root[data-accent="neutral"] {
+    --primary: 220 9% 38%;
+    --primary-hover: 220 10% 31%;
+    --focus: 220 12% 42%;
+  }
+
+  :root[data-theme="dark"][data-accent="blue"] {
+    --primary: 210 72% 62%;
+    --primary-hover: 210 76% 68%;
+    --focus: 210 82% 66%;
+    --primary-foreground: 220 18% 9%;
+  }
+
+  :root[data-theme="dark"][data-accent="green"] {
+    --primary: 151 52% 52%;
+    --primary-hover: 151 56% 59%;
+    --focus: 151 64% 57%;
+    --primary-foreground: 220 18% 9%;
+  }
+
+  :root[data-theme="dark"][data-accent="amber"] {
+    --primary: 36 82% 58%;
+    --primary-hover: 36 86% 65%;
+    --focus: 38 90% 62%;
+    --primary-foreground: 220 18% 9%;
+  }
+
+  :root[data-theme="dark"][data-accent="rose"] {
+    --primary: 344 68% 64%;
+    --primary-hover: 344 72% 70%;
+    --focus: 344 76% 68%;
+    --primary-foreground: 220 18% 9%;
+  }
+
+  :root[data-theme="dark"][data-accent="neutral"] {
+    --primary: 220 10% 68%;
+    --primary-hover: 220 12% 74%;
+    --focus: 220 14% 70%;
+    --primary-foreground: 220 18% 9%;
   }
 
   * {

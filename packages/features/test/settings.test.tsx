@@ -74,7 +74,10 @@ describe("settings page", () => {
       loaded({
         ...DEFAULT_USER_PREFERENCES,
         theme: "dark",
+        accent: "green",
         density: "compact",
+        editorFontSize: 17,
+        editorWidth: "focused",
       }),
     );
     const save = vi.fn(async () => ({
@@ -92,7 +95,12 @@ describe("settings page", () => {
     expect(await screen.findByText("Global workspace")).toBeInTheDocument();
     await vi.waitFor(() => {
       expect(document.documentElement.dataset.theme).toBe("dark");
+      expect(document.documentElement.dataset.accent).toBe("green");
       expect(document.documentElement.dataset.density).toBe("compact");
+      expect(document.documentElement.style.getPropertyValue("--editor-font-size")).toBe("17px");
+      expect(document.documentElement.style.getPropertyValue("--editor-content-width")).toBe(
+        "min(100%, 72ch)",
+      );
     });
   });
 
@@ -113,6 +121,9 @@ describe("settings page", () => {
     renderSettings(createSettingsServices({ load, save }));
 
     expect(await screen.findByRole("heading", { name: "设置" })).toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: "设置分类" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "常规" })).toHaveAttribute("aria-selected", "true");
+    await userEvent.click(screen.getByRole("tab", { name: "外观" }));
     expect(await screen.findByRole("group", { name: "主题" })).toBeInTheDocument();
     expect(
       within(screen.getByRole("group", { name: "主题" })).getByRole("button", {
@@ -124,6 +135,7 @@ describe("settings page", () => {
         name: "紧凑",
       }),
     ).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(screen.getByRole("tab", { name: "关于" }));
     expect(screen.getByText("未配置")).toBeInTheDocument();
     expect(screen.getByText(/当前标签页内存/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/API Key/i)).not.toBeInTheDocument();
@@ -173,6 +185,7 @@ describe("settings page", () => {
         }),
       );
 
+      await userEvent.click(screen.getByRole("tab", { name: "外观" }));
       await vi.waitFor(() => {
         expect(
           within(screen.getByRole("group", { name: "主题" })).getByRole("button", {
@@ -198,8 +211,10 @@ describe("settings page", () => {
 
     renderSettings(createSettingsServices({ load, save }));
 
+    await userEvent.click(screen.getByRole("tab", { name: "外观" }));
     const theme = await screen.findByRole("group", { name: "主题" });
     await user.click(within(theme).getByRole("button", { name: "深色" }));
+    await user.click(screen.getByRole("tab", { name: "编辑器" }));
     const interval = screen.getByLabelText(/自动保存间隔/);
     await user.clear(interval);
     await user.type(interval, "1200");
@@ -233,6 +248,7 @@ describe("settings page", () => {
 
     renderSettings(createSettingsServices({ load, save }));
 
+    await userEvent.click(screen.getByRole("tab", { name: "外观" }));
     const density = await screen.findByRole("group", { name: "密度" });
     await user.click(within(density).getByRole("button", { name: "紧凑" }));
     await user.click(screen.getByRole("button", { name: "保存设置" }));
@@ -258,9 +274,76 @@ describe("settings page", () => {
     renderSettings(createSettingsServices({ load, save }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("设置值无效");
-    expect(screen.getByRole("button", { name: "显示设置提示" })).toHaveAttribute(
-      "aria-pressed",
+    await userEvent.click(screen.getByRole("tab", { name: "常规" }));
+    expect(screen.getByRole("switch", { name: "显示设置提示" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
+  });
+
+  it("exposes general, appearance, editor, data, and about settings", async () => {
+    const user = userEvent.setup();
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+
+    renderSettings(createSettingsServices({ load, save }));
+
+    expect(await screen.findByRole("tab", { name: "常规" })).toBeInTheDocument();
+    expect(screen.getByLabelText("界面语言")).toHaveValue("zh-CN");
+    expect(screen.getByRole("switch", { name: "开机自启" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(screen.getByRole("switch", { name: "静默启动" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(screen.getByRole("switch", { name: "关闭到托盘" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    await user.click(screen.getByRole("tab", { name: "外观" }));
+    expect(screen.getByRole("group", { name: "强调色" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "密度" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "编辑器" }));
+    expect(screen.getByRole("spinbutton", { name: "编辑器字号" })).toHaveValue(15);
+    expect(screen.getByRole("group", { name: "编辑器宽度" })).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "显示文档大纲" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    await user.click(screen.getByRole("tab", { name: "数据" }));
+    expect(screen.getByRole("heading", { name: "数据与存储" })).toBeInTheDocument();
+    expect(screen.getByText(/桌面端.*SQLite/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "关于" }));
+    expect(screen.getByRole("heading", { name: "关于与扩展" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "快捷键" })).toBeInTheDocument();
+  });
+
+  it("switches the settings language without saving prematurely", async () => {
+    const user = userEvent.setup();
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+
+    renderSettings(createSettingsServices({ load, save }));
+
+    expect(await screen.findByRole("heading", { name: "设置" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("界面语言"), "en-US");
+
+    expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "General" })).toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
   });
 });

@@ -22,4 +22,6 @@ export {
   type SegmentedControlOption,
   type SegmentedControlProps,
 } from "./components/segmented-control.js";
+export { Select, type SelectProps } from "./components/select.js";
+export { Switch, type SwitchProps } from "./components/switch.js";
 export { cn } from "./lib/cn.js";

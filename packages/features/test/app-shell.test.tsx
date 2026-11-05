@@ -85,6 +85,15 @@ function renderShell(): void {
 }
 
 describe("application shell search shortcut", () => {
+  it("keeps runtime storage details out of the persistent shell chrome", () => {
+    renderShell();
+
+    expect(screen.getByText("本地数据已就绪")).toBeInTheDocument();
+    expect(screen.getByText("v0.1.0")).toBeInTheDocument();
+    expect(screen.queryByText(/IndexedDB/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Web ·/)).not.toBeInTheDocument();
+  });
+
   it("opens the global search command with / and closes it with Escape", async () => {
     const user = userEvent.setup();
     renderShell();

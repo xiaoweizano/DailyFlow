@@ -59,7 +59,7 @@ function resolveCurrentModule(pathname: string): (typeof appModules)[number] | u
   return appModules.find((module) => module.path !== "/" && pathname.startsWith(module.path));
 }
 
-export function AppShell({ platform, storageLabel, version }: AppShellProps): React.JSX.Element {
+export function AppShell({ version }: AppShellProps): React.JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams();
@@ -185,10 +185,6 @@ export function AppShell({ platform, storageLabel, version }: AppShellProps): Re
             <Settings aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.8} />
             <span className="df-nav-copy truncate">设置</span>
           </NavLink>
-          <div className="mt-2 flex items-center gap-2 rounded-[var(--radius-control)] px-2 py-1.5 text-xs text-muted-foreground max-[899px]:justify-center">
-            <span className="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
-            <span className="df-sidebar-footer-copy truncate">{storageLabel}</span>
-          </div>
         </div>
       </aside>
 
@@ -260,9 +256,7 @@ export function AppShell({ platform, storageLabel, version }: AppShellProps): Re
       <footer className="df-statusbar">
         <div className="flex min-w-0 items-center gap-2">
           <span className="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
-          <span className="truncate">
-            {platform === "desktop" ? "桌面端" : "Web"} · {storageLabel}
-          </span>
+          <span className="truncate">本地数据已就绪</span>
         </div>
         <div className="df-statusbar-secondary flex shrink-0 items-center gap-3 font-mono">
           <span>v{version}</span>

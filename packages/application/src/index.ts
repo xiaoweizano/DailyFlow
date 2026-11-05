@@ -221,16 +221,22 @@ export {
 } from "./use-cases/run-ai-assist.js";
 export type { SettingsStore } from "./ports/settings-store.js";
 export {
+  AccentPreferenceSchema,
   DEFAULT_USER_PREFERENCES,
   DensityPreferenceSchema,
+  EditorWidthPreferenceSchema,
   HistoryRetentionSchema,
+  LocalePreferenceSchema,
   SETTINGS_KEYS,
   ThemePreferenceSchema,
   UserPreferencesSchema,
   loadUserPreferences,
   saveUserPreferences,
+  type AccentPreference,
   type DensityPreference,
+  type EditorWidthPreference,
   type HistoryRetention,
+  type LocalePreference,
   type SettingsWarning,
   type SettingsWarningCode,
   type ThemePreference,

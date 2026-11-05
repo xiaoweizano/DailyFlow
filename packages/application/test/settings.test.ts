@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_USER_PREFERENCES,
   SETTINGS_KEYS,
+  UserPreferencesSchema,
   loadUserPreferences,
   saveUserPreferences,
   type SettingsStore,
@@ -16,6 +17,30 @@ function createStore(value: string | null = null): SettingsStore {
 }
 
 describe("user preference settings", () => {
+  it("migrates legacy preferences without losing valid values", () => {
+    const parsed = UserPreferencesSchema.parse({
+      theme: "dark",
+      density: "compact",
+      autosaveIntervalMs: 1200,
+    });
+
+    expect(parsed).toMatchObject({
+      schemaVersion: 2,
+      theme: "dark",
+      density: "compact",
+      autosaveIntervalMs: 1200,
+      locale: "zh-CN",
+      closeToTray: true,
+      autostart: false,
+      silentStart: false,
+      customDataDirectory: null,
+      accent: "blue",
+      editorFontSize: 15,
+      editorWidth: "wide",
+      showOutline: true,
+    });
+  });
+
   it("uses defaults when no persisted preferences exist", async () => {
     const store = createStore();
 

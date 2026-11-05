@@ -12,5 +12,11 @@ export function applyVisualPreferences(preferences: UserPreferences): void {
   const root = document.documentElement;
   root.dataset.theme =
     preferences.theme === "system" ? (prefersDark ? "dark" : "light") : preferences.theme;
+  root.dataset.accent = preferences.accent;
   root.dataset.density = preferences.density;
+  root.style.setProperty("--editor-font-size", `${preferences.editorFontSize}px`);
+  root.style.setProperty(
+    "--editor-content-width",
+    preferences.editorWidth === "wide" ? "min(100%, 96ch)" : "min(100%, 72ch)",
+  );
 }

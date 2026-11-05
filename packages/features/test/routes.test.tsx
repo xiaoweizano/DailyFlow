@@ -9,6 +9,7 @@ import { ImportPage } from "../src/data-management/import-page.js";
 import { KnowledgeDetailPage } from "../src/knowledge/knowledge-detail.js";
 import { KnowledgePage } from "../src/knowledge/knowledge-page.js";
 import { SearchPage } from "../src/search/search-page.js";
+import { SettingsPage } from "../src/settings/settings-page.js";
 
 const routes = createAppRoutes({
   platform: "web",
@@ -72,5 +73,17 @@ describe("shared application routes", () => {
 
     expect(isValidElement(element)).toBe(true);
     expect(isValidElement(element) ? element.type : undefined).toBe(page);
+  });
+
+  it("passes runtime storage details from the shell into settings", () => {
+    const matches = matchRoutes(routes, "/settings");
+    const element = matches?.at(-1)?.route.element;
+
+    expect(isValidElement(element)).toBe(true);
+    expect(isValidElement(element) ? element.type : undefined).toBe(SettingsPage);
+    expect(isValidElement(element) ? element.props : undefined).toMatchObject({
+      storageLabel: "IndexedDB",
+      version: "0.1.0",
+    });
   });
 });

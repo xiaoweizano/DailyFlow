@@ -20,10 +20,11 @@ export function ShortcutHelpPanel({
   conflicts = [],
 }: ShortcutHelpPanelProps): React.JSX.Element {
   return (
-    <section
+    <div
       id="shortcut-help"
       role="region"
       aria-labelledby="shortcut-help-title"
+      tabIndex={-1}
       className="rounded-[var(--radius-panel)] border border-border bg-surface p-5"
     >
       <div className="flex items-start gap-3">
@@ -71,6 +72,6 @@ export function ShortcutHelpPanel({
           </div>
         ))}
       </dl>
-    </section>
+    </div>
   );
 }
