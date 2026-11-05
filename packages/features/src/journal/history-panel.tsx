@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button, HistoryList, type HistoryListItem } from "@dailyflow/ui";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { VersionComparison } from "./version-comparison.js";
 
 const HISTORY_PAGE_SIZE = 20;
 
@@ -28,6 +29,7 @@ function previewVersion(version: DomainJournalVersion): string {
 export interface HistoryPanelProps {
   readonly journalId: EntityId;
   readonly currentRevision: number;
+  readonly currentMarkdown: string;
   readonly onRestored: (snapshot: SavedJournalSnapshot) => void;
   readonly onClose: () => void;
 }
@@ -35,6 +37,7 @@ export interface HistoryPanelProps {
 export function HistoryPanel({
   journalId,
   currentRevision,
+  currentMarkdown,
   onRestored,
   onClose,
 }: HistoryPanelProps): React.JSX.Element {
@@ -179,9 +182,11 @@ export function HistoryPanel({
               {selected.changeSource}
             </span>
           </div>
-          <p className="max-h-36 overflow-y-auto whitespace-pre-wrap break-words rounded-[var(--radius-control)] bg-surface-muted p-2 text-xs leading-5 text-foreground">
-            {previewVersion(selected)}
-          </p>
+          <VersionComparison
+            currentMarkdown={currentMarkdown}
+            previousMarkdown={previewVersion(selected)}
+            previousRevision={selected.revision}
+          />
           <Button
             className="mt-2 w-full"
             size="sm"

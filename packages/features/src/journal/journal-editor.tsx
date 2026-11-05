@@ -4,6 +4,7 @@ import {
   CURRENT_EDITOR_SCHEMA_VERSION,
   documentFromEditorContent,
   editorContentFromDocument,
+  jsonToPlainText,
   migrateDocument,
   type AttachmentAttrs,
   type TiptapJsonNode,
@@ -18,11 +19,13 @@ import { useStore } from "zustand";
 import { useAppServices } from "../app-services-hooks.js";
 import { useUserPreferences } from "../preferences/use-user-preferences.js";
 import { AttachmentUploadPlaceholder } from "./attachment-node-view.js";
+import { EditorOutline } from "./editor-outline.js";
 import { EditorToolbar } from "./editor-toolbar.js";
 import { createJournalEditorExtensions } from "./journal-editor-extensions.js";
 import { createJournalEditorStore, type JournalEditorStore } from "./journal-editor-store.js";
 import { HistoryPanel } from "./history-panel.js";
 import { SaveCoordinator, type SaveCoordinatorStatus } from "./save-coordinator.js";
+import { SlashCommandMenu, TableEditingToolbar } from "./slash-command.js";
 
 interface JournalDraft {
   readonly title: string;
@@ -86,6 +89,9 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
       migrateDocument(journal.content.doc as TiptapJsonNode, journal.content.schemaVersion).doc,
     ),
   );
+  const [currentMarkdown, setCurrentMarkdown] = useState(() =>
+    jsonToPlainText(initialEditorContent),
+  );
 
   if (storeRef.current === null) {
     storeRef.current = createJournalEditorStore(isPersisted ? journal.revision : 0);
@@ -146,6 +152,10 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
       },
     },
     onUpdate: () => {
+      const editorContent = editor?.getJSON() as TiptapJsonNode | undefined;
+      if (editorContent !== undefined) {
+        setCurrentMarkdown(jsonToPlainText(editorContent));
+      }
       coordinator.update(currentDraft());
     },
   });
@@ -330,6 +340,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
                   void uploadAttachment(file);
                 }}
               />
+              <TableEditingToolbar editor={editor} />
               {attachmentBusy ? (
                 <p role="status" className="mx-3 mt-2 text-xs text-muted-foreground">
                   正在上传附件
@@ -349,6 +360,12 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
               )}
               <div className="df-journal-editor-scroll min-h-0 flex-1 overflow-y-auto">
                 <EditorContent editor={editor} className="min-h-full" />
+                <SlashCommandMenu
+                  editor={editor}
+                  onImageUpload={(file) => {
+                    void uploadAttachment(file);
+                  }}
+                />
               </div>
             </>
           )}
@@ -370,10 +387,15 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           </div>
         </div>
 
+        {editor !== null && preferences.showOutline && !historyOpen ? (
+          <EditorOutline editor={editor} />
+        ) : null}
+
         {historyOpen ? (
           <HistoryPanel
             journalId={journal.id}
             currentRevision={expectedRevision ?? journal.revision}
+            currentMarkdown={currentMarkdown}
             onRestored={onRestored}
             onClose={() => store.getState().setHistoryOpen(false)}
           />

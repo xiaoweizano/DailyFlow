@@ -172,7 +172,14 @@ export function AttachmentNodeView({ node }: ReactNodeViewProps): React.JSX.Elem
   );
 
   return (
-    <NodeViewWrapper as="span" data-type="attachment" className="dailyflow-attachment">
+    <NodeViewWrapper
+      as="span"
+      data-type="attachment"
+      data-attachment-id={attrs.attachmentId}
+      data-display-name={attrs.displayName}
+      data-mime-type={attrs.mimeType}
+      className="dailyflow-attachment"
+    >
       <AttachmentPreview
         attachmentId={attrs.attachmentId}
         displayName={attrs.displayName}

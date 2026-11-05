@@ -16,6 +16,7 @@
     "@dailyflow/editor": "workspace:*",
     "@dailyflow/shared": "workspace:*",
     "@dailyflow/ui": "workspace:*",
+    "@tiptap/pm": "^3.32.2",
     "@tiptap/react": "3.32.2",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",

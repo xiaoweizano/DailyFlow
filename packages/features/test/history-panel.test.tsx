@@ -5,7 +5,7 @@ import "./setup-dom.js";
 import type { JournalVersionSummary, Page } from "@dailyflow/application";
 import { parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
 import { ok } from "@dailyflow/shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -116,13 +116,17 @@ function createServices() {
   };
 }
 
-function renderHistoryPanel(services: ReturnType<typeof createServices>) {
+function renderHistoryPanel(
+  services: ReturnType<typeof createServices>,
+  currentMarkdown = "当前版本正文",
+) {
   const onRestored = vi.fn();
   render(
     <AppServicesProvider services={services}>
       <HistoryPanel
         journalId={journalId}
         currentRevision={3}
+        currentMarkdown={currentMarkdown}
         onRestored={onRestored}
         onClose={vi.fn()}
       />
@@ -188,5 +192,16 @@ describe("HistoryPanel", () => {
         versionCreated: true,
       }),
     );
+  });
+
+  it("compares the current draft with a selected historical version", async () => {
+    const user = userEvent.setup();
+    renderHistoryPanel(createServices(), "当前草稿正文");
+
+    await user.click(await screen.findByRole("button", { name: /版本 2/u }));
+
+    const comparison = await screen.findByRole("region", { name: "版本对比" });
+    expect(within(comparison).getByText("当前草稿正文")).toBeInTheDocument();
+    expect(within(comparison).getByText("旧版本正文")).toBeInTheDocument();
   });
 });

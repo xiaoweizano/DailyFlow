@@ -5,6 +5,7 @@ import TaskList from "@tiptap/extension-task-list";
 import StarterKit from "@tiptap/starter-kit";
 
 import { Attachment } from "../extensions/attachment.js";
+import { EditorBlocks } from "../extensions/editor-blocks.js";
 import { MarkdownShortcuts } from "../extensions/markdown-shortcuts.js";
 import { StructuredBlock } from "../extensions/structured-block.js";
 import { UnknownBlock, UnknownInline } from "../extensions/unknown-content.js";
@@ -29,6 +30,7 @@ export function createEditorExtensions(): Extensions {
       nested: true,
     }),
     Attachment,
+    ...EditorBlocks,
     StructuredBlock,
     UnknownBlock,
     UnknownInline,

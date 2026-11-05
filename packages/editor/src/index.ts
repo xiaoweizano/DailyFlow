@@ -1,4 +1,14 @@
 export { Attachment } from "./extensions/attachment.js";
+export { isAttachmentImage } from "./extensions/attachment-image.js";
+export {
+  BlockDragHandles,
+  createDefaultTableJson,
+  EditorBlocks,
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "./extensions/editor-blocks.js";
 export { MarkdownShortcuts } from "./extensions/markdown-shortcuts.js";
 export { StructuredBlock } from "./extensions/structured-block.js";
 export { UnknownBlock, UnknownInline } from "./extensions/unknown-content.js";
@@ -22,6 +32,10 @@ export type {
 } from "./schema/editor-types.js";
 export { jsonToMarkdown, isSafeMarkdownHref } from "./serialization/json-to-markdown.js";
 export { jsonToPlainText, structuredDataToPlainText } from "./serialization/json-to-plain-text.js";
+export {
+  buildDocumentOutline,
+  type DocumentOutlineItem,
+} from "./serialization/document-outline.js";
 export { markdownToJson } from "./serialization/markdown-to-json.js";
 export { migrateDocument } from "./serialization/migrate-document.js";
 export { cloneJsonObject, normalizeDocument } from "./serialization/normalize-document.js";

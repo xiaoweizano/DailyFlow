@@ -272,16 +272,21 @@
   .df-journal-editor-scroll {
     min-width: 0;
     min-height: 0;
+    position: relative;
   }
 
   .df-journal-prosemirror {
     width: var(--editor-content-width);
     min-height: 100%;
     margin-inline: auto;
-    padding: clamp(20px, 3vw, 36px) clamp(20px, 4vw, 48px) 30vh;
+    padding: clamp(20px, 3vw, 36px) clamp(20px, 4vw, 48px) clamp(24px, 8vh, 96px);
     outline: none;
     font-size: var(--editor-font-size);
     line-height: 1.75;
+  }
+
+  .df-journal-prosemirror > * {
+    position: relative;
   }
 
   .df-journal-prosemirror > :first-child {
@@ -290,6 +295,177 @@
 
   .df-journal-prosemirror > :last-child {
     margin-bottom: 0;
+  }
+
+  .df-block-drag-handle {
+    display: inline-flex;
+    width: 20px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: hsl(var(--muted-foreground));
+    cursor: grab;
+    font: 14px/1 var(--font-mono);
+    opacity: 0;
+    transform: translateX(-24px);
+    transition:
+      opacity 120ms ease,
+      background-color 120ms ease;
+  }
+
+  .df-journal-prosemirror > *:hover > .df-block-drag-handle,
+  .df-block-drag-handle:focus-visible,
+  .df-block-drag-handle:active {
+    opacity: 1;
+  }
+
+  .df-block-drag-handle:hover {
+    background: hsl(var(--surface-muted));
+    color: hsl(var(--foreground));
+  }
+
+  .df-block-drag-handle:active {
+    cursor: grabbing;
+  }
+
+  .df-slash-menu {
+    position: fixed;
+    z-index: 50;
+    display: grid;
+    width: min(260px, calc(100vw - 32px));
+    max-height: min(320px, 55vh);
+    gap: 2px;
+    overflow-y: auto;
+    border: 1px solid hsl(var(--border-strong));
+    border-radius: var(--radius-panel);
+    background: hsl(var(--surface));
+    padding: 6px;
+    box-shadow: 0 14px 36px hsl(var(--foreground) / 0.16);
+  }
+
+  .df-slash-menu-item {
+    display: flex;
+    min-height: 34px;
+    align-items: center;
+    gap: 9px;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    padding: 6px 9px;
+    color: hsl(var(--foreground));
+    text-align: left;
+    font-size: 13px;
+  }
+
+  .df-slash-menu-item[data-active="true"],
+  .df-slash-menu-item:hover {
+    background: hsl(var(--primary) / 0.1);
+    color: hsl(var(--primary));
+  }
+
+  .df-table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    border-bottom: 1px solid hsl(var(--border));
+    background: hsl(var(--surface-muted));
+    padding: 5px 12px;
+  }
+
+  .df-table-toolbar button {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-control);
+    background: transparent;
+    padding: 3px 8px;
+    color: hsl(var(--foreground));
+    font-size: 12px;
+  }
+
+  .df-table-toolbar button:hover {
+    border-color: hsl(var(--border));
+    background: hsl(var(--surface));
+  }
+
+  .df-editor-outline-item {
+    display: block;
+    width: 100%;
+    min-height: 30px;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: transparent;
+    color: hsl(var(--muted-foreground));
+    padding-block: 5px;
+    padding-inline-end: 8px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .df-editor-outline-item:hover {
+    background: hsl(var(--primary) / 0.08);
+    color: hsl(var(--primary));
+  }
+
+  .df-journal-prosemirror .tableWrapper {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-block: 1rem;
+  }
+
+  .df-journal-prosemirror table {
+    width: 100%;
+    min-width: 420px;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .df-journal-prosemirror th,
+  .df-journal-prosemirror td {
+    position: relative;
+    min-width: 96px;
+    border: 1px solid hsl(var(--border-strong));
+    padding: 7px 9px;
+    vertical-align: top;
+  }
+
+  .df-journal-prosemirror th {
+    background: hsl(var(--surface-muted));
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .df-journal-prosemirror th > p,
+  .df-journal-prosemirror td > p {
+    margin: 0;
+  }
+
+  .df-journal-prosemirror .selectedCell::after {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: hsl(var(--primary) / 0.12);
+    content: "";
+    pointer-events: none;
+  }
+
+  .df-journal-prosemirror .column-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    bottom: -1px;
+    width: 4px;
+    background: hsl(var(--primary));
+    pointer-events: none;
   }
 }
 
@@ -342,6 +518,10 @@
   .df-statusbar-secondary,
   .df-topbar-divider,
   .df-topbar-shortcut {
+    display: none;
+  }
+
+  .df-block-drag-handle {
     display: none;
   }
 }
