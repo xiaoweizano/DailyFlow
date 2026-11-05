@@ -74,6 +74,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@dailyflow/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@dailyflow/features':
         specifier: workspace:*
         version: link:../../packages/features
@@ -98,6 +101,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@dailyflow/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@dailyflow/application':
         specifier: workspace:*
         version: link:../../packages/application

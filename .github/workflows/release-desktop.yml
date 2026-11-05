@@ -393,4 +393,5 @@ jobs:
             release/*.dmg
             release/SHA256SUMS
             release/SHA256SUMS-*
+
 # Workflow registration refresh: 2026-11-05.

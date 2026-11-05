@@ -12,6 +12,7 @@
     "tauri:build": "tauri build --features desktop-shell"
   },
   "dependencies": {
+    "@dailyflow/ai": "workspace:*",
     "@dailyflow/features": "workspace:*",
     "@dailyflow/infrastructure": "workspace:*",
     "@dailyflow/ui": "workspace:*",

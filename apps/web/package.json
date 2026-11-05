@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@dailyflow/ai": "workspace:*",
     "@dailyflow/application": "workspace:*",
     "@dailyflow/domain": "workspace:*",
     "@dailyflow/features": "workspace:*",
