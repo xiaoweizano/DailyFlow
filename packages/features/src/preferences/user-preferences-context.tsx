@@ -34,6 +34,9 @@ export function UserPreferencesProvider({
         }
         setPreferences(result.preferences);
         setWarning(result.warning);
+        void settings.applyRuntimePreferences?.(result.preferences).catch((error: unknown) => {
+          console.error("DailyFlow runtime preferences could not be applied", error);
+        });
       })
       .catch(() => {
         if (!active) {
@@ -75,6 +78,9 @@ export function UserPreferencesProvider({
   const save = useCallback(
     async (input: unknown): Promise<UserPreferencesSaveResult> => {
       const result = await settings.save(input);
+      if (result.persisted) {
+        await settings.applyRuntimePreferences?.(result.preferences);
+      }
       setPreferences(result.preferences);
       setWarning(result.warning);
       return result;

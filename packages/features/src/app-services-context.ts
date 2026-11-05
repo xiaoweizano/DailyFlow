@@ -9,6 +9,7 @@ import type {
   SearchRebuildOptions,
   SearchRebuildResult,
   SecretStoreBackend,
+  UserPreferences,
   UserPreferencesLoadResult,
   UserPreferencesSaveResult,
   TimelineQuery,
@@ -39,12 +40,32 @@ export interface AppRuntimeServices {
   readonly timeline: TimelineQuery;
   readonly settings: SettingsRuntimeServices;
   readonly ai: AiRuntimeServices;
+  readonly storageLocation?: StorageLocationRuntimeServices;
   readonly dataManagement?: DataManagementRuntimeServices;
 }
 
 export interface SettingsRuntimeServices {
   load(): Promise<UserPreferencesLoadResult>;
   save(input: unknown): Promise<UserPreferencesSaveResult>;
+  applyRuntimePreferences?(preferences: UserPreferences): Promise<void>;
+}
+
+export interface StorageLocationInfo {
+  readonly currentDirectory: string;
+  readonly defaultDirectory: string;
+  readonly isCustom: boolean;
+}
+
+export interface StorageLocationMigrationResult extends StorageLocationInfo {
+  readonly destination: string;
+  readonly backupDirectory: string;
+  readonly restartRequired: boolean;
+  readonly preferences: UserPreferences;
+}
+
+export interface StorageLocationRuntimeServices {
+  get(): Promise<StorageLocationInfo>;
+  migrate(preferences: UserPreferences): Promise<StorageLocationMigrationResult | null>;
 }
 
 export interface AiRuntimeServices {

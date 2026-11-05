@@ -9,7 +9,7 @@ use tauri::{
 static CLOSE_TO_TRAY: AtomicBool = AtomicBool::new(true);
 static EXPLICIT_QUIT: AtomicBool = AtomicBool::new(false);
 
-pub fn install(app: &mut App) -> tauri::Result<()> {
+pub fn install(app: &mut App, start_hidden: bool) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "打开 DailyFlow", true, None::<&str>)?;
     let settings = MenuItem::with_id(app, "settings", "设置", true, None::<&str>)?;
     let quit_item = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
@@ -45,6 +45,9 @@ pub fn install(app: &mut App) -> tauri::Result<()> {
     tray.build(app)?;
 
     if let Some(window) = app.get_webview_window("main") {
+        if start_hidden {
+            window.hide()?;
+        }
         let window_to_hide = window.clone();
         window.on_window_event(move |event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
@@ -66,6 +69,14 @@ fn should_hide_on_close(close_to_tray: bool, explicit_quit: bool) -> bool {
     close_to_tray && !explicit_quit
 }
 
+pub fn should_start_hidden(silent_start_argument: bool, silent_start_preference: bool) -> bool {
+    silent_start_argument && silent_start_preference
+}
+
+pub fn set_close_to_tray(enabled: bool) {
+    CLOSE_TO_TRAY.store(enabled, Ordering::SeqCst);
+}
+
 fn show_main_window(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -85,7 +96,7 @@ fn request_quit(app: &AppHandle) {
 
 #[tauri::command]
 pub fn lifecycle_set_close_to_tray(enabled: bool) {
-    CLOSE_TO_TRAY.store(enabled, Ordering::SeqCst);
+    set_close_to_tray(enabled);
 }
 
 #[tauri::command]
@@ -100,12 +111,19 @@ pub fn lifecycle_quit(app: AppHandle) {
 
 #[cfg(test)]
 mod tests {
-    use super::should_hide_on_close;
+    use super::{should_hide_on_close, should_start_hidden};
 
     #[test]
     fn hides_on_close_only_while_close_to_tray_is_enabled() {
         assert!(should_hide_on_close(true, false));
         assert!(!should_hide_on_close(false, false));
         assert!(!should_hide_on_close(true, true));
+    }
+
+    #[test]
+    fn starts_hidden_only_when_the_launch_argument_and_preference_are_present() {
+        assert!(should_start_hidden(true, true));
+        assert!(!should_start_hidden(true, false));
+        assert!(!should_start_hidden(false, true));
     }
 }

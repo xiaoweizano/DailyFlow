@@ -6,6 +6,13 @@ export {
   DesktopSettingsStore,
   type DesktopSettingsStoreOptions,
 } from "./desktop-settings-store.js";
+export {
+  DesktopStorageLocationService,
+  type DesktopStorageLocationInfo,
+  type DesktopStorageLocationMigrationResult,
+  type DesktopStorageLocationPicker,
+  type DesktopStorageLocationServiceOptions,
+} from "./desktop-storage-location.js";
 export { DesktopDataManagementPort } from "./desktop-data-management-port.js";
 export {
   DesktopBackupService,

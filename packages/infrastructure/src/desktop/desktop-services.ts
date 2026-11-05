@@ -34,6 +34,10 @@ import { DesktopKnowledgeRepository } from "./desktop-knowledge-repository.js";
 import { DesktopSearchPort, type TauriListen } from "./desktop-search-port.js";
 import { DesktopSecretStore } from "./desktop-secret-store.js";
 import { DesktopSettingsStore } from "./desktop-settings-store.js";
+import {
+  DesktopStorageLocationService,
+  type DesktopStorageLocationPicker,
+} from "./desktop-storage-location.js";
 import { DesktopReportRepository } from "./desktop-report-repository.js";
 import { DesktopTaskRepository } from "./desktop-task-repository.js";
 import { DesktopTimelineQuery } from "./desktop-timeline-query.js";
@@ -62,6 +66,7 @@ export type DesktopServices = Pick<
   readonly dataManagement: DataManagementPort;
   readonly settingsStore: DesktopSettingsStore;
   readonly secretStore: DesktopSecretStore;
+  readonly storageLocation: DesktopStorageLocationService;
 };
 
 export interface CreateDesktopServicesOptions {
@@ -73,6 +78,7 @@ export interface CreateDesktopServicesOptions {
   readonly backupSourcePicker?: DesktopBackupSourcePicker;
   readonly backupTargetPicker?: DesktopBackupTargetPicker;
   readonly searchProgressListener?: TauriListen;
+  readonly storageLocationPicker?: DesktopStorageLocationPicker;
 }
 
 const systemClock: Clock = {
@@ -132,6 +138,12 @@ export function createDesktopServices(options: CreateDesktopServicesOptions = {}
     timeline: new DesktopTimelineQuery({ client }),
     settingsStore: new DesktopSettingsStore({ client }),
     secretStore: new DesktopSecretStore({ client }),
+    storageLocation: new DesktopStorageLocationService({
+      invoke: options.invoke ?? invokeTauriBridge,
+      ...(options.storageLocationPicker === undefined
+        ? {}
+        : { picker: options.storageLocationPicker }),
+    }),
   };
 }
 

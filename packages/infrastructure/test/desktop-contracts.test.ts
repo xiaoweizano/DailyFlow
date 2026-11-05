@@ -1,4 +1,8 @@
-import { PortError, type SaveJournalSnapshot } from "@dailyflow/application";
+import {
+  DEFAULT_USER_PREFERENCES,
+  PortError,
+  type SaveJournalSnapshot,
+} from "@dailyflow/application";
 import {
   createContentDocument,
   parseContentHash,
@@ -13,6 +17,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DesktopJournalRepository } from "../src/desktop/desktop-journal-repository.js";
 import { DesktopSearchPort, type TauriListen } from "../src/desktop/desktop-search-port.js";
+import { DesktopStorageLocationService } from "../src/desktop/desktop-storage-location.js";
 import { DesktopTaskRepository } from "../src/desktop/desktop-task-repository.js";
 import { DesktopTimelineQuery } from "../src/desktop/desktop-timeline-query.js";
 import { TauriCommandClient, type TauriInvoke } from "../src/desktop/tauri-client.js";
@@ -122,6 +127,87 @@ function makeSnapshot(expectedRevision: number | null): SaveJournalSnapshot {
 }
 
 describe("desktop Tauri contracts", () => {
+  it("reads the platform-resolved data directory", async () => {
+    const invoke = createInvoke({
+      currentDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+      defaultDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+      isCustom: false,
+    });
+    const storageLocation = new DesktopStorageLocationService({ invoke });
+
+    await expect(storageLocation.get()).resolves.toEqual({
+      currentDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+      defaultDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+      isCustom: false,
+    });
+    expect(invoke).toHaveBeenCalledWith("storage_location_get");
+  });
+
+  it("migrates the complete preference document to the selected directory", async () => {
+    const invoke = vi.fn<TauriInvoke>(async (command) => {
+      if (command === "storage_location_get") {
+        return {
+          currentDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+          defaultDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+          isCustom: false,
+        };
+      }
+      return {
+        destination: "D:\\DailyFlow",
+        backupDirectory:
+          "C:\\Users\\office\\AppData\\Roaming\\DailyFlow\\.dailyflow-migration-backups\\backup-1",
+        restartRequired: true,
+      };
+    });
+    const storageLocation = new DesktopStorageLocationService({
+      invoke,
+      picker: async () => "D:\\DailyFlow",
+    });
+    await storageLocation.get();
+
+    const result = await storageLocation.migrate(DEFAULT_USER_PREFERENCES);
+
+    expect(invoke).toHaveBeenCalledWith("storage_location_migrate", {
+      destination: "D:\\DailyFlow",
+      preferencesJson: JSON.stringify({
+        ...DEFAULT_USER_PREFERENCES,
+        customDataDirectory: "D:\\DailyFlow",
+      }),
+    });
+    expect(result).toMatchObject({
+      currentDirectory: "D:\\DailyFlow",
+      defaultDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+      isCustom: true,
+      restartRequired: true,
+      preferences: {
+        schemaVersion: DEFAULT_USER_PREFERENCES.schemaVersion,
+        customDataDirectory: "D:\\DailyFlow",
+      },
+    });
+  });
+
+  it("does not start a migration when the directory picker is cancelled", async () => {
+    const invoke = createInvoke({});
+    const storageLocation = new DesktopStorageLocationService({
+      invoke,
+      picker: async () => null,
+    });
+
+    await expect(storageLocation.migrate(DEFAULT_USER_PREFERENCES)).resolves.toBeNull();
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it("maps malformed storage responses to a validation port error", async () => {
+    const storageLocation = new DesktopStorageLocationService({
+      invoke: createInvoke({ currentDirectory: "", isCustom: false }),
+    });
+
+    const error = await storageLocation.get().catch((reason: unknown) => reason);
+
+    expect(error).toBeInstanceOf(PortError);
+    expect(error).toMatchObject({ code: "VALIDATION_ERROR" });
+  });
+
   it("accepts a new task write with revision zero and rejects it as persisted data", () => {
     const command = {
       task: { ...taskDto, revision: 0 },

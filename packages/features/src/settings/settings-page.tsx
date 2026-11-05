@@ -39,7 +39,7 @@ export function SettingsPage({
   storageLabel = "SQLite",
   version = "0.3.0",
 }: SettingsPageProps): React.JSX.Element {
-  const { ai } = useAppServices();
+  const { ai, storageLocation } = useAppServices();
   const { preferences, warning, loading, save: savePreferences } = useUserPreferences();
   const location = useLocation();
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(() =>
@@ -448,6 +448,7 @@ export function SettingsPage({
                   messages={messages}
                   platform={platform}
                   storageLabel={storageLabel}
+                  {...(storageLocation === undefined ? {} : { storageLocation })}
                   onUpdate={updateDraft}
                 />
               ) : null}

@@ -1,7 +1,10 @@
 import { DisabledAiRegistry } from "@dailyflow/ai";
 import { createAppRuntimeServices, type AppRuntimeServices } from "@dailyflow/features";
 import { createDesktopServices, type TauriListen } from "@dailyflow/infrastructure/desktop";
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+
+import { setDesktopCloseToTray } from "./install-desktop-close-guard.js";
 
 const listenToTauriEvent: TauriListen = async <T>(event: string, handler: (payload: T) => void) =>
   await listen<T>(event, ({ payload }) => {
@@ -18,4 +21,10 @@ export const desktopServices: AppRuntimeServices = createAppRuntimeServices({
   settingsStore,
   secretStore,
   aiProviderRegistry: new DisabledAiRegistry(),
+  applyRuntimePreferences: async (preferences) => {
+    await setDesktopCloseToTray(preferences.closeToTray);
+    await invoke("desktop_apply_startup_preferences", {
+      autostart: preferences.autostart,
+    });
+  },
 });

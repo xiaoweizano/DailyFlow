@@ -4,6 +4,9 @@ export {
   type AiRuntimeServices,
   type DataManagementRuntimeServices,
   type SettingsRuntimeServices,
+  type StorageLocationInfo,
+  type StorageLocationMigrationResult,
+  type StorageLocationRuntimeServices,
 } from "./app-services-context.js";
 export { useAppServices } from "./app-services-hooks.js";
 export { AppServicesProvider, type AppServicesProviderProps } from "./app-services-provider.js";

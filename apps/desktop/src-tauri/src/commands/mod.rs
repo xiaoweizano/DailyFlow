@@ -9,6 +9,7 @@ pub mod knowledge_commands;
 pub mod report_commands;
 pub mod search_commands;
 pub mod settings_commands;
+pub mod storage_commands;
 pub mod task_commands;
 pub mod timeline_commands;
 

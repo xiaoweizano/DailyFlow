@@ -16,15 +16,23 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AppRuntimeServices } from "../src/app-services-context.js";
+import type { StorageLocationRuntimeServices } from "../src/app-services-context.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import { SettingsPage } from "../src/settings/settings-page.js";
 
 interface SettingsRuntimeStub {
   readonly load: () => Promise<UserPreferencesLoadResult>;
   readonly save: (input: unknown) => Promise<UserPreferencesSaveResult>;
+  readonly applyRuntimePreferences?: (preferences: UserPreferences) => Promise<void>;
+  readonly storageLocation?: StorageLocationRuntimeServices;
 }
 
-function createSettingsServices({ load, save }: SettingsRuntimeStub): AppRuntimeServices {
+function createSettingsServices({
+  load,
+  save,
+  applyRuntimePreferences,
+  storageLocation,
+}: SettingsRuntimeStub): AppRuntimeServices {
   const registry: AiProviderRegistry = {
     list: () => [
       {
@@ -39,7 +47,12 @@ function createSettingsServices({ load, save }: SettingsRuntimeStub): AppRuntime
   const backend: SecretStoreBackend = "session-memory";
 
   return {
-    settings: { load, save },
+    settings: {
+      load,
+      save,
+      ...(applyRuntimePreferences === undefined ? {} : { applyRuntimePreferences }),
+    },
+    ...(storageLocation === undefined ? {} : { storageLocation }),
     ai: {
       providers: registry.list(),
       secretBackend: backend,
@@ -58,11 +71,14 @@ function loaded(
   };
 }
 
-function renderSettings(services: AppRuntimeServices): void {
+function renderSettings(
+  services: AppRuntimeServices,
+  platform: "windows" | "macos" | "web" = "windows",
+): void {
   render(
     <MemoryRouter initialEntries={["/settings"]}>
       <AppServicesProvider services={services}>
-        <SettingsPage platform="windows" />
+        <SettingsPage platform={platform} />
       </AppServicesProvider>
     </MemoryRouter>,
   );
@@ -70,24 +86,28 @@ function renderSettings(services: AppRuntimeServices): void {
 
 describe("settings page", () => {
   it("applies persisted visual preferences at application startup", async () => {
+    const persistedPreferences = {
+      ...DEFAULT_USER_PREFERENCES,
+      theme: "dark" as const,
+      accent: "green" as const,
+      density: "compact" as const,
+      editorFontSize: 17,
+      editorWidth: "focused" as const,
+    };
     const load = vi.fn(async () =>
-      loaded({
-        ...DEFAULT_USER_PREFERENCES,
-        theme: "dark",
-        accent: "green",
-        density: "compact",
-        editorFontSize: 17,
-        editorWidth: "focused",
-      }),
+      loaded(persistedPreferences),
     );
     const save = vi.fn(async () => ({
       preferences: DEFAULT_USER_PREFERENCES,
       persisted: true,
       warning: null,
     }));
+    const applyRuntimePreferences = vi.fn(async () => undefined);
 
     render(
-      <AppServicesProvider services={createSettingsServices({ load, save })}>
+      <AppServicesProvider
+        services={createSettingsServices({ load, save, applyRuntimePreferences })}
+      >
         <div>Global workspace</div>
       </AppServicesProvider>,
     );
@@ -101,6 +121,7 @@ describe("settings page", () => {
       expect(document.documentElement.style.getPropertyValue("--editor-content-width")).toBe(
         "min(100%, 72ch)",
       );
+      expect(applyRuntimePreferences).toHaveBeenCalledWith(persistedPreferences);
     });
   });
 
@@ -208,8 +229,15 @@ describe("settings page", () => {
       persisted: true,
       warning: null,
     }));
+    const applyRuntimePreferences = vi.fn(async () => undefined);
 
-    renderSettings(createSettingsServices({ load, save }));
+    renderSettings(createSettingsServices({ load, save, applyRuntimePreferences }));
+
+    expect(await screen.findByRole("heading", { name: "设置" })).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(applyRuntimePreferences).toHaveBeenCalledWith(DEFAULT_USER_PREFERENCES);
+    });
+    applyRuntimePreferences.mockClear();
 
     await userEvent.click(screen.getByRole("tab", { name: "外观" }));
     const theme = await screen.findByRole("group", { name: "主题" });
@@ -223,6 +251,12 @@ describe("settings page", () => {
     await user.click(screen.getByRole("button", { name: "保存设置" }));
 
     expect(save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        theme: "dark",
+        autosaveIntervalMs: 1200,
+      }),
+    );
+    expect(applyRuntimePreferences).toHaveBeenCalledWith(
       expect.objectContaining({
         theme: "dark",
         autosaveIntervalMs: 1200,
@@ -245,8 +279,15 @@ describe("settings page", () => {
         message: "无法保存设置，请稍后重试。",
       },
     }));
+    const applyRuntimePreferences = vi.fn(async () => undefined);
 
-    renderSettings(createSettingsServices({ load, save }));
+    renderSettings(createSettingsServices({ load, save, applyRuntimePreferences }));
+
+    expect(await screen.findByRole("heading", { name: "设置" })).toBeInTheDocument();
+    await vi.waitFor(() => {
+      expect(applyRuntimePreferences).toHaveBeenCalledWith(DEFAULT_USER_PREFERENCES);
+    });
+    applyRuntimePreferences.mockClear();
 
     await userEvent.click(screen.getByRole("tab", { name: "外观" }));
     const density = await screen.findByRole("group", { name: "密度" });
@@ -255,6 +296,7 @@ describe("settings page", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("无法保存设置");
     expect(screen.queryByText("设置已保存")).not.toBeInTheDocument();
+    expect(applyRuntimePreferences).not.toHaveBeenCalled();
   });
 
   it("shows invalid persisted values as a warning using safe defaults", async () => {
@@ -326,6 +368,82 @@ describe("settings page", () => {
     await user.click(screen.getByRole("tab", { name: "关于" }));
     expect(screen.getByRole("heading", { name: "关于与扩展" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "快捷键" })).toBeInTheDocument();
+  });
+
+  it("migrates the complete preference document and shows the verified destination", async () => {
+    const user = userEvent.setup();
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+    const storageLocation: StorageLocationRuntimeServices = {
+      get: vi.fn(async () => ({
+        currentDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+        defaultDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+        isCustom: false,
+      })),
+      migrate: vi.fn(async (preferences) => ({
+        ...preferences,
+        currentDirectory: "D:\\DailyFlow",
+        defaultDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
+        destination: "D:\\DailyFlow",
+        backupDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow\\.dailyflow-migration-backups\\backup-1",
+        isCustom: true,
+        restartRequired: true,
+        preferences,
+      })),
+    };
+
+    renderSettings(createSettingsServices({ load, save, storageLocation }));
+
+    expect(await screen.findByRole("heading", { name: "设置" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "数据" }));
+    expect(
+      await screen.findByDisplayValue("C:\\Users\\office\\AppData\\Roaming\\DailyFlow"),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "更改存储位置" }));
+
+    expect(storageLocation.migrate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schemaVersion: DEFAULT_USER_PREFERENCES.schemaVersion,
+        autostart: DEFAULT_USER_PREFERENCES.autostart,
+        silentStart: DEFAULT_USER_PREFERENCES.silentStart,
+        closeToTray: DEFAULT_USER_PREFERENCES.closeToTray,
+        editorFontSize: DEFAULT_USER_PREFERENCES.editorFontSize,
+        editorWidth: DEFAULT_USER_PREFERENCES.editorWidth,
+        autosaveIntervalMs: DEFAULT_USER_PREFERENCES.autosaveIntervalMs,
+        historyRetention: DEFAULT_USER_PREFERENCES.historyRetention,
+      }),
+    );
+    expect(await screen.findByText(/请重启 DailyFlow/)).toBeInTheDocument();
+    expect(screen.getByText(/backup-1/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue("D:\\DailyFlow")).toBeInTheDocument();
+  });
+
+  it("explains browser-managed storage without exposing desktop migration controls", async () => {
+    const user = userEvent.setup();
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+    const storageLocation: StorageLocationRuntimeServices = {
+      get: vi.fn(),
+      migrate: vi.fn(),
+    };
+
+    renderSettings(createSettingsServices({ load, save, storageLocation }), "web");
+
+    expect(await screen.findByRole("heading", { name: "设置" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "数据" }));
+
+    expect(screen.getByText(/浏览器不提供自定义数据目录/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "更改存储位置" })).not.toBeInTheDocument();
+    expect(storageLocation.get).not.toHaveBeenCalled();
   });
 
   it("switches the settings language without saving prematurely", async () => {

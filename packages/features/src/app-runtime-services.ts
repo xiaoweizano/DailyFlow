@@ -18,11 +18,15 @@ import {
   type SettingsStore,
   type TimelineQuery,
   type TxtDocumentConverter,
+  type UserPreferences,
 } from "@dailyflow/application";
 import type { Clock, IdGenerator, LocalDate } from "@dailyflow/domain";
 import { createUuidV7 } from "@dailyflow/shared";
 
-import type { AppRuntimeServices } from "./app-services-context.js";
+import type {
+  AppRuntimeServices,
+  StorageLocationRuntimeServices,
+} from "./app-services-context.js";
 import { createAnalyticsRuntimeServices } from "./analytics/analytics-services.js";
 import { createAttachmentRuntimeServices } from "./attachments/attachment-services.js";
 import { EditorContentProjector } from "./journal/content-projector.js";
@@ -57,6 +61,8 @@ export interface CreateAppRuntimeServicesOptions extends Pick<
   readonly settingsStore: SettingsStore;
   readonly aiProviderRegistry: AiProviderRegistry;
   readonly secretStore: SecretStore;
+  readonly storageLocation?: StorageLocationRuntimeServices;
+  readonly applyRuntimePreferences?: (preferences: UserPreferences) => Promise<void>;
 }
 
 export interface ImportStorageServices {
@@ -153,6 +159,9 @@ export function createAppRuntimeServices(
     settings: {
       load: () => loadUserPreferences({ store: options.settingsStore }),
       save: (input) => saveUserPreferences({ store: options.settingsStore }, input),
+      ...(options.applyRuntimePreferences === undefined
+        ? {}
+        : { applyRuntimePreferences: options.applyRuntimePreferences }),
     },
     ai: {
       providers: options.aiProviderRegistry.list(),
@@ -169,6 +178,9 @@ export function createAppRuntimeServices(
           ...rebuildOptions,
         }),
     },
+    ...(options.storageLocation === undefined
+      ? {}
+      : { storageLocation: options.storageLocation }),
   };
 }
 

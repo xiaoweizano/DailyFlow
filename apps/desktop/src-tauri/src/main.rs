@@ -9,13 +9,15 @@ use dailyflow_desktop::{
     commands::{
         analytics_commands, attachment_commands, backup_commands, data_commands, export_commands,
         import_commands, journal_commands, knowledge_commands, report_commands, search_commands,
-        settings_commands, task_commands, timeline_commands,
+        settings_commands, storage_commands, task_commands, timeline_commands,
     },
-    db::Database,
+    db::{settings_repository, Database},
     lifecycle,
 };
 #[cfg(feature = "desktop-shell")]
 use tauri::Manager;
+#[cfg(feature = "desktop-shell")]
+use tauri_plugin_autostart::MacosLauncher;
 
 #[cfg(feature = "desktop-shell")]
 #[derive(Serialize)]
@@ -40,13 +42,47 @@ fn app_info() -> AppInfo {
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--silent-start"]),
+        ))
         .setup(|app| {
-            let data_directory = app.path().app_data_dir()?;
+            let default_data_directory = app.path().app_data_dir()?;
+            let config_path = app.path().app_config_dir()?.join("data-location.json");
+            let data_directory =
+                storage_commands::locate_data_directory(&default_data_directory, &config_path)?;
             let database_path = data_directory.join("dailyflow.db");
-            app.manage(Database::open(database_path)?);
-            app.manage(AttachmentStore::open(data_directory)?);
+            let database = Database::open(database_path)?;
+            let preferences = database.with_connection(|connection| {
+                settings_repository::read(connection, "user-preferences")
+            })?;
+            let preferences = preferences
+                .as_deref()
+                .and_then(|value| serde_json::from_str::<serde_json::Value>(value).ok())
+                .unwrap_or_default();
+            let silent_start_preference = preferences
+                .get("silentStart")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false);
+            let close_to_tray = preferences
+                .get("closeToTray")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true);
+            let silent_start_argument =
+                std::env::args().any(|argument| argument == "--silent-start");
+            let start_hidden =
+                lifecycle::should_start_hidden(silent_start_argument, silent_start_preference);
+
+            lifecycle::set_close_to_tray(close_to_tray);
+            app.manage(database);
+            app.manage(AttachmentStore::open(data_directory.clone())?);
+            app.manage(storage_commands::StorageLocationState::new(
+                config_path,
+                default_data_directory,
+                data_directory,
+            ));
             app.manage(search_commands::SearchRebuildState::default());
-            lifecycle::install(app)?;
+            lifecycle::install(app, start_hidden)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -90,6 +126,9 @@ fn main() {
             backup_commands::backup_restore,
             settings_commands::settings_read,
             settings_commands::settings_write,
+            storage_commands::storage_location_get,
+            storage_commands::storage_location_migrate,
+            storage_commands::desktop_apply_startup_preferences,
             import_commands::import_create_session,
             import_commands::import_save_preview,
             import_commands::import_find_existing_matches,
