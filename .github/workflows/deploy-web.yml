@@ -72,3 +72,4 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+# Workflow registration refresh: 2026-11-05.
