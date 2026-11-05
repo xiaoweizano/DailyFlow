@@ -12,6 +12,7 @@ use dailyflow_desktop::{
         settings_commands, task_commands, timeline_commands,
     },
     db::Database,
+    lifecycle,
 };
 #[cfg(feature = "desktop-shell")]
 use tauri::Manager;
@@ -45,6 +46,7 @@ fn main() {
             app.manage(Database::open(database_path)?);
             app.manage(AttachmentStore::open(data_directory)?);
             app.manage(search_commands::SearchRebuildState::default());
+            lifecycle::install(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -95,7 +97,10 @@ fn main() {
             import_commands::import_commit_batch,
             import_commands::import_record_failure,
             import_commands::import_scan_txt,
-            import_commands::import_read_txt
+            import_commands::import_read_txt,
+            lifecycle::lifecycle_set_close_to_tray,
+            lifecycle::lifecycle_hide_to_tray,
+            lifecycle::lifecycle_quit
         ])
         .run(tauri::generate_context!())
         .expect("failed to run DailyFlow desktop application");

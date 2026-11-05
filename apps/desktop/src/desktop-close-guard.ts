@@ -11,6 +11,27 @@ export interface CloseGuardWindow {
 
 export interface CloseGuardLifecycle {
   flushAll: () => Promise<boolean>;
+  isCloseToTrayEnabled: () => boolean;
+  hideToTray: () => Promise<void>;
+}
+
+export interface QuitLifecycle {
+  flushAll: () => Promise<boolean>;
+}
+
+export async function flushBeforeQuit(
+  lifecycle: QuitLifecycle,
+  quit: () => Promise<void>,
+): Promise<boolean> {
+  try {
+    if (!(await lifecycle.flushAll())) {
+      return false;
+    }
+    await quit();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function installCloseGuard(
@@ -34,6 +55,16 @@ export async function installCloseGuard(
     }
 
     if (!flushed) {
+      return;
+    }
+
+    if (lifecycle.isCloseToTrayEnabled()) {
+      closing = true;
+      try {
+        await lifecycle.hideToTray();
+      } catch {
+        closing = false;
+      }
       return;
     }
 

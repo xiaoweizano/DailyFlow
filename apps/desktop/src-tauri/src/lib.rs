@@ -6,3 +6,6 @@ pub mod import;
 
 #[cfg(feature = "desktop-shell")]
 pub mod commands;
+
+#[cfg(feature = "desktop-shell")]
+pub mod lifecycle;
