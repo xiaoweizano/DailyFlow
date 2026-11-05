@@ -6,13 +6,33 @@ $applicationProcess = $null
 $applicationLogDirectory = $null
 
 function Write-ApplicationDiagnostics {
-    if ($null -eq $applicationLogDirectory -or -not (Test-Path -LiteralPath $applicationLogDirectory)) {
-        return
+    if ($null -ne $applicationLogDirectory -and (Test-Path -LiteralPath $applicationLogDirectory)) {
+        Get-ChildItem -LiteralPath $applicationLogDirectory -File | ForEach-Object {
+            Write-Host "----- $($_.Name) (tail) -----"
+            Get-Content -LiteralPath $_.FullName -Tail 100
+        }
     }
 
-    Get-ChildItem -LiteralPath $applicationLogDirectory -File | ForEach-Object {
-        Write-Host "----- $($_.Name) (tail) -----"
-        Get-Content -LiteralPath $_.FullName -Tail 100
+    if ($null -ne $applicationProcess) {
+        try {
+            Write-Host "----- DailyFlow process -----"
+            Get-CimInstance Win32_Process -Filter "ProcessId = $($applicationProcess.Id)" |
+                Select-Object ProcessId, ParentProcessId, ExecutablePath, CommandLine |
+                Format-List
+        }
+        catch {
+            Write-Host "Unable to inspect DailyFlow process: $($_.Exception.Message)"
+        }
+    }
+
+    try {
+        Write-Host "----- WebView2 processes -----"
+        Get-CimInstance Win32_Process -Filter "Name = 'msedgewebview2.exe'" |
+            Select-Object ProcessId, ParentProcessId, CommandLine |
+            Format-List
+    }
+    catch {
+        Write-Host "Unable to inspect WebView2 processes: $($_.Exception.Message)"
     }
 }
 
@@ -64,7 +84,7 @@ try {
         New-Item -ItemType Directory -Path $applicationLogDirectory -Force | Out-Null
 
         $previousBrowserArguments = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
-        $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$cdpPort"
+        $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$cdpPort --remote-allow-origins=*"
         try {
             $applicationProcess = Start-Process `
                 -FilePath $env:TAURI_APP_PATH `
@@ -72,11 +92,12 @@ try {
                 -RedirectStandardOutput (Join-Path $applicationLogDirectory "application.stdout.log") `
                 -RedirectStandardError (Join-Path $applicationLogDirectory "application.stderr.log") `
                 -PassThru `
-                -WindowStyle Hidden
+                -WindowStyle Normal
         }
         finally {
             $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousBrowserArguments
         }
+        Write-Host "Started DailyFlow process $($applicationProcess.Id) with CDP endpoint $env:TAURI_WEBVIEW2_CDP_URL"
 
         $versionUrl = "$env:TAURI_WEBVIEW2_CDP_URL/json/version"
         $deadline = (Get-Date).AddSeconds(60)
