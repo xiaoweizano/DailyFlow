@@ -53,6 +53,13 @@ export function mapApplicationError(error: unknown, fallbackEntity: string): App
           code: "STORAGE_UNAVAILABLE",
           retryable: error.details.retryable ?? true,
         };
+      case "PERMISSION_DENIED":
+      case "DIALOG_CANCELLED":
+        return {
+          code: "STORAGE_UNAVAILABLE",
+          retryable: false,
+          ...(error.details.message === undefined ? {} : { cause: error.details.message }),
+        };
       case "BACKUP_INVALID":
         return {
           code: "BACKUP_INVALID",

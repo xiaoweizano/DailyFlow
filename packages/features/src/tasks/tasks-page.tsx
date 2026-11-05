@@ -138,9 +138,8 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
             <label className="grid gap-1.5 text-xs font-medium text-foreground">
               截止日期
               <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="YYYY-MM-DD"
+                aria-label="待办截止日期"
+                type="date"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.currentTarget.value)}
                 className="font-mono text-xs"
@@ -271,9 +270,8 @@ function TaskDetailDialog({
               <label className="grid gap-1.5 text-xs font-medium text-foreground">
                 截止日期
                 <Input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="YYYY-MM-DD"
+                  aria-label="待办截止日期"
+                  type="date"
                   value={dueDate}
                   onChange={(event) => setDueDate(event.currentTarget.value)}
                   className="font-mono text-xs"

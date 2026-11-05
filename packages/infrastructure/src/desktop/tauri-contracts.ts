@@ -263,8 +263,12 @@ export const TaskDtoSchema = z.object({
   deletedAt: UtcTimestampSchema.nullable(),
 });
 
+const TaskWriteDtoSchema = TaskDtoSchema.extend({
+  revision: z.number().int().nonnegative(),
+});
+
 export const TaskSaveCommandDtoSchema = z.object({
-  task: TaskDtoSchema,
+  task: TaskWriteDtoSchema,
   expectedRevision: z.number().int().positive().nullable(),
 });
 
@@ -946,6 +950,8 @@ export const StorageErrorDtoSchema = z.object({
     "NOT_FOUND",
     "VALIDATION_ERROR",
     "STORAGE_UNAVAILABLE",
+    "PERMISSION_DENIED",
+    "DIALOG_CANCELLED",
   ]),
   message: z.string(),
 });
@@ -956,6 +962,8 @@ const STORAGE_ERROR_CODE_MAP = {
   NOT_FOUND: "NOT_FOUND",
   VALIDATION_ERROR: "VALIDATION_ERROR",
   STORAGE_UNAVAILABLE: "STORAGE_UNAVAILABLE",
+  PERMISSION_DENIED: "PERMISSION_DENIED",
+  DIALOG_CANCELLED: "DIALOG_CANCELLED",
 } as const satisfies Record<z.infer<typeof StorageErrorDtoSchema>["code"], PortErrorCode>;
 
 function formatZodFields(error: z.ZodError): Readonly<Record<string, string>> {

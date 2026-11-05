@@ -16,6 +16,10 @@ import { DesktopSearchPort, type TauriListen } from "../src/desktop/desktop-sear
 import { DesktopTaskRepository } from "../src/desktop/desktop-task-repository.js";
 import { DesktopTimelineQuery } from "../src/desktop/desktop-timeline-query.js";
 import { TauriCommandClient, type TauriInvoke } from "../src/desktop/tauri-client.js";
+import {
+  TaskDtoSchema,
+  TaskSaveCommandDtoSchema,
+} from "../src/desktop/tauri-contracts.js";
 
 const JOURNAL_ID = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c26");
 const CONTENT_HASH = parseContentHash(
@@ -118,6 +122,16 @@ function makeSnapshot(expectedRevision: number | null): SaveJournalSnapshot {
 }
 
 describe("desktop Tauri contracts", () => {
+  it("accepts a new task write with revision zero and rejects it as persisted data", () => {
+    const command = {
+      task: { ...taskDto, revision: 0 },
+      expectedRevision: null,
+    };
+
+    expect(TaskSaveCommandDtoSchema.parse(command).task.revision).toBe(0);
+    expect(() => TaskDtoSchema.parse(command.task)).toThrow();
+  });
+
   it("rejects a response with missing required fields", async () => {
     const invoke = createInvoke({ ...journalDto, revision: undefined });
     const journals = createJournalRepository(invoke);
@@ -149,6 +163,19 @@ describe("desktop Tauri contracts", () => {
       code: "CONFLICT",
       message: "Journal revision conflict",
     });
+  });
+
+  it.each([
+    ["PERMISSION_DENIED", "File access was denied"],
+    ["DIALOG_CANCELLED", "The save dialog was cancelled"],
+  ])("preserves the stable %s desktop error", async (code, message) => {
+    const invoke = vi.fn<TauriInvoke>().mockRejectedValue({ code, message });
+    const tasks = createTaskRepository(invoke);
+
+    const error = await tasks.getById(taskDto.id).catch((reason: unknown) => reason);
+
+    expect(error).toBeInstanceOf(PortError);
+    expect(error).toMatchObject({ code, message });
   });
 
   it("maps save input and returns the persisted revision", async () => {

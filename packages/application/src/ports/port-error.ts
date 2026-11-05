@@ -4,7 +4,9 @@ export type PortErrorCode =
   | "CONFLICT"
   | "STORAGE_UNAVAILABLE"
   | "QUOTA_EXCEEDED"
-  | "BACKUP_INVALID";
+  | "BACKUP_INVALID"
+  | "PERMISSION_DENIED"
+  | "DIALOG_CANCELLED";
 
 export interface PortErrorDetails {
   readonly message?: string;

@@ -183,7 +183,9 @@
       "CONFLICT",
       "NOT_FOUND",
       "VALIDATION_ERROR",
-      "STORAGE_UNAVAILABLE"
+      "STORAGE_UNAVAILABLE",
+      "PERMISSION_DENIED",
+      "DIALOG_CANCELLED"
     ]
   },
   "dtoFields": {
