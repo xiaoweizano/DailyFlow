@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const isCi = process.env.CI === "true";
+const isDesktopSmokeOnly = process.env.DAILYFLOW_DESKTOP_SMOKE_ONLY === "true";
 
 export default defineConfig({
   testDir: "./apps",
@@ -45,13 +46,15 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "pnpm --filter @dailyflow/web dev --host 127.0.0.1",
-    url: "http://127.0.0.1:5173",
-    reuseExistingServer: !isCi,
-    timeout: 120_000,
-    env: {
-      VITE_E2E: "true",
-    },
-  },
+  webServer: isDesktopSmokeOnly
+    ? undefined
+    : {
+        command: "pnpm --filter @dailyflow/web dev --host 127.0.0.1",
+        url: "http://127.0.0.1:5173",
+        reuseExistingServer: !isCi,
+        timeout: 120_000,
+        env: {
+          VITE_E2E: "true",
+        },
+      },
 });

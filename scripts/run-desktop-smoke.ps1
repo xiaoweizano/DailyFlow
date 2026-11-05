@@ -2,69 +2,40 @@ $ErrorActionPreference = "Stop"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $playwrightCli = Join-Path $repositoryRoot "node_modules/@playwright/test/cli.js"
-$driverProcess = $null
-$driverLogDirectory = $null
+$applicationProcess = $null
+$applicationLogDirectory = $null
 
-function Write-DriverDiagnostics {
-    if ($null -eq $driverLogDirectory -or -not (Test-Path -LiteralPath $driverLogDirectory)) {
+function Write-ApplicationDiagnostics {
+    if ($null -eq $applicationLogDirectory -or -not (Test-Path -LiteralPath $applicationLogDirectory)) {
         return
     }
 
-    Get-ChildItem -LiteralPath $driverLogDirectory -File | ForEach-Object {
+    Get-ChildItem -LiteralPath $applicationLogDirectory -File | ForEach-Object {
         Write-Host "----- $($_.Name) (tail) -----"
         Get-Content -LiteralPath $_.FullName -Tail 100
     }
 }
 
-if (-not $env:TAURI_WEBDRIVER_URL) {
-    $driver = Get-Command "tauri-driver" -ErrorAction SilentlyContinue
-    if ($null -eq $driver) {
-        Write-Host "SKIP: tauri-driver is not installed. Set TAURI_WEBDRIVER_URL to run the desktop smoke test."
-        exit 0
+function Get-AvailableTcpPort {
+    $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
+    $listener.Start()
+    try {
+        return ([Net.IPEndPoint]$listener.LocalEndpoint).Port
+    }
+    finally {
+        $listener.Stop()
+    }
+}
+
+function Stop-ApplicationProcess {
+    if ($null -eq $applicationProcess) {
+        return
     }
 
-    $env:TAURI_WEBDRIVER_URL = "http://127.0.0.1:4444"
-    $tempRoot = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [IO.Path]::GetTempPath() }
-    $driverLogDirectory = Join-Path $tempRoot "dailyflow-tauri-driver"
-    New-Item -ItemType Directory -Path $driverLogDirectory -Force | Out-Null
-
-    $driverProcess = Start-Process `
-        -FilePath $driver.Source `
-        -ArgumentList "--port", "4444" `
-        -RedirectStandardOutput (Join-Path $driverLogDirectory "tauri-driver.stdout.log") `
-        -RedirectStandardError (Join-Path $driverLogDirectory "tauri-driver.stderr.log") `
-        -PassThru `
-        -WindowStyle Hidden
-
-    $statusUrl = "$env:TAURI_WEBDRIVER_URL/status"
-    $deadline = (Get-Date).AddSeconds(30)
-    $lastStatusError = "WebDriver status has not been checked."
-    $driverReady = $false
-
-    while ((Get-Date) -lt $deadline) {
-        if ($driverProcess.HasExited) {
-            Write-DriverDiagnostics
-            throw "tauri-driver exited before becoming ready with code $($driverProcess.ExitCode)."
-        }
-
-        try {
-            $status = Invoke-RestMethod -Uri $statusUrl -TimeoutSec 2
-            if ($status.value.ready -eq $true) {
-                $driverReady = $true
-                break
-            }
-            $lastStatusError = "WebDriver reported ready=false."
-        }
-        catch {
-            $lastStatusError = $_.Exception.Message
-        }
-
-        Start-Sleep -Milliseconds 250
-    }
-
-    if (-not $driverReady) {
-        Write-DriverDiagnostics
-        throw "tauri-driver did not become ready within 30 seconds: $lastStatusError"
+    $applicationProcess.Refresh()
+    if (-not $applicationProcess.HasExited) {
+        $null = & taskkill.exe /PID $applicationProcess.Id /T /F 2>$null
+        $null = $applicationProcess.WaitForExit(5000)
     }
 }
 
@@ -78,25 +49,92 @@ if (-not $env:TAURI_APP_PATH) {
     $env:TAURI_APP_PATH = $candidatePaths | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 }
 
-if (-not $env:TAURI_APP_PATH) {
+if (-not $env:TAURI_WEBVIEW2_CDP_URL -and -not $env:TAURI_APP_PATH) {
     Write-Host "SKIP: no packaged Tauri application was found. Build the desktop application or set TAURI_APP_PATH."
-    if ($null -ne $driverProcess) {
-        Stop-Process -Id $driverProcess.Id -ErrorAction SilentlyContinue
-    }
     exit 0
 }
 
 try {
-    & pnpm exec playwright test "apps/desktop/e2e/smoke.spec.ts" --project=windows-desktop
-    $testExitCode = $LASTEXITCODE
+    if (-not $env:TAURI_WEBVIEW2_CDP_URL) {
+        $cdpPort = Get-AvailableTcpPort
+        $env:TAURI_WEBVIEW2_CDP_URL = "http://127.0.0.1:$cdpPort"
+
+        $tempRoot = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [IO.Path]::GetTempPath() }
+        $applicationLogDirectory = Join-Path $tempRoot "dailyflow-desktop-smoke"
+        New-Item -ItemType Directory -Path $applicationLogDirectory -Force | Out-Null
+
+        $previousBrowserArguments = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
+        $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$cdpPort"
+        try {
+            $applicationProcess = Start-Process `
+                -FilePath $env:TAURI_APP_PATH `
+                -WorkingDirectory (Split-Path -Parent $env:TAURI_APP_PATH) `
+                -RedirectStandardOutput (Join-Path $applicationLogDirectory "application.stdout.log") `
+                -RedirectStandardError (Join-Path $applicationLogDirectory "application.stderr.log") `
+                -PassThru `
+                -WindowStyle Hidden
+        }
+        finally {
+            $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousBrowserArguments
+        }
+
+        $versionUrl = "$env:TAURI_WEBVIEW2_CDP_URL/json/version"
+        $deadline = (Get-Date).AddSeconds(60)
+        $lastCdpError = "WebView2 CDP has not been checked."
+        $cdpReady = $false
+
+        while ((Get-Date) -lt $deadline) {
+            $applicationProcess.Refresh()
+            if ($applicationProcess.HasExited) {
+                Write-ApplicationDiagnostics
+                throw "DailyFlow exited before WebView2 CDP became ready with code $($applicationProcess.ExitCode)."
+            }
+
+            try {
+                $version = Invoke-RestMethod -Uri $versionUrl -TimeoutSec 2
+                if ($version.Browser) {
+                    $cdpReady = $true
+                    Write-Host "WebView2 CDP ready: $($version.Browser)"
+                    break
+                }
+                $lastCdpError = "WebView2 CDP returned no browser version."
+            }
+            catch {
+                $lastCdpError = $_.Exception.Message
+            }
+
+            Start-Sleep -Milliseconds 250
+        }
+
+        if (-not $cdpReady) {
+            Write-ApplicationDiagnostics
+            throw "WebView2 CDP did not become ready within 60 seconds: $lastCdpError"
+        }
+    }
+    else {
+        Write-Host "Using existing WebView2 CDP endpoint: $env:TAURI_WEBVIEW2_CDP_URL"
+    }
+
+    $node = Get-Command "node.exe"
+    $env:DAILYFLOW_DESKTOP_SMOKE_ONLY = "true"
+    $testProcess = Start-Process `
+        -FilePath $node.Source `
+        -ArgumentList @(
+            $playwrightCli,
+            "test",
+            "apps/desktop/e2e/smoke.spec.ts",
+            "--project=windows-desktop"
+        ) `
+        -WorkingDirectory $repositoryRoot `
+        -NoNewWindow `
+        -Wait `
+        -PassThru
+    $testExitCode = $testProcess.ExitCode
     if ($testExitCode -ne 0) {
-        Write-DriverDiagnostics
+        Write-ApplicationDiagnostics
     }
     exit $testExitCode
 }
 finally {
-    if ($null -ne $driverProcess) {
-        Stop-Process -Id $driverProcess.Id -ErrorAction SilentlyContinue
-        $driverProcess.WaitForExit(5000)
-    }
+    Stop-ApplicationProcess
 }

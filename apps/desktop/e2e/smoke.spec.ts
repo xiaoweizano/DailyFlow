@@ -1,50 +1,57 @@
-import { expect, test } from "@playwright/test";
+import { chromium, expect, test } from "@playwright/test";
 
-const webdriverUrl = process.env.TAURI_WEBDRIVER_URL;
-const applicationPath = process.env.TAURI_APP_PATH;
+const webview2Url = process.env.TAURI_WEBVIEW2_CDP_URL;
 
 test.setTimeout(90_000);
 
-test("launches the packaged Tauri shell", async ({ request }) => {
+test("launches the packaged Tauri shell", async () => {
   test.skip(
-    webdriverUrl === undefined,
-    "SKIP: TAURI_WEBDRIVER_URL is not configured; install tauri-driver and set the application path.",
+    webview2Url === undefined,
+    "SKIP: TAURI_WEBVIEW2_CDP_URL is not configured; run scripts/run-desktop-smoke.ps1.",
   );
-  expect(
-    applicationPath,
-    "TAURI_APP_PATH is required when TAURI_WEBDRIVER_URL is set",
-  ).toBeTruthy();
 
-  const response = await request.post(`${webdriverUrl}/session`, {
-    data: {
-      capabilities: {
-        alwaysMatch: {
-          browserName: "wry",
-          "tauri:options": {
-            application: applicationPath,
-          },
-        },
-      },
-    },
-    timeout: 60_000,
+  const browser = await chromium.connectOverCDP(webview2Url, {
+    timeout: 30_000,
   });
-  expect(response.ok(), await response.text()).toBe(true);
-
-  const session = (await response.json()) as { value?: { sessionId?: string } };
-  const sessionId = session.value?.sessionId;
-  expect(sessionId).toBeTruthy();
 
   try {
-    const titleResponse = await request.get(`${webdriverUrl}/session/${sessionId}/title`);
-    expect(titleResponse.ok(), await titleResponse.text()).toBe(true);
-    const title = (await titleResponse.json()) as { value?: string };
-    expect(title.value).toBe("DailyFlow");
+    await expect
+      .poll(
+        async () => {
+          const page = browser
+            .contexts()
+            .flatMap((context) => context.pages())
+            .find((candidate) => !candidate.url().startsWith("devtools://"));
+          if (page === undefined) {
+            return null;
+          }
 
-    const sourceResponse = await request.get(`${webdriverUrl}/session/${sessionId}/source`);
-    expect(sourceResponse.ok(), await sourceResponse.text()).toBe(true);
-    const source = (await sourceResponse.json()) as { value?: string };
-    expect(source.value).toContain('id="root"');
+          try {
+            return await page.evaluate(() => ({
+              readyState: document.readyState,
+              rootCount: document.querySelectorAll("#root").length,
+              title: document.title,
+            }));
+          } catch {
+            // The initial WebView2 host page is replaced by the Tauri document.
+            return null;
+          }
+        },
+        { intervals: [250, 500, 1_000], timeout: 60_000 },
+      )
+      .toEqual({
+        readyState: "complete",
+        rootCount: 1,
+        title: "DailyFlow",
+      });
+
+    const page = browser
+      .contexts()
+      .flatMap((context) => context.pages())
+      .find((candidate) => !candidate.url().startsWith("devtools://"));
+    expect(page).toBeDefined();
+    await expect(page!.locator("#root")).toBeAttached();
   } finally {
-    await request.delete(`${webdriverUrl}/session/${sessionId}`);
+    await browser.close();
   }
 });

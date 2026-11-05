@@ -93,17 +93,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Tauri WebDriver
-        run: cargo install tauri-driver --locked
-
-      - name: Install Microsoft Edge WebDriver
-        uses: browser-actions/setup-edge@v1
-        with:
-          edge-version: stable
-
-      - name: Verify Microsoft Edge WebDriver
-        run: msedgedriver --version
-
       - name: Build desktop application
         run: pnpm --filter @dailyflow/desktop exec tauri build --features desktop-shell --no-bundle
 
@@ -119,7 +108,7 @@ jobs:
           path: |
             playwright-report
             test-results
-            ${{ runner.temp }}/dailyflow-tauri-driver
+            ${{ runner.temp }}/dailyflow-desktop-smoke
           if-no-files-found: warn
           retention-days: 7
 # Workflow registration refresh: 2026-11-05.
