@@ -105,7 +105,7 @@ jobs:
         run: msedgedriver --version
 
       - name: Build desktop application
-        run: pnpm --filter @dailyflow/desktop tauri:build -- --no-bundle
+        run: pnpm --filter @dailyflow/desktop exec tauri build --features desktop-shell --no-bundle
 
       - name: Run desktop smoke test
         shell: pwsh

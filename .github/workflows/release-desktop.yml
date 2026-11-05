@@ -211,7 +211,8 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          pnpm --filter @dailyflow/desktop tauri:build -- `
+          pnpm --filter @dailyflow/desktop exec tauri build `
+            --features desktop-shell `
             --target ${{ matrix.target }} `
             --bundles ${{ matrix.bundle }} `
             --config "$env:TAURI_RELEASE_CONFIG"
@@ -270,7 +271,8 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          pnpm --filter @dailyflow/desktop tauri:build -- \
+          pnpm --filter @dailyflow/desktop exec tauri build \
+            --features desktop-shell \
             --target ${{ matrix.target }} \
             --bundles ${{ matrix.bundle }}
 

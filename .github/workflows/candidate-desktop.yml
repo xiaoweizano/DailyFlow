@@ -40,7 +40,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Windows NSIS candidate
-        run: pnpm --filter @dailyflow/desktop tauri:build -- --target x86_64-pc-windows-msvc --bundles nsis
+        run: pnpm --filter @dailyflow/desktop exec tauri build --features desktop-shell --target x86_64-pc-windows-msvc --bundles nsis
 
       - name: Stage candidate artifacts
         shell: pwsh
