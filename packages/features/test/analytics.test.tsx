@@ -12,7 +12,7 @@ import {
   parseUtcTimestamp,
   type Report,
 } from "@dailyflow/domain";
-import { ok } from "@dailyflow/shared";
+import { err, ok, type AppError } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
@@ -316,5 +316,57 @@ describe("Analytics experience", () => {
       }),
     );
     expect(await screen.findByText("报告已保存")).toBeTruthy();
+  });
+
+  it("restores an unsaved report draft after switching from week to month and back", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByRole("heading", { name: "分析" });
+    await user.click(screen.getByRole("button", { name: "打开周期报告" }));
+
+    const title = await screen.findByLabelText("报告标题");
+    await user.clear(title);
+    await user.type(title, "未保存的周报标题");
+
+    await user.click(screen.getByRole("button", { name: "月" }));
+    await waitFor(() =>
+      expect(screen.getByLabelText("当前地址")).toHaveTextContent(
+        "/analytics/month/2026-10-01?report=1",
+      ),
+    );
+
+    await user.click(screen.getByRole("button", { name: "周" }));
+    await waitFor(() =>
+      expect(screen.getByLabelText("当前地址")).toHaveTextContent(
+        "/analytics/week/2026-10-26?report=1",
+      ),
+    );
+
+    expect(await screen.findByLabelText("报告标题")).toHaveValue("未保存的周报标题");
+  });
+
+  it("keeps an unsaved report draft when persistence fails before a period switch", async () => {
+    const user = userEvent.setup();
+    const analytics = createAnalyticsServices();
+    analytics.saveReport = vi.fn(async () =>
+      err<AppError>({
+        code: "STORAGE_UNAVAILABLE",
+        retryable: true,
+        cause: "test storage failure",
+      }),
+    );
+    renderPage("/analytics/week/2026-10-28?report=1", analytics);
+
+    const title = await screen.findByLabelText("报告标题");
+    await user.clear(title);
+    await user.type(title, "保存失败后仍需保留");
+    await user.click(screen.getByRole("button", { name: "保存报告" }));
+    expect(await screen.findByText("报告保存失败，请稍后重试")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "月" }));
+    await user.click(screen.getByRole("button", { name: "周" }));
+
+    expect(await screen.findByLabelText("报告标题")).toHaveValue("保存失败后仍需保留");
   });
 });

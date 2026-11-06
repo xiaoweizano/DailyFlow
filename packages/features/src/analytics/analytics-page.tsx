@@ -22,11 +22,16 @@ import {
   CheckSquare2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { currentLocalDate, isLocalDate } from "../date-utils.js";
 import type { ReportEditorModel } from "./analytics-services.js";
+import {
+  createReportDraftStore,
+  reportPeriodKey,
+  type ReportDraftStore,
+} from "./report-draft-store.js";
 import { ReportEditor } from "./report-editor.js";
 import { StatTile } from "./stat-tile.js";
 
@@ -60,6 +65,7 @@ function reportModel(
   report: Report | null,
   draft: ReportDraft,
   period: AnalyticsPeriod,
+  preferDraft = false,
 ): ReportEditorModel {
   if (report === null) {
     return {
@@ -69,6 +75,17 @@ function reportModel(
       stats: draft.stats,
       expectedRevision: null,
       key: `new:${period.periodType}:${period.start}`,
+    };
+  }
+
+  if (preferDraft) {
+    return {
+      title: draft.title,
+      content: draft.content,
+      projectionVersion: report.projectionVersion,
+      stats: draft.stats,
+      expectedRevision: report.revision,
+      key: `draft:${report.id}:${report.revision}`,
     };
   }
 
@@ -160,11 +177,18 @@ export function AnalyticsPage({
 }: AnalyticsPageProps): React.JSX.Element {
   const services = useAppServices();
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams();
   const [searchParams] = useSearchParams();
   const reportOpen = searchParams.get("report") === "1";
   const periodType = isPeriodType(params.periodType) ? params.periodType : "week";
   const start = params.start !== undefined && isLocalDate(params.start) ? params.start : today;
+  const navigationState = location.state as { readonly analyticsAnchor?: unknown } | null;
+  const periodAnchor =
+    typeof navigationState?.analyticsAnchor === "string" &&
+    isLocalDate(navigationState.analyticsAnchor)
+      ? navigationState.analyticsAnchor
+      : start;
   const period = useMemo(
     () => resolveAnalyticsPeriod(periodType, start, timezone),
     [periodType, start, timezone],
@@ -176,6 +200,7 @@ export function AnalyticsPage({
   const [editorModel, setEditorModel] = useState<ReportEditorModel | null>(null);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportError, setReportError] = useState<string | null>(null);
+  const [reportDrafts] = useState<ReportDraftStore>(createReportDraftStore);
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -208,7 +233,11 @@ export function AnalyticsPage({
       .getReport(period)
       .then((report) => {
         if (!cancelled) {
-          setEditorModel(reportModel(report, services.analytics.generateDraft(summary), period));
+          const draft =
+            reportDrafts.peek(reportPeriodKey(period)) ?? services.analytics.generateDraft(summary);
+          setEditorModel(
+            reportModel(report, draft, period, reportDrafts.peek(reportPeriodKey(period)) !== null),
+          );
         }
       })
       .catch(() => {
@@ -226,10 +255,12 @@ export function AnalyticsPage({
     return () => {
       cancelled = true;
     };
-  }, [period, reportOpen, services.analytics, summary]);
+  }, [period, reportDrafts, reportOpen, services.analytics, summary]);
 
-  function navigatePeriod(nextPeriod: AnalyticsPeriod): void {
-    navigate(analyticsPath(nextPeriod, reportOpen));
+  function navigatePeriod(nextPeriod: AnalyticsPeriod, anchor: string = nextPeriod.start): void {
+    navigate(analyticsPath(nextPeriod, reportOpen), {
+      state: { analyticsAnchor: anchor },
+    });
   }
 
   if (loading) {
@@ -280,7 +311,7 @@ export function AnalyticsPage({
               options={periodOptions}
               value={periodType}
               onChange={(value) => {
-                navigatePeriod(resolveAnalyticsPeriod(value, period.start, timezone));
+                navigatePeriod(resolveAnalyticsPeriod(value, periodAnchor, timezone), periodAnchor);
               }}
             />
             <div className="inline-flex items-center gap-1">
@@ -353,6 +384,14 @@ export function AnalyticsPage({
                 initialStats={editorModel.stats}
                 expectedRevision={editorModel.expectedRevision}
                 onClose={() => navigate(analyticsPath(period, false))}
+                onDraftChange={(draft) => {
+                  const key = reportPeriodKey(period);
+                  if (draft === null) {
+                    reportDrafts.remove(key);
+                  } else {
+                    reportDrafts.capture(key, draft);
+                  }
+                }}
               />
             )}
           </>

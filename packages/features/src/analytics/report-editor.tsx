@@ -1,4 +1,4 @@
-import type { AnalyticsPeriod } from "@dailyflow/application";
+import type { AnalyticsPeriod, ReportDraft } from "@dailyflow/application";
 import { createEditorExtensions } from "@dailyflow/editor";
 import type { ContentDocument, JsonObject } from "@dailyflow/domain";
 import { Button, Input, SaveStatus, type SaveState } from "@dailyflow/ui";
@@ -18,6 +18,7 @@ export interface ReportEditorProps {
   readonly initialStats: JsonObject;
   readonly expectedRevision: number | null;
   readonly onClose: () => void;
+  readonly onDraftChange?: (draft: ReportDraft | null) => void;
 }
 
 type ReportSaveState = "idle" | "saving" | "saved" | "error";
@@ -40,13 +41,26 @@ export function ReportEditor({
   initialStats,
   expectedRevision,
   onClose,
+  onDraftChange,
 }: ReportEditorProps): React.JSX.Element {
   const services = useAppServices();
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<ReportSaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const contentRef = useRef<JsonObject>(initialContent.doc);
+  const titleRef = useRef(initialTitle);
   const revisionRef = useRef<number | null>(expectedRevision);
+
+  function draftSnapshot(nextTitle = titleRef.current): ReportDraft {
+    return {
+      title: nextTitle,
+      content: {
+        schemaVersion: initialContent.schemaVersion,
+        doc: contentRef.current,
+      },
+      stats: initialStats,
+    };
+  }
 
   const editor = useEditor({
     extensions: createEditorExtensions(),
@@ -64,6 +78,7 @@ export function ReportEditor({
       contentRef.current = activeEditor.getJSON() as JsonObject;
       setSaveState("idle");
       setErrorMessage(null);
+      onDraftChange?.(draftSnapshot());
     },
   });
 
@@ -97,6 +112,7 @@ export function ReportEditor({
 
     revisionRef.current = result.value.revision;
     setSaveState("saved");
+    onDraftChange?.(null);
   }
 
   const saveStatus: SaveState =
@@ -153,9 +169,12 @@ export function ReportEditor({
             value={title}
             maxLength={500}
             onChange={(event) => {
-              setTitle(event.currentTarget.value);
+              const nextTitle = event.currentTarget.value;
+              titleRef.current = nextTitle;
+              setTitle(nextTitle);
               setSaveState("idle");
               setErrorMessage(null);
+              onDraftChange?.(draftSnapshot(nextTitle));
             }}
           />
         </label>
