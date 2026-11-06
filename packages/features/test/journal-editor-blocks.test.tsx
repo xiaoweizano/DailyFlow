@@ -155,6 +155,30 @@ describe("Journal editor blocks", () => {
     );
   });
 
+  it("inserts an editable-looking math block from the slash menu", async () => {
+    renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
+    const user = userEvent.setup();
+    const editor = await screen.findByLabelText("日志正文");
+
+    await user.click(editor);
+    await user.keyboard("/formula");
+    await user.click(await screen.findByRole("menuitem", { name: "数学公式" }));
+
+    expect(document.querySelector("[data-type='block-math']")).not.toBeNull();
+  });
+
+  it("inserts a Mermaid diagram from the slash menu", async () => {
+    renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
+    const user = userEvent.setup();
+    const editor = await screen.findByLabelText("日志正文");
+
+    await user.click(editor);
+    await user.keyboard("/mermaid");
+    await user.click(await screen.findByRole("menuitem", { name: "Mermaid 图表" }));
+
+    expect(document.querySelector("[data-type='mermaid-block']")).not.toBeNull();
+  });
+
   it("renders heading positions in the document outline", async () => {
     renderJournal({
       type: "doc",

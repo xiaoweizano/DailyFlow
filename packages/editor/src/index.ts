@@ -9,6 +9,11 @@ export {
   TableHeader,
   TableRow,
 } from "./extensions/editor-blocks.js";
+export {
+  EditorRichContent,
+  MermaidBlock,
+  renderMermaidToSvg,
+} from "./extensions/editor-rich-content.js";
 export { MarkdownShortcuts } from "./extensions/markdown-shortcuts.js";
 export { StructuredBlock } from "./extensions/structured-block.js";
 export { UnknownBlock, UnknownInline } from "./extensions/unknown-content.js";
@@ -37,6 +42,10 @@ export {
   type DocumentOutlineItem,
 } from "./serialization/document-outline.js";
 export { markdownToJson } from "./serialization/markdown-to-json.js";
+export {
+  editorDocumentToMarkdown,
+  markdownToEditorDocument,
+} from "./serialization/markdown-document.js";
 export { migrateDocument } from "./serialization/migrate-document.js";
 export { cloneJsonObject, normalizeDocument } from "./serialization/normalize-document.js";
 export {

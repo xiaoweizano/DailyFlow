@@ -38,6 +38,27 @@ function applyMark(nodes: TiptapJsonNode[], mark: TiptapJsonMark): TiptapJsonNod
   });
 }
 
+function parseInlineMath(
+  input: string,
+  start: number,
+): { latex: string; nextIndex: number } | null {
+  if (input[start] !== "$" || input[start + 1] === "$") {
+    return null;
+  }
+
+  const end = findClosing(input, "$", start + 1);
+  if (end <= start + 1) {
+    return null;
+  }
+
+  const latex = input.slice(start + 1, end);
+  if (latex.trim().length === 0 || latex.startsWith(" ") || latex.endsWith(" ")) {
+    return null;
+  }
+
+  return { latex, nextIndex: end + 1 };
+}
+
 function findClosing(input: string, needle: string, from: number): number {
   let index = input.indexOf(needle, from);
   while (index >= 0) {
@@ -184,6 +205,15 @@ function parseInline(
         continue;
       }
     }
+    if (char === "$") {
+      const math = parseInlineMath(input, index);
+      if (math !== null) {
+        flush();
+        nodes.push({ type: "inlineMath", attrs: { latex: math.latex } });
+        index = math.nextIndex;
+        continue;
+      }
+    }
     if (input.startsWith("**", index)) {
       const end = findClosing(input, "**", index + 2);
       if (end > index + 2) {
@@ -271,8 +301,82 @@ function isBlockStart(line: string): boolean {
     /^[-*] \[[ xX]\]\s/u.test(line) ||
     /^[-*]\s/u.test(line) ||
     /^\d+\.\s/u.test(line) ||
-    line === "---"
+    line === "---" ||
+    line.trim() === "$$" ||
+    line.trimStart().startsWith("|")
   );
+}
+
+function splitTableRow(line: string): string[] {
+  const value = line.trim().replace(/^\|/u, "").replace(/\|$/u, "");
+  const cells: string[] = [];
+  let buffer = "";
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    if (char === "\\" && value[index + 1] === "|") {
+      buffer += "|";
+      index += 1;
+    } else if (char === "|") {
+      cells.push(buffer);
+      buffer = "";
+    } else {
+      buffer += char;
+    }
+  }
+
+  cells.push(buffer);
+  return cells;
+}
+
+function isTableSeparator(line: string): boolean {
+  const cells = splitTableRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/u.test(cell.trim()));
+}
+
+function isTableStart(lines: readonly string[], index: number): boolean {
+  return lines[index]?.includes("|") === true && isTableSeparator(lines[index + 1] ?? "");
+}
+
+function tableCell(type: "tableCell" | "tableHeader", value: string): TiptapJsonNode {
+  const text = value.trim();
+  return {
+    type,
+    attrs: { colspan: 1, rowspan: 1, colwidth: null },
+    content: [paragraph(text.length === 0 ? [] : parseInline(text))],
+  };
+}
+
+function parseTable(
+  lines: readonly string[],
+  start: number,
+): {
+  readonly node: TiptapJsonNode;
+  readonly nextIndex: number;
+} {
+  const header = splitTableRow(lines[start] ?? "");
+  const rows: TiptapJsonNode[] = [
+    {
+      type: "tableRow",
+      content: header.map((cell) => tableCell("tableHeader", cell)),
+    },
+  ];
+  let index = start + 2;
+
+  while (index < lines.length) {
+    const line = lines[index] ?? "";
+    if (line.trim().length === 0 || !line.includes("|")) {
+      break;
+    }
+    const body = splitTableRow(line);
+    rows.push({
+      type: "tableRow",
+      content: header.map((_, column) => tableCell("tableCell", body[column] ?? "")),
+    });
+    index += 1;
+  }
+
+  return { node: { type: "table", content: rows }, nextIndex: index };
 }
 
 function parseStructuredFence(payload: string): TiptapJsonNode {
@@ -302,6 +406,21 @@ function parseMarkdownBlocks(markdown: string): TiptapJsonNode[] {
       continue;
     }
 
+    if (line.trim() === "$$") {
+      let closing = index + 1;
+      while (closing < lines.length && (lines[closing] ?? "").trim() !== "$$") {
+        closing += 1;
+      }
+      if (closing < lines.length) {
+        nodes.push({
+          type: "blockMath",
+          attrs: { latex: lines.slice(index + 1, closing).join("\n") },
+        });
+        index = closing + 1;
+        continue;
+      }
+    }
+
     if (isFenceStart(line)) {
       const language = line.slice(3).trim();
       const content: string[] = [];
@@ -318,6 +437,8 @@ function parseMarkdownBlocks(markdown: string): TiptapJsonNode[] {
         nodes.push(parseStructuredFence(payload));
       } else if (language === "dailyflow-unknown") {
         nodes.push(parseUnknownFence(payload));
+      } else if (language === "mermaid") {
+        nodes.push({ type: "mermaidBlock", attrs: { code: payload } });
       } else {
         nodes.push({
           type: "codeBlock",
@@ -325,6 +446,13 @@ function parseMarkdownBlocks(markdown: string): TiptapJsonNode[] {
           ...(payload.length === 0 ? {} : { content: [{ type: "text", text: payload }] }),
         });
       }
+      continue;
+    }
+
+    if (isTableStart(lines, index)) {
+      const table = parseTable(lines, index);
+      nodes.push(table.node);
+      index = table.nextIndex;
       continue;
     }
 

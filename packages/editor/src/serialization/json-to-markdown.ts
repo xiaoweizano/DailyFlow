@@ -94,6 +94,10 @@ function renderInline(nodes: readonly TiptapJsonNode[] = []): string {
       if (node.type === "attachment") {
         return renderAttachment(node.attrs ?? {});
       }
+      if (node.type === "inlineMath") {
+        const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex : "";
+        return `$${latex}$`;
+      }
       if (node.content !== undefined) {
         return renderInline(node.content);
       }
@@ -120,6 +124,36 @@ function renderList(
 function fence(language: string, content: string): string {
   const normalizedContent = content.endsWith("\n") ? content.slice(0, -1) : content;
   return `\`\`\`${language}\n${normalizedContent}\n\`\`\``;
+}
+
+function renderTableCell(node: TiptapJsonNode): string {
+  const content = (node.content ?? [])
+    .map((child) => {
+      if (child.type === "paragraph") {
+        return renderInline(child.content);
+      }
+      return renderBlock(child).trim();
+    })
+    .join("<br>");
+  return content.replaceAll("|", "\\|").replaceAll("\n", "<br>");
+}
+
+function renderTable(node: TiptapJsonNode): string {
+  const rows = node.content ?? [];
+  const firstRow = rows[0]?.content ?? [];
+  if (firstRow.length === 0) {
+    return "";
+  }
+
+  const renderRow = (row: TiptapJsonNode): string =>
+    `| ${firstRow.map((_, index) => renderTableCell(row.content?.[index] ?? { type: "tableCell" })).join(" | ")} |`;
+
+  const separator = `| ${firstRow.map(() => "---").join(" | ")} |`;
+  return [
+    renderRow(rows[0] ?? { type: "tableRow" }),
+    separator,
+    ...rows.slice(1).map(renderRow),
+  ].join("\n");
 }
 
 function renderBlock(node: TiptapJsonNode): string {
@@ -158,6 +192,16 @@ function renderBlock(node: TiptapJsonNode): string {
       const language = typeof node.attrs?.language === "string" ? node.attrs.language : "";
       return fence(language, renderPlainTextContent(node.content));
     }
+    case "blockMath": {
+      const latex = typeof node.attrs?.latex === "string" ? node.attrs.latex : "";
+      return `$$\n${latex}\n$$`;
+    }
+    case "mermaidBlock": {
+      const code = typeof node.attrs?.code === "string" ? node.attrs.code : "";
+      return fence("mermaid", code);
+    }
+    case "table":
+      return renderTable(node);
     case "horizontalRule":
       return "---";
     case "structuredBlock":

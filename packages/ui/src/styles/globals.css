@@ -467,6 +467,151 @@
     background: hsl(var(--primary));
     pointer-events: none;
   }
+
+  .df-journal-prosemirror pre {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-control);
+    background: hsl(var(--surface-muted));
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    line-height: 1.65;
+    tab-size: 2;
+    white-space: pre;
+  }
+
+  .df-journal-prosemirror pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .df-journal-prosemirror :not(pre) > code {
+    border: 1px solid hsl(var(--border));
+    border-radius: 4px;
+    background: hsl(var(--surface-muted));
+    padding: 0.12em 0.36em;
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  .df-journal-prosemirror .hljs-comment,
+  .df-journal-prosemirror .hljs-quote {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  .df-journal-prosemirror .hljs-keyword,
+  .df-journal-prosemirror .hljs-selector-tag,
+  .df-journal-prosemirror .hljs-literal,
+  .df-journal-prosemirror .hljs-section,
+  .df-journal-prosemirror .hljs-link {
+    color: hsl(var(--info));
+    font-weight: 600;
+  }
+
+  .df-journal-prosemirror .hljs-string,
+  .df-journal-prosemirror .hljs-regexp,
+  .df-journal-prosemirror .hljs-addition,
+  .df-journal-prosemirror .hljs-variable,
+  .df-journal-prosemirror .hljs-template-variable,
+  .df-journal-prosemirror .hljs-attribute {
+    color: hsl(var(--success));
+  }
+
+  .df-journal-prosemirror .hljs-number,
+  .df-journal-prosemirror .hljs-built_in,
+  .df-journal-prosemirror .hljs-type {
+    color: hsl(var(--accent));
+  }
+
+  .df-journal-prosemirror .hljs-title,
+  .df-journal-prosemirror .hljs-title.function_,
+  .df-journal-prosemirror .hljs-title.class_ {
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+
+  .df-journal-prosemirror .hljs-meta,
+  .df-journal-prosemirror .hljs-symbol,
+  .df-journal-prosemirror .hljs-bullet {
+    color: hsl(var(--warning));
+  }
+
+  .df-journal-prosemirror .hljs-deletion {
+    color: hsl(var(--danger));
+  }
+
+  .df-journal-prosemirror [data-type="block-math"] {
+    max-width: 100%;
+    overflow-x: auto;
+    margin-block: 1.25rem;
+    border-block: 1px solid hsl(var(--border));
+    background: hsl(var(--surface-raised));
+    padding: 14px 18px;
+  }
+
+  .df-journal-prosemirror [data-type="block-math"] .katex-display {
+    margin: 0;
+  }
+
+  .df-journal-prosemirror [data-type="block-math"] .katex-display > .katex {
+    max-width: 100%;
+  }
+
+  .df-journal-prosemirror [data-type="inline-math"] {
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-inline: 0.1em;
+    vertical-align: baseline;
+  }
+
+  .df-journal-prosemirror [data-type="inline-math"].inline-math-error,
+  .df-journal-prosemirror [data-type="block-math"].block-math-error {
+    border-color: hsl(var(--danger));
+    color: hsl(var(--danger));
+  }
+
+  .df-journal-prosemirror .dailyflow-mermaid-block {
+    max-width: 100%;
+    overflow: hidden;
+    margin-block: 1.25rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-control);
+    background: hsl(var(--surface-raised));
+  }
+
+  .df-journal-prosemirror .dailyflow-mermaid-block pre {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .df-journal-prosemirror .dailyflow-mermaid-diagram {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 16px;
+  }
+
+  .df-journal-prosemirror .dailyflow-mermaid-diagram svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+  }
+
+  .df-journal-prosemirror .dailyflow-mermaid-error {
+    margin: 0;
+    border-top: 1px solid hsl(var(--border));
+    background: hsl(var(--danger) / 0.08);
+    padding: 8px 12px;
+    color: hsl(var(--danger));
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 1179px) {

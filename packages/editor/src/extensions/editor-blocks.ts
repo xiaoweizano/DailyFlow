@@ -70,8 +70,8 @@ export const Table = Node.create({
     return ["table", ["tbody", 0]];
   },
 
-  extendNodeSchema() {
-    return { tableRole: "table" };
+  extendNodeSchema(extension) {
+    return extension.name === "table" ? { tableRole: "table" } : {};
   },
 
   addProseMirrorPlugins() {
@@ -91,8 +91,8 @@ export const TableRow = Node.create({
     return ["tr", 0];
   },
 
-  extendNodeSchema() {
-    return { tableRole: "row" };
+  extendNodeSchema(extension) {
+    return extension.name === "tableRow" ? { tableRole: "row" } : {};
   },
 });
 
@@ -113,8 +113,8 @@ export const TableCell = Node.create({
     return ["td", HTMLAttributes, 0];
   },
 
-  extendNodeSchema() {
-    return { tableRole: "cell" };
+  extendNodeSchema(extension) {
+    return extension.name === "tableCell" ? { tableRole: "cell" } : {};
   },
 });
 
@@ -135,8 +135,8 @@ export const TableHeader = Node.create({
     return ["th", HTMLAttributes, 0];
   },
 
-  extendNodeSchema() {
-    return { tableRole: "header_cell" };
+  extendNodeSchema(extension) {
+    return extension.name === "tableHeader" ? { tableRole: "header_cell" } : {};
   },
 });
 

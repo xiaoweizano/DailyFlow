@@ -24,6 +24,7 @@ import { EditorToolbar } from "./editor-toolbar.js";
 import { createJournalEditorExtensions } from "./journal-editor-extensions.js";
 import { createJournalEditorStore, type JournalEditorStore } from "./journal-editor-store.js";
 import { HistoryPanel } from "./history-panel.js";
+import { JournalImportExport } from "./journal-import-export.js";
 import { SaveCoordinator, type SaveCoordinatorStatus } from "./save-coordinator.js";
 import { SlashCommandMenu, TableEditingToolbar } from "./slash-command.js";
 
@@ -325,6 +326,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           <History aria-hidden="true" className="size-4" />
           历史
         </Button>
+        <JournalImportExport editor={editor} />
       </div>
 
       <div className="df-journal-editor-body flex min-h-0 flex-1 flex-col lg:flex-row">

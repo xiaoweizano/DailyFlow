@@ -16,8 +16,10 @@ import {
   ListChecks,
   ListOrdered,
   Quote,
+  Sigma,
   Table2,
   Trash2,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -130,6 +132,37 @@ const slashItems: readonly SlashItem[] = [
     run: (editor, match) => {
       removeQuery(editor, match);
       editor.chain().focus().insertContent(createDefaultTableJson(3, 3)).run();
+    },
+  },
+  {
+    id: "formula",
+    label: "数学公式",
+    keywords: ["formula", "math", "latex", "katex"],
+    icon: Sigma,
+    run: (editor, match) => {
+      removeQuery(editor, match);
+      editor
+        .chain()
+        .focus()
+        .insertContent({ type: "blockMath", attrs: { latex: "E = mc^2" } })
+        .run();
+    },
+  },
+  {
+    id: "mermaid",
+    label: "Mermaid 图表",
+    keywords: ["mermaid", "diagram", "flowchart"],
+    icon: Workflow,
+    run: (editor, match) => {
+      removeQuery(editor, match);
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "mermaidBlock",
+          attrs: { code: "graph LR\n  A[开始] --> B[结束]" },
+        })
+        .run();
     },
   },
   {

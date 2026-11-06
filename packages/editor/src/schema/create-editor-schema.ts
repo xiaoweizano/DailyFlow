@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 
 import { Attachment } from "../extensions/attachment.js";
 import { EditorBlocks } from "../extensions/editor-blocks.js";
+import { EditorRichContent } from "../extensions/editor-rich-content.js";
 import { MarkdownShortcuts } from "../extensions/markdown-shortcuts.js";
 import { StructuredBlock } from "../extensions/structured-block.js";
 import { UnknownBlock, UnknownInline } from "../extensions/unknown-content.js";
@@ -18,6 +19,7 @@ export function createEditorExtensions(): Extensions {
         levels: [1, 2, 3],
       },
       link: false,
+      codeBlock: false,
     }),
     Link.configure({
       autolink: true,
@@ -31,6 +33,7 @@ export function createEditorExtensions(): Extensions {
     }),
     Attachment,
     ...EditorBlocks,
+    ...EditorRichContent,
     StructuredBlock,
     UnknownBlock,
     UnknownInline,

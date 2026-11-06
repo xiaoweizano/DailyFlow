@@ -1,7 +1,8 @@
-import { Attachment, createEditorExtensions } from "@dailyflow/editor";
+import { Attachment, createEditorExtensions, MermaidBlock } from "@dailyflow/editor";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import { AttachmentNodeView } from "./attachment-node-view.js";
+import { MermaidNodeView } from "./mermaid-node-view.js";
 
 const AttachmentWithNodeView = Attachment.extend({
   addNodeView() {
@@ -9,14 +10,18 @@ const AttachmentWithNodeView = Attachment.extend({
   },
 });
 
+const MermaidBlockWithNodeView = MermaidBlock.extend({
+  addNodeView() {
+    return ReactNodeViewRenderer(MermaidNodeView);
+  },
+});
+
 export function createJournalEditorExtensions() {
   const extensions = createEditorExtensions();
-  const attachmentIndex = extensions.findIndex((extension) => extension.name === "attachment");
-  if (attachmentIndex === -1) {
-    return [...extensions, AttachmentWithNodeView];
-  }
+  const replacements = new Map([
+    ["attachment", AttachmentWithNodeView],
+    ["mermaidBlock", MermaidBlockWithNodeView],
+  ]);
 
-  return extensions.map((extension, index) =>
-    index === attachmentIndex ? AttachmentWithNodeView : extension,
-  );
+  return extensions.map((extension) => replacements.get(extension.name) ?? extension);
 }
