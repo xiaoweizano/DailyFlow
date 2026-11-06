@@ -6,6 +6,7 @@ import { appModules, createAppRoutes, mainNavigation, routePaths } from "../src/
 import { AnalyticsPage } from "../src/analytics/analytics-page.js";
 import { ExportPage } from "../src/data-management/export-page.js";
 import { ImportPage } from "../src/data-management/import-page.js";
+import { HelpCenter } from "../src/help/help-center.js";
 import { KnowledgeDetailPage } from "../src/knowledge/knowledge-detail.js";
 import { KnowledgePage } from "../src/knowledge/knowledge-page.js";
 import { SearchPage } from "../src/search/search-page.js";
@@ -47,6 +48,8 @@ describe("shared application routes", () => {
     "/data",
     "/data/import",
     "/data/export",
+    "/help",
+    "/help/journal",
     "/settings",
   ])("matches the shared route %s", (path) => {
     expect(matchRoutes(routes, path)).not.toBeNull();
@@ -67,6 +70,8 @@ describe("shared application routes", () => {
     ["/analytics/month/2026-10-01", AnalyticsPage],
     ["/data/import", ImportPage],
     ["/data/export", ExportPage],
+    ["/help", HelpCenter],
+    ["/help/journal", HelpCenter],
   ])("mounts the implemented page for %s", (path, page) => {
     const matches = matchRoutes(routes, path);
     const element = matches?.at(-1)?.route.element;

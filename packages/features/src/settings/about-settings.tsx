@@ -1,5 +1,6 @@
 import type { AiProviderDescriptor, SecretStoreBackend } from "@dailyflow/application";
-import { Bot, HardDrive, Info, Monitor } from "lucide-react";
+import { BookOpenText, Bot, HardDrive, Info, Monitor } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import type { SettingsMessages } from "../preferences/messages.js";
 import type { ShortcutPlatform } from "../platform/command-registry.js";
@@ -66,6 +67,13 @@ export function AboutSettings({
             </p>
           </div>
         </div>
+        <Link
+          to="/help"
+          className="mt-4 inline-flex h-9 items-center gap-2 border border-border-strong bg-surface px-3 text-sm font-medium text-foreground hover:border-primary/40"
+        >
+          <BookOpenText aria-hidden="true" className="size-4 text-primary" />
+          打开帮助中心
+        </Link>
       </SettingsSection>
 
       <ShortcutHelpPanel platform={platform} />

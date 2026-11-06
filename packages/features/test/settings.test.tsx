@@ -368,6 +368,7 @@ describe("settings page", () => {
     await user.click(screen.getByRole("tab", { name: "关于" }));
     expect(screen.getByRole("heading", { name: "关于与扩展" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "快捷键" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "打开帮助中心" })).toHaveAttribute("href", "/help");
   });
 
   it("migrates the complete preference document and shows the verified destination", async () => {

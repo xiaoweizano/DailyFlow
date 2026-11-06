@@ -13,6 +13,7 @@ import type { AppError, Result } from "@dailyflow/shared";
 export interface KnowledgeDetail {
   readonly item: KnowledgeItem;
   readonly sourceJournalDate: LocalDate | null;
+  readonly sourceJournalAvailable: boolean;
 }
 
 export interface KnowledgeRuntimeServices {
@@ -48,6 +49,7 @@ export function createKnowledgeRuntimeServices(
       return {
         item,
         sourceJournalDate: sourceJournal?.journalDate ?? null,
+        sourceJournalAvailable: sourceJournal !== null,
       };
     },
     promote: (input) =>

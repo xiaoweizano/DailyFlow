@@ -10,6 +10,7 @@ import { DataManagementPage } from "./data-management/data-management-page.js";
 import { ExportPage } from "./data-management/export-page.js";
 import { ImportPage } from "./data-management/import-page.js";
 import { DashboardPage } from "./dashboard/dashboard-page.js";
+import { HelpCenter } from "./help/help-center.js";
 import { JournalPage } from "./journal/journal-page.js";
 import { KnowledgeDetailPage } from "./knowledge/knowledge-detail.js";
 import { KnowledgePage } from "./knowledge/knowledge-page.js";
@@ -105,6 +106,10 @@ export function createAppRoutes(options: AppRouteOptions): RouteObject[] {
             storageLabel: shellOptions.storageLabel,
             version: shellOptions.version,
           }),
+        },
+        {
+          path: "help/*",
+          element: createElement(HelpCenter),
         },
         {
           path: "*",

@@ -102,6 +102,26 @@ describe("structured block editor integration", () => {
     ]);
   });
 
+  it("renders the stable anchor id instead of the raw data id", () => {
+    const schema = createEditorSchema();
+    const id = "0198e2f4-7e33-7c70-a8b2-18c1520f9c26";
+    const node = schema.nodes.structuredBlock?.create({
+      id,
+      blockType: "issue",
+      schemaVersion: 1,
+      data: {},
+    });
+    const rendered = node?.type.spec.toDOM?.(node);
+
+    expect(rendered).toEqual([
+      "div",
+      expect.objectContaining({
+        "data-id": id,
+        id: `block-${id}`,
+      }),
+    ]);
+  });
+
   it("rejects malformed structured blocks instead of silently dropping data", () => {
     expect(() =>
       extractStructuredBlocks({

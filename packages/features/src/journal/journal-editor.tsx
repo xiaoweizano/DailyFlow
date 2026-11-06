@@ -1,5 +1,5 @@
 import type { JournalLookup, SavedJournalSnapshot } from "@dailyflow/application";
-import type { JsonObject } from "@dailyflow/domain";
+import type { EntityId, JsonObject, KnowledgeItem } from "@dailyflow/domain";
 import {
   CURRENT_EDITOR_SCHEMA_VERSION,
   documentFromEditorContent,
@@ -12,8 +12,9 @@ import {
 import { Button, Input, SaveStatus, type SaveState } from "@dailyflow/ui";
 import type { AppError } from "@dailyflow/shared";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { History, Save } from "lucide-react";
+import { BookPlus, History, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { useAppServices } from "../app-services-hooks.js";
@@ -27,6 +28,8 @@ import { HistoryPanel } from "./history-panel.js";
 import { JournalImportExport } from "./journal-import-export.js";
 import { SaveCoordinator, type SaveCoordinatorStatus } from "./save-coordinator.js";
 import { SlashCommandMenu, TableEditingToolbar } from "./slash-command.js";
+import { KnowledgePromotionDialog } from "../knowledge/knowledge-promotion-dialog.js";
+import { NodeSelection } from "@tiptap/pm/state";
 
 interface JournalDraft {
   readonly title: string;
@@ -80,6 +83,10 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const [tagsText, setTagsText] = useState("");
   const [attachmentBusy, setAttachmentBusy] = useState(false);
   const [attachmentFailure, setAttachmentFailure] = useState<AttachmentUploadFailure | null>(null);
+  const [selectedBlockId, setSelectedBlockId] = useState<EntityId | null>(null);
+  const [promotionOpen, setPromotionOpen] = useState(false);
+  const [promotionBlockId, setPromotionBlockId] = useState<EntityId | null>(null);
+  const [promotedItem, setPromotedItem] = useState<KnowledgeItem | null>(null);
   const titleRef = useRef(title);
   const tagsTextRef = useRef(tagsText);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
@@ -103,6 +110,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const savedAt = useStore(store, (state) => state.savedAt);
   const expectedRevision = useStore(store, (state) => state.expectedRevision);
   const historyOpen = useStore(store, (state) => state.historyOpen);
+  const canPromoteJournal = isPersisted || expectedRevision !== null;
 
   const coordinatorRef = useRef<SaveCoordinator<JournalDraft, SavedJournalSnapshot> | null>(null);
   if (coordinatorRef.current === null) {
@@ -216,6 +224,29 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   }, [coordinator, preferences.autosaveIntervalMs]);
 
   useEffect(() => {
+    if (editor === null) {
+      return;
+    }
+
+    const refreshSelectedBlock = (): void => {
+      const selection = editor.state.selection;
+      const candidate =
+        selection instanceof NodeSelection && selection.node.type.name === "structuredBlock"
+          ? selection.node.attrs.id
+          : null;
+      setSelectedBlockId(typeof candidate === "string" ? (candidate as EntityId) : null);
+    };
+
+    refreshSelectedBlock();
+    editor.on("selectionUpdate", refreshSelectedBlock);
+    editor.on("update", refreshSelectedBlock);
+    return () => {
+      editor.off("selectionUpdate", refreshSelectedBlock);
+      editor.off("update", refreshSelectedBlock);
+    };
+  }, [editor]);
+
+  useEffect(() => {
     return coordinator.subscribe((state) => {
       store
         .getState()
@@ -326,6 +357,40 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           <History aria-hidden="true" className="size-4" />
           历史
         </Button>
+        {canPromoteJournal ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setPromotionBlockId(null);
+              setPromotionOpen(true);
+            }}
+          >
+            <BookPlus aria-hidden="true" className="size-4" />
+            沉淀整篇日志
+          </Button>
+        ) : null}
+        {selectedBlockId === null || !canPromoteJournal ? null : (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setPromotionBlockId(selectedBlockId);
+              setPromotionOpen(true);
+            }}
+          >
+            <BookPlus aria-hidden="true" className="size-4" />
+            沉淀当前块
+          </Button>
+        )}
+        {promotedItem === null ? null : (
+          <Link
+            to={`/knowledge/${promotedItem.id}`}
+            className="text-xs font-medium text-primary hover:underline"
+          >
+            打开知识项
+          </Link>
+        )}
         <JournalImportExport editor={editor} />
       </div>
 
@@ -403,6 +468,18 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           />
         ) : null}
       </div>
+
+      {promotionOpen ? (
+        <KnowledgePromotionDialog
+          open
+          journal={journal}
+          {...(promotionBlockId === null ? {} : { sourceBlockId: promotionBlockId })}
+          onOpenChange={setPromotionOpen}
+          onPromoted={(item) => {
+            setPromotedItem(item);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

@@ -3,7 +3,13 @@
 import "./setup-dom.js";
 
 import type { SavedJournalSnapshot, StoredAttachment } from "@dailyflow/application";
-import { createJournal, parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
+import {
+  createJournal,
+  createKnowledgeItem,
+  parseEntityId,
+  parseRevision,
+  parseUtcTimestamp,
+} from "@dailyflow/domain";
 import type { TiptapJsonNode } from "@dailyflow/editor";
 import { ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -21,6 +27,29 @@ import { JournalPage } from "../src/journal/journal-page.js";
 
 const journalId = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c26");
 const attachmentId = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c28");
+const knowledgeId = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c29");
+
+function promotedKnowledge() {
+  return createKnowledgeItem(
+    {
+      kind: "note",
+      title: "块编辑测试",
+      content: {
+        schemaVersion: 2,
+        doc: {
+          type: "doc",
+          content: [{ type: "paragraph", content: [{ type: "text", text: "沉淀内容" }] }],
+        },
+      },
+      projectionVersion: 1,
+      sourceJournalId: journalId,
+    },
+    {
+      ids: { nextId: () => knowledgeId },
+      clock: { nowUtc: () => "2026-11-05T03:20:11.123Z" },
+    },
+  );
+}
 
 function createServices(content?: TiptapJsonNode) {
   const journal = createJournal(
@@ -177,6 +206,62 @@ describe("Journal editor blocks", () => {
     await user.click(await screen.findByRole("menuitem", { name: "Mermaid 图表" }));
 
     expect(document.querySelector("[data-type='mermaid-block']")).not.toBeNull();
+  });
+
+  it("promotes the whole saved journal into knowledge", async () => {
+    const services = renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
+    const user = userEvent.setup();
+    await screen.findByLabelText("日志正文");
+    const item = promotedKnowledge();
+    services.knowledge.promote.mockResolvedValue(ok(item));
+
+    await user.click(screen.getByRole("button", { name: "沉淀整篇日志" }));
+    expect(await screen.findByRole("dialog", { name: "保存为知识" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "保存到知识库" }));
+
+    await waitFor(() =>
+      expect(services.knowledge.promote).toHaveBeenCalledWith({
+        journalId,
+        kind: "note",
+        title: "块编辑测试",
+      }),
+    );
+    expect(await screen.findByRole("link", { name: "打开知识项" })).toHaveAttribute(
+      "href",
+      `/knowledge/${knowledgeId}`,
+    );
+  });
+
+  it("inserts a structured block and promotes the selected block", async () => {
+    const services = renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
+    const user = userEvent.setup();
+    const editor = await screen.findByLabelText("日志正文");
+    const item = promotedKnowledge();
+    services.knowledge.promote.mockResolvedValue(ok(item));
+
+    await user.click(editor);
+    await user.keyboard("/structured");
+    await user.click(await screen.findByRole("menuitem", { name: "结构化块" }));
+
+    const block = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>("[data-type='structuredBlock']");
+      expect(element).not.toBeNull();
+      return element as HTMLElement;
+    });
+    await user.click(block);
+    await user.click(await screen.findByRole("button", { name: "沉淀当前块" }));
+    await user.click(screen.getByRole("button", { name: "保存到知识库" }));
+
+    await waitFor(() =>
+      expect(services.knowledge.promote).toHaveBeenCalledWith(
+        expect.objectContaining({
+          journalId,
+          sourceBlockId: expect.stringMatching(
+            /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
+          ),
+        }),
+      ),
+    );
   });
 
   it("renders heading positions in the document outline", async () => {

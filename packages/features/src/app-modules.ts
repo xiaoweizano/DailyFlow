@@ -95,4 +95,5 @@ export const routePaths = {
   dataExport: "/data/export",
   dataBackup: "/data/backup",
   settings: "/settings",
+  help: "/help",
 } as const;

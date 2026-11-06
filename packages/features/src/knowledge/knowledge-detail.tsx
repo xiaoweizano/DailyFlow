@@ -1,11 +1,12 @@
 import { parseEntityId, type EntityId } from "@dailyflow/domain";
 import { jsonToPlainText, type TiptapJsonNode } from "@dailyflow/editor";
-import { ArrowLeft, ExternalLink, LoaderCircle } from "lucide-react";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { useAppServices } from "../app-services-hooks.js";
 import type { KnowledgeDetail } from "./knowledge-services.js";
+import { KnowledgeSourceLink } from "./knowledge-source-link.js";
 
 const kindLabels = {
   note: "笔记",
@@ -98,7 +99,7 @@ export function KnowledgeDetailPage(): React.JSX.Element {
     );
   }
 
-  const { item, sourceJournalDate } = detail;
+  const { item, sourceJournalAvailable, sourceJournalDate } = detail;
   const plainText = jsonToPlainText(item.content.doc as TiptapJsonNode);
 
   return (
@@ -131,22 +132,12 @@ export function KnowledgeDetailPage(): React.JSX.Element {
         {plainText || "该知识条目没有正文。"}
       </div>
 
-      {sourceJournalDate === null ? null : (
-        <aside className="mt-8 border-t border-border pt-5">
-          <p className="text-xs font-semibold text-foreground">来源</p>
-          <Link
-            to={`/journal/${sourceJournalDate}`}
-            className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-          >
-            原始日志 · {sourceJournalDate}
-            <ExternalLink aria-hidden="true" className="size-3.5" />
-          </Link>
-          {item.sourceBlockId === null ? null : (
-            <p className="mt-2 break-all font-mono text-[10px] text-muted-foreground">
-              来源块 {item.sourceBlockId}
-            </p>
-          )}
-        </aside>
+      {item.sourceJournalId === null ? null : (
+        <KnowledgeSourceLink
+          sourceJournalDate={sourceJournalDate}
+          sourceJournalAvailable={sourceJournalAvailable}
+          sourceBlockId={item.sourceBlockId}
+        />
       )}
     </article>
   );

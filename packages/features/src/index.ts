@@ -81,6 +81,7 @@ export { StorageOverview, type StorageOverviewProps } from "./data-management/st
 export { DashboardPage, type DashboardPageProps } from "./dashboard/dashboard-page.js";
 export { TodayJournalPanel, type TodayJournalPanelProps } from "./dashboard/today-journal-panel.js";
 export { TodayTasksPanel } from "./dashboard/today-tasks-panel.js";
+export { HelpCenter, SafeMarkdown, type SafeMarkdownProps } from "./help/help-center.js";
 export {
   appModules,
   mainNavigation,

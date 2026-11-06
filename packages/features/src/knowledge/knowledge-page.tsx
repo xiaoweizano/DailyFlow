@@ -113,7 +113,11 @@ export function KnowledgePage(): React.JSX.Element {
             <div>
               <BookOpenText aria-hidden="true" className="mx-auto size-5 text-muted-foreground" />
               <p className="mt-3 text-sm font-medium text-foreground">这里还没有知识条目</p>
-              <p className="mt-1 text-xs text-muted-foreground">可从日志中的结构化块提升内容。</p>
+              <div className="mt-2 grid gap-1 text-xs text-muted-foreground">
+                <p>手动新建知识条目。</p>
+                <p>从每日日志沉淀整篇内容。</p>
+                <p>选中结构化块后只沉淀该块。</p>
+              </div>
             </div>
           </div>
         ) : (

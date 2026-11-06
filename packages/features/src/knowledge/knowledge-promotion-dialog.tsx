@@ -1,4 +1,4 @@
-import type { EntityId, Journal, KnowledgeKind } from "@dailyflow/domain";
+import type { EntityId, Journal, KnowledgeItem, KnowledgeKind } from "@dailyflow/domain";
 import {
   Button,
   Dialog,
@@ -18,9 +18,9 @@ import { useAppServices } from "../app-services-hooks.js";
 export interface KnowledgePromotionDialogProps {
   readonly open: boolean;
   readonly journal: Journal;
-  readonly sourceBlockId: EntityId;
+  readonly sourceBlockId?: EntityId | null;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onPromoted?: () => void;
+  readonly onPromoted?: (item: KnowledgeItem) => void;
 }
 
 export function KnowledgePromotionDialog({
@@ -54,7 +54,7 @@ export function KnowledgePromotionDialog({
     try {
       const result = await services.knowledge.promote({
         journalId: journal.id,
-        sourceBlockId,
+        ...(sourceBlockId === undefined || sourceBlockId === null ? {} : { sourceBlockId }),
         kind,
         title: title.trim(),
       });
@@ -62,7 +62,7 @@ export function KnowledgePromotionDialog({
         setError("保存到知识库失败，请重试");
         return;
       }
-      onPromoted?.();
+      onPromoted?.(result.value);
       onOpenChange(false);
     } catch {
       setError("保存到知识库失败，请重试");
@@ -105,9 +105,15 @@ export function KnowledgePromotionDialog({
               onChange={(event) => setTitle(event.currentTarget.value)}
             />
           </label>
-          <p className="break-all border border-border bg-surface-muted/60 px-3 py-2 font-mono text-[10px] text-muted-foreground">
-            来源块 {sourceBlockId}
-          </p>
+          {sourceBlockId === undefined || sourceBlockId === null ? (
+            <p className="border border-border bg-surface-muted/60 px-3 py-2 text-xs text-muted-foreground">
+              将整篇日志保存为独立知识快照。
+            </p>
+          ) : (
+            <p className="break-all border border-border bg-surface-muted/60 px-3 py-2 font-mono text-[10px] text-muted-foreground">
+              来源块 {sourceBlockId}
+            </p>
+          )}
           {error === null ? null : (
             <p role="alert" className="text-xs text-danger">
               {error}

@@ -65,7 +65,8 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
   const params = useParams();
   const currentModule = resolveCurrentModule(location.pathname);
   const isSettings = location.pathname === "/settings";
-  const currentLabel = isSettings ? "设置" : (currentModule?.label ?? "DailyFlow");
+  const isHelp = location.pathname === "/help" || location.pathname.startsWith("/help/");
+  const currentLabel = isSettings ? "设置" : isHelp ? "帮助" : (currentModule?.label ?? "DailyFlow");
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -239,6 +240,14 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
           <div className="ml-auto flex shrink-0 items-center gap-3">
             <SaveStatus status="idle" />
             <span className="hidden h-4 w-px bg-border xl:block" aria-hidden="true" />
+            <Link
+              to="/help"
+              aria-label="帮助中心"
+              title="帮助中心"
+              className="inline-flex size-8 items-center justify-center rounded-[var(--radius-control)] border border-border bg-surface text-muted-foreground hover:border-primary/40 hover:text-foreground"
+            >
+              <BookOpenText aria-hidden="true" className="size-4" />
+            </Link>
             <Link
               to={params.date ? `/journal/${params.date}` : navDestination("journal")}
               className="inline-flex h-8 items-center rounded-[var(--radius-control)] border border-primary bg-primary px-3 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary-hover max-[719px]:hidden"

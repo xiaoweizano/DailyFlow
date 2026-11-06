@@ -90,6 +90,7 @@ describe("application shell search shortcut", () => {
 
     expect(screen.getByText("本地数据已就绪")).toBeInTheDocument();
     expect(screen.getByText("v0.1.0")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "帮助中心" })).toHaveAttribute("href", "/help");
     expect(screen.queryByText(/IndexedDB/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Web ·/)).not.toBeInTheDocument();
   });

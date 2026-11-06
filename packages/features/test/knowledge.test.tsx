@@ -121,6 +121,7 @@ function createKnowledgeServices(
     get: vi.fn(async (): Promise<KnowledgeDetail | null> => ({
       item: solutionItem,
       sourceJournalDate: parseLocalDate("2026-10-30"),
+      sourceJournalAvailable: true,
     })),
     promote: vi.fn(async (): Promise<Result<KnowledgeItem, AppError>> => ok(solutionItem)),
     ...overrides,
@@ -219,9 +220,44 @@ describe("Knowledge Base experience", () => {
     expect(screen.getByText("回滚后服务恢复，记录检查清单。")).toBeTruthy();
     expect(screen.getByRole("link", { name: /原始日志/u })).toHaveAttribute(
       "href",
-      "/journal/2026-10-30",
+      `/journal/2026-10-30#block-${BLOCK_ID}`,
     );
     expect(screen.getByText(new RegExp(BLOCK_ID, "u"))).toBeTruthy();
+  });
+
+  it("marks a deleted or inaccessible source journal as unavailable", async () => {
+    const knowledge = createKnowledgeServices({
+      get: vi.fn(async (): Promise<KnowledgeDetail | null> => ({
+        item: solutionItem,
+        sourceJournalDate: null,
+        sourceJournalAvailable: false,
+      })),
+    });
+
+    renderWithServices(
+      <Routes>
+        <Route path="/knowledge/:id" element={<KnowledgeDetailPage />} />
+      </Routes>,
+      createServices(knowledge),
+      `/knowledge/${KNOWLEDGE_ID}`,
+    );
+
+    expect(await screen.findByText("来源不可用")).toBeTruthy();
+    expect(
+      screen.getByText("来源日志已删除或当前无法访问，知识正文仍可正常使用。"),
+    ).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /原始日志/u })).not.toBeInTheDocument();
+  });
+
+  it("explains the available ways to create knowledge when the library is empty", async () => {
+    const knowledge = createKnowledgeServices({
+      list: vi.fn(async () => ({ items: [], nextCursor: null })),
+    });
+    renderWithServices(<KnowledgePage />, createServices(knowledge));
+
+    expect(await screen.findByText("这里还没有知识条目")).toBeTruthy();
+    expect(screen.getByText(/从每日日志沉淀整篇内容/u)).toBeTruthy();
+    expect(screen.getByText(/选中结构化块后只沉淀该块/u)).toBeTruthy();
   });
 
   it("shows a recoverable error without querying when the knowledge id is invalid", async () => {
@@ -270,5 +306,32 @@ describe("Knowledge Base experience", () => {
         title: "连接超时的排查记录",
       }),
     );
+  });
+
+  it("promotes a whole journal without inventing a source block", async () => {
+    const knowledge = createKnowledgeServices();
+    const user = userEvent.setup();
+    const onPromoted = vi.fn();
+
+    renderWithServices(
+      <KnowledgePromotionDialog
+        open
+        journal={journal}
+        onOpenChange={() => undefined}
+        onPromoted={onPromoted}
+      />,
+      createServices(knowledge),
+    );
+
+    await user.click(screen.getByRole("button", { name: "保存到知识库" }));
+
+    await waitFor(() =>
+      expect(knowledge.promote).toHaveBeenCalledWith({
+        journalId: journal.id,
+        kind: "note",
+        title: journal.title,
+      }),
+    );
+    expect(onPromoted).toHaveBeenCalledWith(solutionItem);
   });
 });

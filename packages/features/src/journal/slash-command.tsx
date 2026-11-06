@@ -1,4 +1,5 @@
 import { createDefaultTableJson, isAttachmentImage } from "@dailyflow/editor";
+import { createUuidV7 } from "@dailyflow/shared";
 import type { EditorState, Transaction } from "@tiptap/pm/state";
 import {
   addColumnAfter,
@@ -10,6 +11,7 @@ import {
 import type { Editor } from "@tiptap/react";
 import {
   Code2,
+  Box,
   Heading2,
   ImagePlus,
   List,
@@ -132,6 +134,28 @@ const slashItems: readonly SlashItem[] = [
     run: (editor, match) => {
       removeQuery(editor, match);
       editor.chain().focus().insertContent(createDefaultTableJson(3, 3)).run();
+    },
+  },
+  {
+    id: "structured-block",
+    label: "结构化块",
+    keywords: ["structured", "block", "issue", "solution", "结构化"],
+    icon: Box,
+    run: (editor, match) => {
+      removeQuery(editor, match);
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "structuredBlock",
+          attrs: {
+            id: createUuidV7(),
+            blockType: "note",
+            schemaVersion: 1,
+            data: { text: "结构化内容" },
+          },
+        })
+        .run();
     },
   },
   {
