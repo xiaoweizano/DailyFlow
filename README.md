@@ -114,6 +114,7 @@ pnpm dev:desktop
 pnpm format:check
 pnpm lint
 pnpm depcruise
+pnpm check:dto-fixtures
 pnpm check:hardcoded-paths
 pnpm typecheck
 pnpm test
@@ -132,6 +133,21 @@ cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 ```
 
 Web 和桌面数据是两套独立的本地存储；跨端迁移使用导出、备份和恢复，不要让 Web 直接读取 SQLite。开发环境、测试矩阵和故障排查见[开发指南](docs/development/DEVELOPMENT-GUIDE.md)，正式发布步骤见[发布验收清单](docs/development/RELEASE-CHECKLIST.md)。
+
+## Windows 候选构建
+
+推送到 `main` 后，CI、浏览器 E2E 和 `Build Windows Candidate` 工作流会并行运行。候选工作流只上传未签名的手工测试包，不创建 tag 或 GitHub Release：
+
+- `DailyFlow_<version>_x64-unsigned-setup.exe`：NSIS 安装包。
+- `DailyFlow_<version>_x64-portable.exe`：便携版可执行文件。
+- `BUILD-INFO.txt` 和 `SHA256SUMS`：构建来源与完整性校验信息。
+
+在 GitHub Actions 的 `Build Windows Candidate` 运行记录中下载 `dailyflow-windows-x64-unsigned-<commit-sha>` 产物。测试前应在 PowerShell 中使用 `Get-FileHash -Algorithm SHA256` 核对 `SHA256SUMS`。也可以手动触发：
+
+```bash
+gh workflow run candidate-desktop.yml --ref main
+gh run list --workflow=candidate-desktop.yml --branch main --limit 1
+```
 
 ## V1 边界
 
