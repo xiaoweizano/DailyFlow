@@ -31,6 +31,8 @@ pub enum StorageErrorCode {
     NotFound,
     ValidationError,
     StorageUnavailable,
+    PermissionDenied,
+    DialogCancelled,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

@@ -10,8 +10,6 @@ import {
   type HelpPageId,
 } from "./help-content.js";
 
-const AUTHORIZED_EXTERNAL_URL = "https://github.com/xiaoweizano/DailyFlow";
-
 function isAuthorizedExternalHref(href: string): boolean {
   try {
     const url = new URL(href);

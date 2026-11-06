@@ -8,11 +8,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { AnnualHeatmap } from "../src/timeline/annual-heatmap.js";
 import {
-  AnnualHeatmap,
   buildAnnualHeatmapData,
   keyboardHeatmapDate,
-} from "../src/timeline/annual-heatmap.js";
+} from "../src/timeline/annual-heatmap-data.js";
 
 const JOURNAL_ID = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c26");
 const NOW = parseUtcTimestamp("2026-10-30T03:20:11.123Z");

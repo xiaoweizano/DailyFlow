@@ -276,5 +276,3 @@ export function AnnualHeatmap({
     </section>
   );
 }
-
-export { buildAnnualHeatmapData, keyboardHeatmapDate } from "./annual-heatmap-data.js";

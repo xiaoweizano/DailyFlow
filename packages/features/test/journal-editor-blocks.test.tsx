@@ -10,7 +10,7 @@ import {
   parseRevision,
   parseUtcTimestamp,
 } from "@dailyflow/domain";
-import type { TiptapJsonNode } from "@dailyflow/editor";
+import type * as EditorModule from "@dailyflow/editor";
 import { ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -24,6 +24,16 @@ import { createImportServicesStub } from "./import-stub.js";
 import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import { JournalPage } from "../src/journal/journal-page.js";
+
+type TiptapJsonNode = EditorModule.TiptapJsonNode;
+
+vi.mock("@dailyflow/editor", async (importOriginal) => {
+  const actual = await importOriginal<typeof EditorModule>();
+  return {
+    ...actual,
+    renderMermaidToSvg: vi.fn(async () => '<svg aria-label="Mermaid diagram"></svg>'),
+  };
+});
 
 const journalId = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c26");
 const attachmentId = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c28");

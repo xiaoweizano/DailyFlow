@@ -322,6 +322,8 @@ fn rust_dto_fields_and_enums_match_the_shared_fixture() {
             StorageErrorCode::NotFound,
             StorageErrorCode::ValidationError,
             StorageErrorCode::StorageUnavailable,
+            StorageErrorCode::PermissionDenied,
+            StorageErrorCode::DialogCancelled,
         ])
         .expect("storage error enum serialization"),
         serde_json::to_value(&fixture.enums.storage_error_code)
