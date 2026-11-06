@@ -66,7 +66,11 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
   const currentModule = resolveCurrentModule(location.pathname);
   const isSettings = location.pathname === "/settings";
   const isHelp = location.pathname === "/help" || location.pathname.startsWith("/help/");
-  const currentLabel = isSettings ? "设置" : isHelp ? "帮助" : (currentModule?.label ?? "DailyFlow");
+  const currentLabel = isSettings
+    ? "设置"
+    : isHelp
+      ? "帮助"
+      : (currentModule?.label ?? "DailyFlow");
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {

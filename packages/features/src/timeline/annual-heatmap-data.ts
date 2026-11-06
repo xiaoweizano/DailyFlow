@@ -138,18 +138,12 @@ function shiftMonthClamped(value: string, months: number): string {
   const day = date.getUTCDate();
   date.setUTCDate(1);
   date.setUTCMonth(date.getUTCMonth() + months);
-  const lastDay = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0),
-  ).getUTCDate();
+  const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
   date.setUTCDate(Math.min(day, lastDay));
   return formatDate(date);
 }
 
-export function keyboardHeatmapDate(
-  value: string,
-  key: string,
-  weekStartsOn: number,
-): string {
+export function keyboardHeatmapDate(value: string, key: string, weekStartsOn: number): string {
   assertWeekStart(weekStartsOn);
   switch (key) {
     case "ArrowLeft":

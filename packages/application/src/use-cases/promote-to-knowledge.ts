@@ -59,11 +59,7 @@ function cloneContentDocument(content: ContentDocument): ContentDocument {
 }
 
 function findStructuredBlock(node: JsonObject, blockId: string): JsonObject | null {
-  if (
-    node.type === "structuredBlock" &&
-    isJsonObject(node.attrs) &&
-    node.attrs.id === blockId
-  ) {
+  if (node.type === "structuredBlock" && isJsonObject(node.attrs) && node.attrs.id === blockId) {
     return cloneJsonObject(node);
   }
 

@@ -2,8 +2,10 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 
 import { cn } from "../lib/cn.js";
 
-export interface SwitchProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "aria-checked" | "role"> {
+export interface SwitchProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "aria-checked" | "role"
+> {
   readonly checked: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
 }

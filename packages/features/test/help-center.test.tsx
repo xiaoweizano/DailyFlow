@@ -45,14 +45,16 @@ describe("offline help center", () => {
   it("only renders safe internal and allowlisted external links", () => {
     render(
       <MemoryRouter>
-        <SafeMarkdown>{[
-          "<script>alert('unsafe')</script>",
-          "[内部日志](/journal/2026-11-06)",
-          "[不安全链接](javascript:alert('unsafe'))",
-          "[项目仓库](https://github.com/xiaoweizano/DailyFlow)",
-          "[相似仓库链接](https://github.com/xiaoweizano/DailyFlow-evil)",
-          "[未授权外链](https://example.com/unsafe)",
-        ].join("\n\n")}</SafeMarkdown>
+        <SafeMarkdown>
+          {[
+            "<script>alert('unsafe')</script>",
+            "[内部日志](/journal/2026-11-06)",
+            "[不安全链接](javascript:alert('unsafe'))",
+            "[项目仓库](https://github.com/xiaoweizano/DailyFlow)",
+            "[相似仓库链接](https://github.com/xiaoweizano/DailyFlow-evil)",
+            "[未授权外链](https://example.com/unsafe)",
+          ].join("\n\n")}
+        </SafeMarkdown>
       </MemoryRouter>,
     );
 

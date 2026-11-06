@@ -21,10 +21,7 @@ import { DesktopStorageLocationService } from "../src/desktop/desktop-storage-lo
 import { DesktopTaskRepository } from "../src/desktop/desktop-task-repository.js";
 import { DesktopTimelineQuery } from "../src/desktop/desktop-timeline-query.js";
 import { TauriCommandClient, type TauriInvoke } from "../src/desktop/tauri-client.js";
-import {
-  TaskDtoSchema,
-  TaskSaveCommandDtoSchema,
-} from "../src/desktop/tauri-contracts.js";
+import { TaskDtoSchema, TaskSaveCommandDtoSchema } from "../src/desktop/tauri-contracts.js";
 
 const JOURNAL_ID = parseEntityId("0198e2f4-7e33-7c70-a8b2-18c1520f9c26");
 const CONTENT_HASH = parseContentHash(

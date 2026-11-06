@@ -265,7 +265,8 @@ const enUS: SettingsMessages = {
     title: "Data and storage",
     description: "Review data location, history retention, and platform storage boundaries.",
     storage: "Storage location",
-    storageDescription: "DailyFlow uses the operating system application-data directory by default.",
+    storageDescription:
+      "DailyFlow uses the operating system application-data directory by default.",
     browserStorage: "The browser manages storage; use export and backup to move data.",
     defaultLocation: "Default application-data directory",
     history: "History retention",

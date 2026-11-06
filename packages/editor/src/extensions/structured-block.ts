@@ -66,9 +66,7 @@ export const StructuredBlock = Node.create({
         "data-type": "structuredBlock",
         class: "dailyflow-structured-block",
         ...HTMLAttributes,
-        ...(blockId === undefined || blockId === null
-          ? {}
-          : { id: `block-${String(blockId)}` }),
+        ...(blockId === undefined || blockId === null ? {} : { id: `block-${String(blockId)}` }),
       },
     ];
   },

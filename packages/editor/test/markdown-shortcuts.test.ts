@@ -7,12 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MarkdownShortcuts } from "../src/extensions/markdown-shortcuts.js";
 
 const editors: Editor[] = [];
-type TextInputHandler = (
-  view: Editor["view"],
-  from: number,
-  to: number,
-  text: string,
-) => boolean;
+type TextInputHandler = (view: Editor["view"], from: number, to: number, text: string) => boolean;
 
 function createTestEditor(content = "<p></p>"): Editor {
   const editor = new Editor({

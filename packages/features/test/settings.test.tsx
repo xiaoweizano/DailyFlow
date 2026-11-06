@@ -94,9 +94,7 @@ describe("settings page", () => {
       editorFontSize: 17,
       editorWidth: "focused" as const,
     };
-    const load = vi.fn(async () =>
-      loaded(persistedPreferences),
-    );
+    const load = vi.fn(async () => loaded(persistedPreferences));
     const save = vi.fn(async () => ({
       preferences: DEFAULT_USER_PREFERENCES,
       persisted: true,
@@ -390,7 +388,8 @@ describe("settings page", () => {
         currentDirectory: "D:\\DailyFlow",
         defaultDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow",
         destination: "D:\\DailyFlow",
-        backupDirectory: "C:\\Users\\office\\AppData\\Roaming\\DailyFlow\\.dailyflow-migration-backups\\backup-1",
+        backupDirectory:
+          "C:\\Users\\office\\AppData\\Roaming\\DailyFlow\\.dailyflow-migration-backups\\backup-1",
         isCustom: true,
         restartRequired: true,
         preferences,

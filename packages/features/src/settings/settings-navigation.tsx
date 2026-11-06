@@ -1,11 +1,4 @@
-import {
-  Database,
-  Info,
-  Palette,
-  PenLine,
-  Settings2,
-  type LucideIcon,
-} from "lucide-react";
+import { Database, Info, Palette, PenLine, Settings2, type LucideIcon } from "lucide-react";
 import { useRef } from "react";
 
 import type { SettingsMessages } from "../preferences/messages.js";

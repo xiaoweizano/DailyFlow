@@ -23,10 +23,7 @@ import {
 import type { Clock, IdGenerator, LocalDate } from "@dailyflow/domain";
 import { createUuidV7 } from "@dailyflow/shared";
 
-import type {
-  AppRuntimeServices,
-  StorageLocationRuntimeServices,
-} from "./app-services-context.js";
+import type { AppRuntimeServices, StorageLocationRuntimeServices } from "./app-services-context.js";
 import { createAnalyticsRuntimeServices } from "./analytics/analytics-services.js";
 import { createAttachmentRuntimeServices } from "./attachments/attachment-services.js";
 import { EditorContentProjector } from "./journal/content-projector.js";
@@ -178,9 +175,7 @@ export function createAppRuntimeServices(
           ...rebuildOptions,
         }),
     },
-    ...(options.storageLocation === undefined
-      ? {}
-      : { storageLocation: options.storageLocation }),
+    ...(options.storageLocation === undefined ? {} : { storageLocation: options.storageLocation }),
   };
 }
 

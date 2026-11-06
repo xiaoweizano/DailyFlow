@@ -36,9 +36,7 @@ export function SettingsSection({
             {title}
           </h2>
           {description === undefined ? null : (
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {description}
-            </p>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
           )}
         </div>
       </div>
