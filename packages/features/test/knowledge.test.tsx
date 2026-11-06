@@ -18,6 +18,7 @@ import {
   type KnowledgeItem,
   type KnowledgeKind,
 } from "@dailyflow/domain";
+import { CURRENT_EDITOR_SCHEMA_VERSION, markdownToJson } from "@dailyflow/editor";
 import { ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -32,6 +33,7 @@ import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { KnowledgeDetailPage } from "../src/knowledge/knowledge-detail.js";
+import { KnowledgeCreateDialog } from "../src/knowledge/knowledge-create-dialog.js";
 import { KnowledgePage } from "../src/knowledge/knowledge-page.js";
 import { KnowledgePromotionDialog } from "../src/knowledge/knowledge-promotion-dialog.js";
 import type {
@@ -124,6 +126,7 @@ function createKnowledgeServices(
       sourceJournalAvailable: true,
     })),
     promote: vi.fn(async (): Promise<Result<KnowledgeItem, AppError>> => ok(solutionItem)),
+    create: vi.fn(async (): Promise<Result<KnowledgeItem, AppError>> => ok(solutionItem)),
     ...overrides,
   };
 }
@@ -244,9 +247,7 @@ describe("Knowledge Base experience", () => {
     );
 
     expect(await screen.findByText("来源不可用")).toBeTruthy();
-    expect(
-      screen.getByText("来源日志已删除或当前无法访问，知识正文仍可正常使用。"),
-    ).toBeTruthy();
+    expect(screen.getByText("来源日志已删除或当前无法访问，知识正文仍可正常使用。")).toBeTruthy();
     expect(screen.queryByRole("link", { name: /原始日志/u })).not.toBeInTheDocument();
   });
 
@@ -259,6 +260,63 @@ describe("Knowledge Base experience", () => {
     expect(await screen.findByText("这里还没有知识条目")).toBeTruthy();
     expect(screen.getByText(/从每日日志沉淀整篇内容/u)).toBeTruthy();
     expect(screen.getByText(/选中结构化块后只沉淀该块/u)).toBeTruthy();
+  });
+
+  it("creates standalone knowledge from Markdown and opens the saved item", async () => {
+    const knowledge = createKnowledgeServices();
+    const user = userEvent.setup();
+
+    renderWithServices(
+      <Routes>
+        <Route path="/knowledge" element={<KnowledgePage />} />
+        <Route path="/knowledge/:id" element={<p>知识详情已打开</p>} />
+      </Routes>,
+      createServices(knowledge),
+    );
+
+    await user.click(await screen.findByRole("button", { name: "新建知识" }));
+    await user.type(screen.getByLabelText("知识标题"), "  发布检查清单  ");
+    await user.type(screen.getByLabelText("摘要"), "  发布前确认回滚路径。  ");
+    await user.type(
+      screen.getByLabelText("Markdown 正文"),
+      "## 发布前\n\n- 检查候选包\n- 验证回滚",
+    );
+    await user.click(screen.getByRole("button", { name: "保存到知识库" }));
+
+    await waitFor(() =>
+      expect(knowledge.create).toHaveBeenCalledWith({
+        kind: "note",
+        title: "发布检查清单",
+        summary: "发布前确认回滚路径。",
+        contentSchemaVersion: CURRENT_EDITOR_SCHEMA_VERSION,
+        contentJson: markdownToJson("## 发布前\n\n- 检查候选包\n- 验证回滚"),
+      }),
+    );
+    expect(await screen.findByText("知识详情已打开")).toBeTruthy();
+  });
+
+  it("keeps the standalone knowledge editor open when saving fails", async () => {
+    const knowledge = createKnowledgeServices({
+      create: vi.fn(
+        async (): Promise<Result<KnowledgeItem, AppError>> =>
+          ({
+            ok: false,
+            error: { code: "STORAGE_UNAVAILABLE", retryable: true },
+          }) as const,
+      ),
+    });
+    const user = userEvent.setup();
+
+    renderWithServices(<KnowledgeCreateDialog open onOpenChange={() => undefined} />, {
+      ...createServices(knowledge),
+    });
+
+    await user.type(screen.getByLabelText("知识标题"), "发布检查清单");
+    await user.type(screen.getByLabelText("Markdown 正文"), "记录发布步骤。");
+    await user.click(screen.getByRole("button", { name: "保存到知识库" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("保存到知识库失败，请重试");
+    expect(screen.getByLabelText("知识标题")).toHaveValue("发布检查清单");
   });
 
   it("shows a recoverable error without querying when the knowledge id is invalid", async () => {

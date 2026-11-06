@@ -1,4 +1,5 @@
 import {
+  createKnowledge,
   promoteToKnowledge,
   type ContentProjector,
   type JournalRepository,
@@ -19,6 +20,7 @@ export interface KnowledgeDetail {
 export interface KnowledgeRuntimeServices {
   readonly list: (query?: KnowledgeListQuery) => Promise<Page<KnowledgeSummary>>;
   readonly get: (id: EntityId) => Promise<KnowledgeDetail | null>;
+  readonly create: (input: unknown) => Promise<Result<KnowledgeItem, AppError>>;
   readonly promote: (input: unknown) => Promise<Result<KnowledgeItem, AppError>>;
 }
 
@@ -52,6 +54,16 @@ export function createKnowledgeRuntimeServices(
         sourceJournalAvailable: sourceJournal !== null,
       };
     },
+    create: (input) =>
+      createKnowledge(
+        {
+          knowledge: dependencies.knowledge,
+          projector: dependencies.projector,
+          ids: dependencies.ids,
+          clock: dependencies.clock,
+        },
+        input,
+      ),
     promote: (input) =>
       promoteToKnowledge(
         {

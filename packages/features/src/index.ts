@@ -113,6 +113,10 @@ export {
 } from "./lifecycle/save-lifecycle.js";
 export { HistoryPanel, type HistoryPanelProps } from "./journal/history-panel.js";
 export {
+  KnowledgeCreateDialog,
+  type KnowledgeCreateDialogProps,
+} from "./knowledge/knowledge-create-dialog.js";
+export {
   AttachmentPreview,
   AttachmentUploadPlaceholder,
   type AttachmentPreviewProps,

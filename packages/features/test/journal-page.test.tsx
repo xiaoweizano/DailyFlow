@@ -60,6 +60,7 @@ function createServices(initialText = "原有内容") {
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
       get: vi.fn(async () => null),
+      create: vi.fn(),
       promote: vi.fn(),
     },
     journal: {

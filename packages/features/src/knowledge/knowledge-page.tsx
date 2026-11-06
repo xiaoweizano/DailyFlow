@@ -1,11 +1,12 @@
 import type { KnowledgeSummary } from "@dailyflow/application";
 import type { KnowledgeKind } from "@dailyflow/domain";
 import { Button, SegmentedControl } from "@dailyflow/ui";
-import { AlertCircle, BookOpenText, RotateCw } from "lucide-react";
+import { AlertCircle, BookOpenText, Plus, RotateCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { KnowledgeCreateDialog } from "./knowledge-create-dialog.js";
 
 type KnowledgeFilter = "all" | KnowledgeKind;
 
@@ -24,6 +25,7 @@ export function KnowledgePage(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadVersion, setReloadVersion] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const loadItems = useCallback(async () => {
     setLoading(true);
@@ -56,20 +58,28 @@ export function KnowledgePage(): React.JSX.Element {
             将日志中的问题、方案和决策沉淀为可复用知识。
           </p>
         </div>
-        <SegmentedControl
-          label="知识类型"
-          value={filter}
-          onChange={setFilter}
-          options={[
-            { label: "全部", value: "all" },
-            { label: "问题", value: "issue" },
-            { label: "方案", value: "solution" },
-            { label: "决策", value: "decision" },
-            { label: "笔记", value: "note" },
-            { label: "参考", value: "reference" },
-          ]}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <SegmentedControl
+            label="知识类型"
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { label: "全部", value: "all" },
+              { label: "问题", value: "issue" },
+              { label: "方案", value: "solution" },
+              { label: "决策", value: "decision" },
+              { label: "笔记", value: "note" },
+              { label: "参考", value: "reference" },
+            ]}
+          />
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus aria-hidden="true" className="size-4" />
+            新建知识
+          </Button>
+        </div>
       </header>
+
+      <KnowledgeCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       {error === null ? null : (
         <div

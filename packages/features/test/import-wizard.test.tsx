@@ -155,6 +155,7 @@ function createServices(imports: ImportService): AppRuntimeServices {
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
       get: vi.fn(async () => null),
+      create: vi.fn(),
       promote: vi.fn(async (): Promise<Result<never, AppError>> => {
         throw new Error("not used");
       }),

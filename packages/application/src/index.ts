@@ -286,6 +286,11 @@ export {
   type PromoteToKnowledgeDependencies,
 } from "./use-cases/promote-to-knowledge.js";
 export {
+  CreateKnowledgeInputSchema,
+  createKnowledge,
+  type CreateKnowledgeDependencies,
+} from "./use-cases/create-knowledge.js";
+export {
   RestoreJournalVersionInputSchema,
   restoreJournalVersion,
   type RestoreJournalVersionDependencies,

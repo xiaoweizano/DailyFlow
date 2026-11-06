@@ -38,6 +38,7 @@ function createTasksServices(): AppRuntimeServices {
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
       get: vi.fn(async () => null),
+      create: vi.fn(),
       promote: vi.fn(),
     },
     journal: {

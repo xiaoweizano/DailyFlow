@@ -6,7 +6,7 @@ export interface DailyFlowE2EBridge {
     "get" | "save" | "listVersions" | "restore"
   >;
   readonly tasks: Pick<AppRuntimeServices["tasks"], "list" | "create">;
-  readonly knowledge: Pick<AppRuntimeServices["knowledge"], "list" | "get" | "promote">;
+  readonly knowledge: Pick<AppRuntimeServices["knowledge"], "list" | "get" | "create" | "promote">;
   readonly search: Pick<AppRuntimeServices["search"], "query" | "rebuild">;
 }
 
@@ -35,6 +35,7 @@ export function installE2EBridge(services: AppRuntimeServices): void {
     knowledge: {
       list: (input) => services.knowledge.list(input),
       get: (id) => services.knowledge.get(id),
+      create: (input) => services.knowledge.create(input),
       promote: (input) => services.knowledge.promote(input),
     },
     search: {

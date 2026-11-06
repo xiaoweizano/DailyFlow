@@ -47,6 +47,7 @@ function createServices(
     knowledge: {
       list: vi.fn(async () => ({ items: [], nextCursor: null })),
       get: vi.fn(async () => null),
+      create: vi.fn(),
       promote: vi.fn(async () => {
         throw new Error("not used");
       }),
