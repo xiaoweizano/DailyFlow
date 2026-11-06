@@ -22,3 +22,7 @@ DailyFlow 是本地优先的个人工作记忆系统。它把每日日志、待�
 桌面端数据保存在本机 SQLite 数据库中，Web 端使用浏览器 IndexedDB。重要变更前建议从“数据管理”创建备份。
 
 详细步骤请继续阅读“每日日志”“任务”“知识库”和“数据管理”章节。
+
+## 完整用户手册
+
+应用内章节覆盖常用流程；安装版数据目录、桌面托盘、备份恢复、导入策略和故障排查等完整说明，请阅读 [DailyFlow 用户操作手册](https://github.com/xiaoweizano/DailyFlow/blob/main/docs/guides/USER-GUIDE.md)。

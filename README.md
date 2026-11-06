@@ -28,6 +28,7 @@ V1 自动化交付门禁已经覆盖 Windows、macOS 与 Web 的构建验证。�
 - [开发计划](docs/development/DEVELOPMENT-PLAN.md)
 - [编码规范](docs/development/CODING-STANDARDS.md)
 - [开发指南](docs/development/DEVELOPMENT-GUIDE.md)
+- [用户操作手册](docs/guides/USER-GUIDE.md)
 - [发布验收清单](docs/development/RELEASE-CHECKLIST.md)
 - [架构决策记录](docs/decisions/ADR/README.md)
 
@@ -146,5 +147,6 @@ Web 和桌面数据是两套独立的本地存储；跨端迁移使用导出、�
 - [产品需求文档](docs/product/PRD.md)
 - [系统架构设计](docs/architecture/SYSTEM-ARCHITECTURE.md)
 - [开发计划](docs/development/DEVELOPMENT-PLAN.md)
+- [用户操作手册](docs/guides/USER-GUIDE.md)
 - [架构决策记录](docs/decisions/ADR/README.md)
 
