@@ -1,10 +1,12 @@
 import type {
+  AnnualActivityInput,
   Page,
   TimelineCalendarQuery,
   TimelineDaySummary,
   TimelineListQuery,
   TimelineQuery,
 } from "@dailyflow/application";
+import { annualTimelineDateRange } from "@dailyflow/application";
 
 import type { TauriCommandClient } from "./tauri-client.js";
 import type {
@@ -52,6 +54,10 @@ export class DesktopTimelineQuery implements TimelineQuery {
     };
     const items = await this.client.getTimelineCalendar(calendarQuery);
     return items.map(toTimelineDaySummary);
+  }
+
+  async getAnnualActivity(input: AnnualActivityInput): Promise<readonly TimelineDaySummary[]> {
+    return this.getCalendar(annualTimelineDateRange(input.year));
   }
 
   async listEntries(query: TimelineListQuery): Promise<Page<TimelineDaySummary>> {

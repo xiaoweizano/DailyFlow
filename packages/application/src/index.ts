@@ -54,11 +54,14 @@ export type {
   AnalyticsTaskSource,
 } from "./queries/analytics-query.js";
 export type {
+  AnnualActivityInput,
+  AnnualActivityQuery,
   TimelineCalendarQuery,
   TimelineDaySummary,
   TimelineListQuery,
   TimelineQuery,
 } from "./queries/timeline-query.js";
+export { annualTimelineDateRange } from "./queries/timeline-query.js";
 export {
   buildAnalyticsSummary,
   resolveAnalyticsPeriod,

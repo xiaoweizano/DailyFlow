@@ -1,10 +1,12 @@
 import type {
+  AnnualActivityInput,
   Page,
   TimelineCalendarQuery,
   TimelineDaySummary,
   TimelineListQuery,
   TimelineQuery,
 } from "@dailyflow/application";
+import { annualTimelineDateRange } from "@dailyflow/application";
 import type { LocalDate, UtcTimestamp } from "@dailyflow/domain";
 
 import { decodeCursor, encodeCursor, resolvePageSize } from "../memory/pagination-cursor.js";
@@ -99,6 +101,10 @@ export class DexieTimelineQuery implements TimelineQuery {
 
   async getCalendar(query: TimelineCalendarQuery): Promise<readonly TimelineDaySummary[]> {
     return loadRange(this.database, query.from, query.to);
+  }
+
+  async getAnnualActivity(input: AnnualActivityInput): Promise<readonly TimelineDaySummary[]> {
+    return this.getCalendar(annualTimelineDateRange(input.year));
   }
 
   async listEntries(query: TimelineListQuery): Promise<Page<TimelineDaySummary>> {

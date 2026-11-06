@@ -44,8 +44,35 @@ test("renders calendar, timeline, and activity heatmap views", async ({ page }) 
   ).toBeVisible();
 
   await page.getByRole("button", { name: "热力图", exact: true }).click();
-  await expect(page.getByRole("list", { name: "过去 12 周活动热力图" })).toBeVisible();
   await expect(
-    page.getByRole("listitem", { name: `${fixture.date}，1 篇日志，1 个任务到期` }),
+    page.getByRole("grid", { name: `${fixture.date.slice(0, 4)} 年全年日志热力图` }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("gridcell", { name: `${fixture.date}，1 篇日志，1 个任务到期` }),
+  ).toBeVisible();
+});
+
+test("keeps annual heatmap context visible while cells scroll on mobile", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/timeline");
+  await page.getByRole("button", { name: "热力图", exact: true }).click();
+
+  const grid = page.getByRole("grid", {
+    name: `${fixture.date.slice(0, 4)} 年全年日志热力图`,
+  });
+  await expect(grid).toBeVisible();
+  await expect(page.getByText("周一", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 月", { exact: true })).toBeVisible();
+
+  const scrollMetrics = await grid.evaluate((element) => {
+    let container = element.parentElement;
+    while (container !== null && getComputedStyle(container).overflowX !== "auto") {
+      container = container.parentElement;
+    }
+    return container === null
+      ? null
+      : { clientWidth: container.clientWidth, scrollWidth: container.scrollWidth };
+  });
+  expect(scrollMetrics).not.toBeNull();
+  expect(scrollMetrics?.scrollWidth).toBeGreaterThan(scrollMetrics?.clientWidth ?? 0);
 });

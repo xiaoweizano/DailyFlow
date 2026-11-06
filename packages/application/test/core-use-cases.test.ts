@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { annualTimelineDateRange } from "../src/queries/timeline-query.js";
 import { completeTask } from "../src/use-cases/complete-task.js";
 import { getJournal } from "../src/use-cases/get-journal.js";
 import { restoreJournalVersion } from "../src/use-cases/restore-journal-version.js";
@@ -15,6 +16,20 @@ import {
   makeJournal,
   makeJournalVersion,
 } from "./support.js";
+
+describe("annualTimelineDateRange", () => {
+  it("returns one natural-year range including leap day", () => {
+    expect(annualTimelineDateRange(2024)).toEqual({
+      from: "2024-01-01",
+      to: "2024-12-31",
+    });
+  });
+
+  it("rejects invalid years", () => {
+    expect(() => annualTimelineDateRange(0)).toThrow(RangeError);
+    expect(() => annualTimelineDateRange(2024.5)).toThrow(RangeError);
+  });
+});
 
 describe("getJournal", () => {
   it("returns a revision-zero draft when the local date has no journal", async () => {

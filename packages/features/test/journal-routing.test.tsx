@@ -107,6 +107,7 @@ function createServices(error?: AppError) {
     },
     timeline: {
       getCalendar: vi.fn(async () => []),
+      getAnnualActivity: vi.fn(async () => []),
       listEntries: vi.fn(async () => ({ items: [], nextCursor: null })),
     },
   } satisfies AppRuntimeServices;

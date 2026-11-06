@@ -2,16 +2,18 @@ import type { TimelineDaySummary } from "@dailyflow/application";
 import type { LocalDate } from "@dailyflow/domain";
 import { SegmentedControl } from "@dailyflow/ui";
 import { AlertCircle, ArrowRight, CalendarDays, List, RotateCw } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { currentLocalDate, isLocalDate } from "../date-utils.js";
-import { ActivityHeatmap } from "./activity-heatmap.js";
+import { useUserPreferences } from "../preferences/use-user-preferences.js";
+import { AnnualHeatmap } from "./annual-heatmap.js";
 import { isCalendarMonth, monthDateRange } from "./calendar-utils.js";
 import { MonthCalendar } from "./month-calendar.js";
 
 type TimelineView = "calendar" | "timeline" | "heatmap";
+const LOCAL_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 
 export interface TimelinePageProps {
   readonly today?: string;
@@ -19,16 +21,22 @@ export interface TimelinePageProps {
 
 export function TimelinePage({ today = currentLocalDate() }: TimelinePageProps): React.JSX.Element {
   const services = useAppServices();
+  const { preferences } = useUserPreferences();
   const navigate = useNavigate();
   const initialDate = isLocalDate(today) ? today : currentLocalDate();
   const [month, setMonth] = useState(initialDate.slice(0, 7));
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [view, setView] = useState<TimelineView>("calendar");
+  const [heatmapYear, setHeatmapYear] = useState(Number(initialDate.slice(0, 4)));
   const [calendarDays, setCalendarDays] = useState<readonly TimelineDaySummary[]>([]);
   const [timelineDays, setTimelineDays] = useState<readonly TimelineDaySummary[]>([]);
+  const [annualDays, setAnnualDays] = useState<readonly TimelineDaySummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [annualLoading, setAnnualLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [annualError, setAnnualError] = useState<string | null>(null);
   const [reloadVersion, setReloadVersion] = useState(0);
+  const annualCache = useRef(new Map<string, readonly TimelineDaySummary[]>());
 
   const loadTimeline = useCallback(async () => {
     if (!isCalendarMonth(month)) {
@@ -72,6 +80,47 @@ export function TimelinePage({ today = currentLocalDate() }: TimelinePageProps):
   useEffect(() => {
     void loadTimeline();
   }, [loadTimeline, reloadVersion]);
+
+  useEffect(() => {
+    if (view !== "heatmap") {
+      return;
+    }
+    const cacheKey = `${heatmapYear}:${LOCAL_TIMEZONE}:${preferences.weekStartsOn}`;
+    const cached = annualCache.current.get(cacheKey);
+    if (cached !== undefined) {
+      setAnnualDays(cached);
+      setAnnualLoading(false);
+      setAnnualError(null);
+      return;
+    }
+
+    let active = true;
+    setAnnualLoading(true);
+    setAnnualError(null);
+    void services.timeline
+      .getAnnualActivity({ year: heatmapYear, timezone: LOCAL_TIMEZONE })
+      .then((days) => {
+        if (!active) {
+          return;
+        }
+        annualCache.current.set(cacheKey, days);
+        setAnnualDays(days);
+      })
+      .catch(() => {
+        if (active) {
+          setAnnualDays([]);
+          setAnnualError("年度热力图加载失败");
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setAnnualLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [heatmapYear, preferences.weekStartsOn, reloadVersion, services.timeline, view]);
 
   function openDate(date: string): void {
     setSelectedDate(date);
@@ -134,7 +183,37 @@ export function TimelinePage({ today = currentLocalDate() }: TimelinePageProps):
             }}
           />
         ) : view === "heatmap" ? (
-          <ActivityHeatmap endDate={selectedDate} days={calendarDays} weeks={12} />
+          annualLoading ? (
+            <div role="status" className="flex min-h-72 items-center justify-center gap-2 text-sm">
+              <RotateCw aria-hidden="true" className="size-4 animate-spin text-primary" />
+              正在加载年度热力图
+            </div>
+          ) : annualError === null ? (
+            <AnnualHeatmap
+              year={heatmapYear}
+              today={today}
+              days={annualDays}
+              weekStartsOn={preferences.weekStartsOn}
+              timezone={LOCAL_TIMEZONE}
+              onYearChange={setHeatmapYear}
+              onOpenDate={openDate}
+            />
+          ) : (
+            <div role="alert" className="grid min-h-72 place-items-center text-center">
+              <div>
+                <AlertCircle aria-hidden="true" className="mx-auto size-5 text-danger" />
+                <h2 className="mt-3 text-base font-semibold text-foreground">{annualError}</h2>
+                <button
+                  type="button"
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                  onClick={() => setReloadVersion((version) => version + 1)}
+                >
+                  <RotateCw aria-hidden="true" className="size-3.5" />
+                  重试
+                </button>
+              </div>
+            </div>
+          )
         ) : timelineDays.length === 0 ? (
           <div className="grid min-h-72 place-items-center text-center">
             <div>

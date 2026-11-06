@@ -127,6 +127,7 @@ function createServices(
 ): AppRuntimeServices {
   const timeline: TimelineQuery = {
     getCalendar: vi.fn(async () => [day]),
+    getAnnualActivity: vi.fn(async () => [day]),
     listEntries: vi.fn(async () => ({ items: [day], nextCursor: null })),
     ...options.timeline,
   };
@@ -235,7 +236,7 @@ describe("Timeline experience", () => {
     );
 
     await user.click(screen.getByRole("button", { name: "热力图" }));
-    expect(screen.getByText("按日志数量着色")).toBeTruthy();
+    expect(await screen.findByRole("grid", { name: "2026 年全年日志热力图" })).toBeTruthy();
     expect(screen.getByLabelText("2026-10-30，1 篇日志，2 个任务到期")).toBeTruthy();
   });
 
@@ -245,6 +246,37 @@ describe("Timeline experience", () => {
     expect(screen.getByText("按日志数量着色")).toBeTruthy();
     expect(screen.getByText(/每格代表一天/u)).toBeTruthy();
     expect(screen.getByLabelText("2026-10-30，1 篇日志，2 个任务到期")).toBeTruthy();
+  });
+
+  it("loads a natural year once and reuses the cached annual heatmap", async () => {
+    const user = userEvent.setup();
+    const getAnnualActivity = vi.fn(async () => [day]);
+    const services = createServices({
+      timeline: {
+        getAnnualActivity,
+      },
+    });
+    renderPage(<TimelinePage today="2026-10-30" />, services);
+
+    await user.click(await screen.findByRole("button", { name: "热力图" }));
+    expect(await screen.findByRole("grid", { name: "2026 年全年日志热力图" })).toBeTruthy();
+    expect(getAnnualActivity).toHaveBeenCalledWith({
+      year: 2026,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    });
+
+    await user.click(screen.getByRole("button", { name: "下一年" }));
+    await waitFor(() =>
+      expect(getAnnualActivity).toHaveBeenLastCalledWith({
+        year: 2027,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+      }),
+    );
+    expect(await screen.findByRole("grid", { name: "2027 年全年日志热力图" })).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "上一年" }));
+    expect(await screen.findByRole("grid", { name: "2026 年全年日志热力图" })).toBeTruthy();
+    expect(getAnnualActivity).toHaveBeenCalledTimes(2);
   });
 });
 

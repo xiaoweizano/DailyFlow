@@ -702,6 +702,32 @@ describe("desktop Tauri contracts", () => {
     });
   });
 
+  it("loads a desktop annual heatmap from one natural-year calendar query", async () => {
+    const invoke = vi.fn<TauriInvoke>().mockResolvedValueOnce([timelineDto]);
+    const timeline = new DesktopTimelineQuery({
+      client: new TauriCommandClient(invoke),
+    });
+
+    const annual = await timeline.getAnnualActivity({
+      year: 2026,
+      timezone: "Asia/Shanghai",
+    });
+
+    expect(invoke).toHaveBeenCalledWith("timeline_get_calendar", {
+      query: {
+        from: "2026-01-01",
+        to: "2026-12-31",
+      },
+    });
+    expect(annual).toEqual([
+      expect.objectContaining({
+        date: "2026-10-30",
+        journalCount: 1,
+        taskDueCount: 2,
+      }),
+    ]);
+  });
+
   it("rejects invalid task responses and timeline requests", async () => {
     const invoke = createInvoke({ ...taskDto, revision: undefined });
     const tasks = createTaskRepository(invoke);
