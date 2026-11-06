@@ -91,3 +91,15 @@ test("autolinks typed URLs and preserves the link after saving", async ({ page }
     page.getByLabel("日志正文").locator('a[href="https://example.com/docs"]'),
   ).toHaveText("https://example.com/docs");
 });
+
+test("converts Markdown heading shortcuts while typing", async ({ page }) => {
+  await page.goto("/journal/2026-11-04");
+
+  const editor = page.getByLabel("日志正文");
+  await editor.click();
+  await page.keyboard.type("## ");
+  await expect(editor.locator("h2")).toBeVisible();
+
+  await page.keyboard.type("问题排查");
+  await expect(editor.locator("h2")).toHaveText("问题排查");
+});

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { readFile } from "node:fs/promises";
 
 import {
   installTxtImportFixture,
@@ -65,4 +66,44 @@ test("exports a portable ZIP through the browser download fallback", async ({ pa
 
   expect(download.suggestedFilename()).toMatch(/^dailyflow-export-.*\.zip$/u);
   await expect(page.getByRole("heading", { name: "导出已保存" })).toBeVisible();
+});
+
+test("imports rich Markdown into a journal and exports it back as a Markdown file", async ({
+  page,
+}) => {
+  const source = [
+    "# 故障复盘",
+    "",
+    "排查步骤：",
+    "",
+    "- 检查数据库连接",
+    "- 查看服务日志",
+    "",
+    "最终 **恢复服务**。",
+    "",
+  ].join("\n");
+
+  await page.goto("/journal/2026-11-04");
+  await page.getByLabel("导入 Markdown 文件").setInputFiles({
+    name: "incident.md",
+    mimeType: "text/markdown",
+    buffer: Buffer.from(source, "utf8"),
+  });
+
+  const editor = page.getByLabel("日志正文");
+  await expect(editor.locator("h1")).toHaveText("故障复盘");
+  await expect(editor.locator("li")).toHaveCount(2);
+  await expect(editor.locator("strong")).toHaveText("恢复服务");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出 Markdown" }).click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe("dailyflow-journal.md");
+
+  const downloadPath = await download.path();
+  expect(downloadPath).not.toBeNull();
+  const exported = await readFile(downloadPath!, "utf8");
+  expect(exported).toContain("# 故障复盘");
+  expect(exported).toContain("- 检查数据库连接");
+  expect(exported).toContain("**恢复服务**");
 });

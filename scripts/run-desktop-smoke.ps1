@@ -138,6 +138,8 @@ try {
 
     $node = Get-Command "node.exe"
     $env:DAILYFLOW_DESKTOP_SMOKE_ONLY = "true"
+    $env:DAILYFLOW_DESKTOP_PID = "$($applicationProcess.Id)"
+    $env:DAILYFLOW_SMOKE_RUN_ID = Get-Date -Format "yyyyMMddHHmmss"
     $testProcess = Start-Process `
         -FilePath $node.Source `
         -ArgumentList @(
@@ -153,9 +155,22 @@ try {
     $testExitCode = $testProcess.ExitCode
     if ($testExitCode -ne 0) {
         Write-ApplicationDiagnostics
+        exit $testExitCode
     }
-    exit $testExitCode
+
+    $applicationProcess.Refresh()
+    if (-not $applicationProcess.WaitForExit(15000)) {
+        Write-ApplicationDiagnostics
+        throw "DailyFlow did not exit within 15 seconds after lifecycle_quit."
+    }
+
+    if ($applicationProcess.ExitCode -ne 0) {
+        Write-ApplicationDiagnostics
+        throw "DailyFlow exited with code $($applicationProcess.ExitCode) after lifecycle_quit."
+    }
 }
 finally {
+    Remove-Item Env:DAILYFLOW_DESKTOP_PID -ErrorAction SilentlyContinue
+    Remove-Item Env:DAILYFLOW_SMOKE_RUN_ID -ErrorAction SilentlyContinue
     Stop-ApplicationProcess
 }

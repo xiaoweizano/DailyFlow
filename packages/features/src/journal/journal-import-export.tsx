@@ -26,12 +26,9 @@ export function JournalImportExport({ editor }: JournalImportExportProps): React
     try {
       const markdown = await file.text();
       const document = markdownToEditorDocument(markdown);
-      editor
-        .chain()
-        .setContent(document.doc, { emitUpdate: true })
-        .setTextSelection(1)
-        .focus()
-        .run();
+      editor.commands.setContent(document.doc, { emitUpdate: true });
+      editor.commands.setTextSelection(1);
+      editor.commands.focus();
       setError(null);
     } catch {
       setError("Markdown 文件读取失败，请确认文件编码和内容。");
@@ -81,10 +78,12 @@ export function JournalImportExport({ editor }: JournalImportExportProps): React
         accept=".md,.markdown,text/markdown,text/plain"
         className="sr-only"
         onChange={(event) => {
-          const file = event.currentTarget.files?.[0];
-          event.currentTarget.value = "";
+          const input = event.currentTarget;
+          const file = input.files?.[0];
           if (file !== undefined) {
-            void importMarkdown(file);
+            void importMarkdown(file).finally(() => {
+              input.value = "";
+            });
           }
         }}
       />

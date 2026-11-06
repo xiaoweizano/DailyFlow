@@ -86,9 +86,7 @@ export function AnnualHeatmap({
 
   function focusDate(date: string): void {
     setFocusedDate(date);
-    gridRef.current
-      ?.querySelector<HTMLElement>(`[data-heatmap-date="${date}"]`)
-      ?.focus();
+    gridRef.current?.querySelector<HTMLElement>(`[data-heatmap-date="${date}"]`)?.focus();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, cell: AnnualHeatmapCell): void {
@@ -108,11 +106,15 @@ export function AnnualHeatmap({
     if (firstDate === undefined || lastDate === undefined) {
       return;
     }
-    const boundedDate = nextDate < firstDate ? firstDate : nextDate > lastDate ? lastDate : nextDate;
+    const boundedDate =
+      nextDate < firstDate ? firstDate : nextDate > lastDate ? lastDate : nextDate;
     focusDate(boundedDate);
   }
 
   const optionYears = Array.from({ length: 21 }, (_, index) => year - 10 + index);
+  const cellRows = Array.from({ length: 7 }, (_, rowIndex) =>
+    data.cells.filter((_, cellIndex) => cellIndex % 7 === rowIndex),
+  );
 
   return (
     <section aria-labelledby="annual-heatmap-title" className="min-w-0">
@@ -197,44 +199,52 @@ export function AnnualHeatmap({
               ref={gridRef}
               role="grid"
               aria-label={`${year} 年全年日志热力图`}
-              className="grid grid-flow-col"
+              className="grid"
               style={{
-                gridTemplateColumns: GRID_COLUMNS,
                 gridTemplateRows: GRID_ROWS,
                 gap: "0.25rem",
               }}
             >
-              {data.cells.map((cell) => (
-                <button
-                  key={cell.date}
-                  type="button"
-                  role="gridcell"
-                  data-heatmap-date={cell.date}
-                  tabIndex={cell.date === focusedCell?.date ? 0 : -1}
-                  aria-label={`${cell.date}，${cell.journalCount} 篇日志，${cell.taskDueCount} 个任务到期`}
-                  title={`${cell.date} · ${cell.journalCount} 篇日志 · ${cell.taskDueCount} 个任务到期`}
-                  className={[
-                    "relative size-3.5 shrink-0 rounded-[2px] border outline-none",
-                    "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-                    activityClass(cell.journalCount),
-                    cell.inYear ? "" : "opacity-40",
-                    cell.isToday ? "ring-1 ring-foreground ring-offset-1" : "",
-                  ].join(" ")}
-                  onClick={() => {
-                    if (cell.inYear) {
-                      onOpenDate(cell.date);
-                    }
-                  }}
-                  onFocus={() => setFocusedDate(cell.date)}
-                  onKeyDown={(event) => handleKeyDown(event, cell)}
+              {cellRows.map((row, rowIndex) => (
+                <div
+                  key={row[0]?.date ?? rowIndex}
+                  role="row"
+                  className="grid"
+                  style={{ gridTemplateColumns: GRID_COLUMNS, gap: "0.25rem" }}
                 >
-                  {cell.taskDueCount > 0 ? (
-                    <span
-                      aria-hidden="true"
-                      className="df-heatmap-task-corner absolute -right-px -top-px size-0 border-l-[4px] border-t-[4px] border-l-transparent border-t-warning"
-                    />
-                  ) : null}
-                </button>
+                  {row.map((cell) => (
+                    <button
+                      key={cell.date}
+                      type="button"
+                      role="gridcell"
+                      data-heatmap-date={cell.date}
+                      tabIndex={cell.date === focusedCell?.date ? 0 : -1}
+                      aria-label={`${cell.date}，${cell.journalCount} 篇日志，${cell.taskDueCount} 个任务到期`}
+                      title={`${cell.date} · ${cell.journalCount} 篇日志 · ${cell.taskDueCount} 个任务到期`}
+                      className={[
+                        "relative size-3.5 shrink-0 rounded-[2px] border outline-none",
+                        "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                        activityClass(cell.journalCount),
+                        cell.inYear ? "" : "opacity-40",
+                        cell.isToday ? "ring-1 ring-foreground ring-offset-1" : "",
+                      ].join(" ")}
+                      onClick={() => {
+                        if (cell.inYear) {
+                          onOpenDate(cell.date);
+                        }
+                      }}
+                      onFocus={() => setFocusedDate(cell.date)}
+                      onKeyDown={(event) => handleKeyDown(event, cell)}
+                    >
+                      {cell.taskDueCount > 0 ? (
+                        <span
+                          aria-hidden="true"
+                          className="df-heatmap-task-corner absolute -right-px -top-px size-0 border-l-[4px] border-t-[4px] border-l-transparent border-t-warning"
+                        />
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
               ))}
             </div>
           </div>
@@ -247,16 +257,20 @@ export function AnnualHeatmap({
             ? ""
             : `${formatAccessibleDate(focusedCell.date)}，${focusedCell.journalCount} 篇日志，${focusedCell.taskDueCount} 个任务到期`}
         </p>
-        <div className="flex items-center gap-1.5" aria-label="颜色图例">
-          <span>少</span>
+        <div
+          role="img"
+          aria-label="颜色图例：颜色越深表示日志数量越多，从 0 篇到 4 篇以上"
+          className="flex items-center gap-1.5"
+        >
+          <span aria-hidden="true">少</span>
           {[0, 1, 2, 3, 4].map((level) => (
             <span
               key={level}
-              aria-label={`${level === 4 ? "4+" : level} 篇日志`}
+              aria-hidden="true"
               className={`size-3 rounded-[2px] border ${activityClass(level)}`}
             />
           ))}
-          <span>多</span>
+          <span aria-hidden="true">多</span>
         </div>
       </div>
     </section>
