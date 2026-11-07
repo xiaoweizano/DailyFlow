@@ -32,6 +32,8 @@ fn knowledge(id: &str, title: &str, updated_at: &str) -> KnowledgeItem {
                 "content": [{ "type": "text", "text": "连接池耗尽" }]
             }]
         }),
+        content_markdown: String::new(),
+        content_plain_text: String::new(),
         editor_schema_version: 1,
         content_hash: None,
         projection_version: 1,
@@ -164,4 +166,26 @@ fn cursor_paginates_knowledge_in_updated_order_without_duplicates() {
     .expect("second page");
     assert_eq!(second_page.items[0].id, FIRST_ID);
     assert!(second_page.next_cursor.is_none());
+}
+
+#[test]
+fn save_preserves_distinct_summary_plain_text_and_markdown_projections() {
+    let mut connection = connection();
+    let mut item = knowledge(FIRST_ID, "数据库连接超时", CREATED_AT);
+    item.summary = "摘要只用于摘要".to_owned();
+    item.content_plain_text = "正文纯文本".to_owned();
+    item.content_markdown = "## 正文 Markdown".to_owned();
+
+    let saved = knowledge_repository::save(
+        &mut connection,
+        &KnowledgeSaveCommand {
+            item,
+            expected_revision: None,
+        },
+    )
+    .expect("save knowledge projections");
+
+    assert_eq!(saved.summary, "摘要只用于摘要");
+    assert_eq!(saved.content_plain_text, "正文纯文本");
+    assert_eq!(saved.content_markdown, "## 正文 Markdown");
 }

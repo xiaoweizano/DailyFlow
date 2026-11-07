@@ -89,9 +89,10 @@ test("persists journal, settings, and desktop lifecycle", async () => {
     await expect(title).toBeVisible();
     await expect(body).toBeVisible();
     await title.fill(smokeTitle);
-    await body.click();
+    await body.locator("p").last().click();
     await page.keyboard.press("Control+A");
-    await page.keyboard.insertText(smokeBody);
+    await page.keyboard.type(smokeBody);
+    await expect(body).toContainText(smokeBody);
     await page.getByRole("button", { name: "立即保存" }).click();
     await expect(page.getByRole("status").filter({ hasText: /^已保存/ })).toBeVisible();
 
@@ -103,10 +104,10 @@ test("persists journal, settings, and desktop lifecycle", async () => {
     await expect(page.getByRole("heading", { name: "设置" })).toBeVisible();
     await page.getByRole("tab", { name: "外观" }).click();
     const darkTheme = page
-      .getByRole("group", { name: "主题" })
-      .getByRole("button", { name: "深色" });
+      .getByRole("radiogroup", { name: "主题" })
+      .getByRole("radio", { name: "深色" });
     await darkTheme.click();
-    await expect(darkTheme).toHaveAttribute("aria-pressed", "true");
+    await expect(darkTheme).toHaveAttribute("aria-checked", "true");
     await page.getByRole("button", { name: "保存设置" }).click();
     await expect(page.getByRole("status").filter({ hasText: "设置已保存" })).toBeVisible();
     await expect
@@ -117,8 +118,8 @@ test("persists journal, settings, and desktop lifecycle", async () => {
     await expect(page.getByRole("heading", { name: "设置" })).toBeVisible();
     await page.getByRole("tab", { name: "外观" }).click();
     await expect(
-      page.getByRole("group", { name: "主题" }).getByRole("button", { name: "深色" }),
-    ).toHaveAttribute("aria-pressed", "true");
+      page.getByRole("radiogroup", { name: "主题" }).getByRole("radio", { name: "深色" }),
+    ).toHaveAttribute("aria-checked", "true");
     await expect
       .poll(() => page.evaluate(() => document.documentElement.dataset.theme))
       .toBe("dark");

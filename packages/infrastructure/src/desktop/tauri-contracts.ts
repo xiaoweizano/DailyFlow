@@ -310,6 +310,8 @@ export const KnowledgeItemDtoSchema = z.object({
   title: z.string().min(1).max(500),
   contentJson: JsonObjectSchema,
   editorSchemaVersion: z.number().int().positive(),
+  contentMarkdown: z.string(),
+  contentPlainText: z.string(),
   contentHash: ContentHashSchema.nullable(),
   projectionVersion: z.number().int().positive(),
   summary: z.string(),

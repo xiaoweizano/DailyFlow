@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useAppServices } from "../app-services-hooks.js";
 import { useAppText } from "../preferences/use-app-text.js";
 import { knowledgeKindOptions } from "./knowledge-labels.js";
+import { knowledgeErrorMessage } from "./knowledge-services.js";
 
 export interface KnowledgePromotionDialogProps {
   readonly open: boolean;
@@ -54,6 +55,10 @@ export function KnowledgePromotionDialog({
 
     setSaving(true);
     setError(null);
+    const fallback = text(
+      "保存到知识库失败，请重试",
+      "Failed to save to the knowledge base. Try again.",
+    );
     try {
       const result = await services.knowledge.promote({
         journalId: journal.id,
@@ -62,17 +67,13 @@ export function KnowledgePromotionDialog({
         title: title.trim(),
       });
       if (!result.ok) {
-        setError(
-          text("保存到知识库失败，请重试", "Failed to save to the knowledge base. Try again."),
-        );
+        setError(knowledgeErrorMessage(result.error, fallback));
         return;
       }
       onPromoted?.(result.value);
       onOpenChange(false);
-    } catch {
-      setError(
-        text("保存到知识库失败，请重试", "Failed to save to the knowledge base. Try again."),
-      );
+    } catch (caught) {
+      setError(knowledgeErrorMessage(caught, fallback));
     } finally {
       setSaving(false);
     }
@@ -80,8 +81,13 @@ export function KnowledgePromotionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent aria-describedby="knowledge-promotion-description">
-        <DialogHeader>
+      <DialogContent
+        aria-describedby="knowledge-promotion-description"
+        className="h-[min(72vh,620px)] max-w-[720px] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 p-0"
+        scroll="none"
+        size="immersive"
+      >
+        <DialogHeader className="border-b border-border px-6 py-5 pr-14">
           <DialogTitle>{text("保存为知识", "Save as knowledge")}</DialogTitle>
           <DialogDescription id="knowledge-promotion-description">
             {text(
@@ -91,7 +97,7 @@ export function KnowledgePromotionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
+        <div className="grid min-h-0 content-start gap-4 overflow-y-auto p-6">
           <div className="grid gap-2">
             <p className="text-xs font-medium text-foreground">
               {text("知识类型", "Knowledge type")}
@@ -130,7 +136,7 @@ export function KnowledgePromotionDialog({
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="mt-0 border-t border-border px-6 py-4">
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
             {text("取消", "Cancel")}
           </Button>

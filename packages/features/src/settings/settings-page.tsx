@@ -15,7 +15,6 @@ import { useLocation } from "react-router-dom";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { detectShortcutPlatform, type ShortcutPlatform } from "../platform/command-registry.js";
-import { useAppMessages } from "../preferences/use-app-messages.js";
 import { applyVisualPreferences } from "../preferences/apply-visual-preferences.js";
 import { getSettingsMessages } from "../preferences/messages.js";
 import { useAppText } from "../preferences/use-app-text.js";
@@ -43,7 +42,6 @@ export function SettingsPage({
   const { ai, storageLocation } = useAppServices();
   const text = useAppText();
   const { preferences, warning, loading, save: savePreferences } = useUserPreferences();
-  const { setLocalePreview } = useAppMessages();
   const location = useLocation();
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(() =>
     location.hash === "#shortcut-help" ? "about" : "general",
@@ -53,7 +51,7 @@ export function SettingsPage({
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const effectiveDraft = draft ?? preferences;
-  const messages = getSettingsMessages(effectiveDraft.locale);
+  const messages = getSettingsMessages(preferences.locale);
   const isDesktop = platform === "windows" || platform === "macos";
 
   useEffect(() => {
@@ -72,15 +70,6 @@ export function SettingsPage({
       applyVisualPreferences(preferences);
     };
   }, [draft, loading, preferences]);
-
-  useEffect(() => {
-    if (loading) {
-      return;
-    }
-
-    setLocalePreview(effectiveDraft.locale);
-    return () => setLocalePreview(null);
-  }, [effectiveDraft.locale, loading, setLocalePreview]);
 
   useEffect(() => {
     if (location.hash !== "#shortcut-help") {
@@ -217,18 +206,49 @@ export function SettingsPage({
                           {messages.general.languageDescription}
                         </p>
                       </div>
-                      <Select
+                      <div
+                        role="radiogroup"
                         aria-label={messages.general.language}
-                        value={effectiveDraft.locale}
-                        onChange={(event) =>
-                          updateDraft({
-                            locale: event.currentTarget.value as UserPreferences["locale"],
-                          })
-                        }
+                        className="grid grid-cols-2 gap-2"
                       >
-                        <option value="zh-CN">简体中文</option>
-                        <option value="en-US">English</option>
-                      </Select>
+                        {[
+                          {
+                            value: "zh-CN" as const,
+                            label: "简体中文",
+                            description: "中文界面",
+                          },
+                          {
+                            value: "en-US" as const,
+                            label: "English",
+                            description: "English interface",
+                          },
+                        ].map((option) => {
+                          const selected = effectiveDraft.locale === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="radio"
+                              aria-label={option.label}
+                              aria-checked={selected}
+                              className={[
+                                "min-w-0 rounded-[var(--radius-control)] border px-3 py-2.5 text-left transition-colors",
+                                selected
+                                  ? "border-primary bg-primary/8 text-foreground shadow-sm"
+                                  : "border-border-strong bg-surface text-muted-foreground hover:border-primary/35 hover:text-foreground",
+                              ].join(" ")}
+                              onClick={() => updateDraft({ locale: option.value })}
+                            >
+                              <span className="block truncate text-sm font-medium">
+                                {option.label}
+                              </span>
+                              <span className="mt-0.5 block truncate text-[11px]">
+                                {option.description}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     <div className="py-4">
@@ -253,7 +273,7 @@ export function SettingsPage({
                       </div>
                       <div
                         data-settings-group="startup-background"
-                        className="grid divide-y divide-border border-y border-border"
+                        className="grid divide-y divide-border"
                       >
                         <SettingSwitchRow
                           label={messages.general.autostart}
@@ -269,13 +289,71 @@ export function SettingsPage({
                           disabled={!isDesktop}
                           onCheckedChange={(silentStart) => updateDraft({ silentStart })}
                         />
-                        <SettingSwitchRow
-                          label={messages.general.closeToTray}
-                          description={messages.general.closeToTrayDescription}
-                          checked={effectiveDraft.closeToTray}
-                          disabled={!isDesktop}
-                          onCheckedChange={(closeToTray) => updateDraft({ closeToTray })}
-                        />
+                        <div className="py-3.5">
+                          <p className="text-sm font-medium text-foreground">
+                            {messages.general.closeBehavior}
+                          </p>
+                          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                            {messages.general.closeBehaviorDescription}
+                          </p>
+                          <div
+                            role="radiogroup"
+                            aria-label={messages.general.closeBehavior}
+                            className="mt-3 grid gap-2 sm:grid-cols-3"
+                          >
+                            {[
+                              {
+                                value: "ask" as const,
+                                label: messages.general.ask,
+                                description: messages.general.askDescription,
+                              },
+                              {
+                                value: "minimize" as const,
+                                label: messages.general.minimize,
+                                description: messages.general.minimizeDescription,
+                              },
+                              {
+                                value: "quit" as const,
+                                label: messages.general.quit,
+                                description: messages.general.quitDescription,
+                              },
+                            ].map((option) => {
+                              const selected = effectiveDraft.closeBehavior === option.value;
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  role="radio"
+                                  aria-label={option.label}
+                                  aria-checked={selected}
+                                  disabled={!isDesktop}
+                                  className={[
+                                    "min-w-0 rounded-[var(--radius-control)] border px-3 py-2.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-55",
+                                    selected
+                                      ? "border-primary bg-primary/8 text-foreground shadow-sm"
+                                      : "border-border-strong bg-surface text-muted-foreground hover:border-primary/35 hover:text-foreground",
+                                  ].join(" ")}
+                                  onClick={() => updateDraft({ closeBehavior: option.value })}
+                                >
+                                  <span className="flex items-center justify-between gap-2">
+                                    <span className="truncate text-sm font-medium">
+                                      {option.label}
+                                    </span>
+                                    {selected ? (
+                                      <Check
+                                        aria-hidden="true"
+                                        className="size-3.5 shrink-0 text-primary"
+                                      />
+                                    ) : null}
+                                  </span>
+                                  <span className="mt-1 block text-[11px] leading-4">
+                                    {option.description}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -286,7 +364,7 @@ export function SettingsPage({
                       <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                         {messages.general.interfaceFeedbackDescription}
                       </p>
-                      <div className="mt-3 border-y border-border">
+                      <div className="mt-3">
                         <SettingSwitchRow
                           label={messages.general.warnings}
                           description={messages.general.warningsDescription}
@@ -308,53 +386,210 @@ export function SettingsPage({
                   icon={Palette}
                 >
                   <div className="divide-y divide-border border-y border-border">
-                    <SettingControlRow
-                      label={messages.appearance.theme}
-                      description={messages.appearance.themeDescription}
-                    >
-                      <SegmentedControl
-                        label={messages.appearance.theme}
-                        value={effectiveDraft.theme}
-                        options={[
-                          { label: messages.appearance.system, value: "system" },
-                          { label: messages.appearance.light, value: "light" },
-                          { label: messages.appearance.dark, value: "dark" },
-                        ]}
-                        onChange={(theme) => updateDraft({ theme })}
-                      />
-                    </SettingControlRow>
-                    <SettingControlRow
-                      label={messages.appearance.accent}
-                      description={messages.appearance.accentDescription}
-                    >
-                      <SegmentedControl
-                        label={messages.appearance.accent}
-                        value={effectiveDraft.accent}
-                        options={[
-                          { label: messages.appearance.blue, value: "blue" },
-                          { label: messages.appearance.green, value: "green" },
-                          { label: messages.appearance.amber, value: "amber" },
-                          { label: messages.appearance.rose, value: "rose" },
-                          { label: messages.appearance.neutral, value: "neutral" },
-                        ]}
-                        onChange={(accent) => updateDraft({ accent })}
-                      />
-                    </SettingControlRow>
-                    <SettingControlRow
-                      label={messages.appearance.density}
-                      description={messages.appearance.densityDescription}
-                    >
-                      <SegmentedControl
-                        label={messages.appearance.density}
-                        value={effectiveDraft.density}
-                        options={[
-                          { label: messages.appearance.compact, value: "compact" },
-                          { label: messages.appearance.comfortable, value: "comfortable" },
-                          { label: messages.appearance.spacious, value: "spacious" },
-                        ]}
-                        onChange={(density) => updateDraft({ density })}
-                      />
-                    </SettingControlRow>
+                    <div className="py-4">
+                      <p className="text-sm font-medium text-foreground">
+                        {messages.appearance.theme}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                        {messages.appearance.themeDescription}
+                      </p>
+                      <div
+                        role="radiogroup"
+                        aria-label={messages.appearance.theme}
+                        className="mt-3 grid gap-2 sm:grid-cols-3"
+                      >
+                        {[
+                          {
+                            value: "system" as const,
+                            label: messages.appearance.system,
+                            preview: "split" as const,
+                          },
+                          {
+                            value: "light" as const,
+                            label: messages.appearance.light,
+                            preview: "light" as const,
+                          },
+                          {
+                            value: "dark" as const,
+                            label: messages.appearance.dark,
+                            preview: "dark" as const,
+                          },
+                        ].map((option) => {
+                          const selected = effectiveDraft.theme === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="radio"
+                              aria-label={option.label}
+                              aria-checked={selected}
+                              className={[
+                                "min-w-0 rounded-[var(--radius-control)] border p-2.5 text-left transition-colors",
+                                selected
+                                  ? "border-primary bg-primary/8 text-foreground shadow-sm"
+                                  : "border-border-strong bg-surface text-muted-foreground hover:border-primary/35 hover:text-foreground",
+                              ].join(" ")}
+                              onClick={() => updateDraft({ theme: option.value })}
+                            >
+                              <ThemePreview mode={option.preview} />
+                              <span className="mt-2 flex items-center justify-between gap-2">
+                                <span className="truncate text-sm font-medium">{option.label}</span>
+                                {selected ? (
+                                  <Check
+                                    aria-hidden="true"
+                                    className="size-3.5 shrink-0 text-primary"
+                                  />
+                                ) : null}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="py-4">
+                      <p className="text-sm font-medium text-foreground">
+                        {messages.appearance.accent}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                        {messages.appearance.accentDescription}
+                      </p>
+                      <div
+                        role="radiogroup"
+                        aria-label={messages.appearance.accent}
+                        className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5"
+                      >
+                        {[
+                          {
+                            value: "blue" as const,
+                            label: messages.appearance.blue,
+                            swatch: "hsl(210 72% 45%)",
+                          },
+                          {
+                            value: "green" as const,
+                            label: messages.appearance.green,
+                            swatch: "hsl(151 55% 36%)",
+                          },
+                          {
+                            value: "amber" as const,
+                            label: messages.appearance.amber,
+                            swatch: "hsl(32 82% 40%)",
+                          },
+                          {
+                            value: "rose" as const,
+                            label: messages.appearance.rose,
+                            swatch: "hsl(344 62% 46%)",
+                          },
+                          {
+                            value: "neutral" as const,
+                            label: messages.appearance.neutral,
+                            swatch: "hsl(220 9% 38%)",
+                          },
+                        ].map((option) => {
+                          const selected = effectiveDraft.accent === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="radio"
+                              aria-label={option.label}
+                              aria-checked={selected}
+                              className={[
+                                "flex min-w-0 items-center gap-2.5 rounded-[var(--radius-control)] border px-3 py-3 text-left transition-colors",
+                                selected
+                                  ? "border-primary bg-primary/8 text-foreground shadow-sm"
+                                  : "border-border-strong bg-surface text-muted-foreground hover:border-primary/35 hover:text-foreground",
+                              ].join(" ")}
+                              onClick={() => updateDraft({ accent: option.value })}
+                            >
+                              <span
+                                aria-hidden="true"
+                                className="size-5 shrink-0 rounded-full shadow-[inset_0_0_0_1px_rgb(0_0_0_/_0.12)]"
+                                style={{ backgroundColor: option.swatch }}
+                              />
+                              <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                                {option.label}
+                              </span>
+                              {selected ? (
+                                <Check
+                                  aria-hidden="true"
+                                  className="size-3.5 shrink-0 text-primary"
+                                />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="py-4">
+                      <p className="text-sm font-medium text-foreground">
+                        {messages.appearance.density}
+                      </p>
+                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                        {messages.appearance.densityDescription}
+                      </p>
+                      <div
+                        role="radiogroup"
+                        aria-label={messages.appearance.density}
+                        className="mt-3 grid gap-2 sm:grid-cols-3"
+                      >
+                        {[
+                          {
+                            value: "compact" as const,
+                            label: messages.appearance.compact,
+                            rowHeight: 4,
+                          },
+                          {
+                            value: "comfortable" as const,
+                            label: messages.appearance.comfortable,
+                            rowHeight: 6,
+                          },
+                          {
+                            value: "spacious" as const,
+                            label: messages.appearance.spacious,
+                            rowHeight: 8,
+                          },
+                        ].map((option) => {
+                          const selected = effectiveDraft.density === option.value;
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              role="radio"
+                              aria-label={option.label}
+                              aria-checked={selected}
+                              className={[
+                                "min-w-0 rounded-[var(--radius-control)] border p-3 text-left transition-colors",
+                                selected
+                                  ? "border-primary bg-primary/8 text-foreground shadow-sm"
+                                  : "border-border-strong bg-surface text-muted-foreground hover:border-primary/35 hover:text-foreground",
+                              ].join(" ")}
+                              onClick={() => updateDraft({ density: option.value })}
+                            >
+                              <span aria-hidden="true" className="grid gap-1">
+                                {[0, 1, 2].map((row) => (
+                                  <span
+                                    key={row}
+                                    className="rounded-[2px] bg-current opacity-20"
+                                    style={{ height: option.rowHeight }}
+                                  />
+                                ))}
+                              </span>
+                              <span className="mt-2.5 flex items-center justify-between gap-2">
+                                <span className="truncate text-sm font-medium">{option.label}</span>
+                                {selected ? (
+                                  <Check
+                                    aria-hidden="true"
+                                    className="size-3.5 shrink-0 text-primary"
+                                  />
+                                ) : null}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </SettingsSection>
               ) : null}
@@ -506,25 +741,39 @@ export function SettingsPage({
   );
 }
 
-interface SettingControlRowProps {
-  readonly label: string;
-  readonly description: string;
-  readonly children: React.ReactNode;
-}
+function ThemePreview({ mode }: { readonly mode: "split" | "light" | "dark" }): React.JSX.Element {
+  const previewClass = {
+    split: "border-border bg-surface",
+    light: "border-zinc-300 bg-white",
+    dark: "border-zinc-700 bg-zinc-900",
+  }[mode];
+  const sidebarClass = {
+    split: "border-border bg-surface-muted",
+    light: "border-zinc-200 bg-zinc-100",
+    dark: "border-zinc-700 bg-zinc-800",
+  }[mode];
+  const lineClass = {
+    split: "bg-muted-foreground/30",
+    light: "bg-zinc-400/45",
+    dark: "bg-zinc-500/55",
+  }[mode];
 
-function SettingControlRow({
-  label,
-  description,
-  children,
-}: SettingControlRowProps): React.JSX.Element {
   return (
-    <div className="grid gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-      <div>
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{description}</p>
-      </div>
-      <div className="min-w-0 sm:justify-self-end">{children}</div>
-    </div>
+    <span
+      aria-hidden="true"
+      className={`grid h-14 grid-cols-[36%_1fr] overflow-hidden rounded-[4px] border ${previewClass}`}
+    >
+      <span className={`border-r p-1.5 ${sidebarClass}`}>
+        <span className={`block h-1.5 w-3/4 rounded-[2px] ${lineClass}`} />
+        <span className={`mt-1 block h-1.5 w-full rounded-[2px] ${lineClass}`} />
+        <span className={`mt-1 block h-1.5 w-2/3 rounded-[2px] ${lineClass}`} />
+      </span>
+      <span className="p-2">
+        <span className={`block h-1.5 w-1/2 rounded-[2px] ${lineClass}`} />
+        <span className={`mt-1.5 block h-1 w-full rounded-[2px] ${lineClass}`} />
+        <span className={`mt-1 block h-1 w-4/5 rounded-[2px] ${lineClass}`} />
+      </span>
+    </span>
   );
 }
 

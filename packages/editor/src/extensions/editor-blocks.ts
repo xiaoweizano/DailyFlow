@@ -164,7 +164,6 @@ function createDragHandle(position: number, label: string): HTMLElement {
   handle.dataset.blockPosition = String(position);
   handle.setAttribute("aria-label", `拖动${label}块`);
   handle.title = "拖动块";
-  handle.textContent = "⠿";
   return handle;
 }
 

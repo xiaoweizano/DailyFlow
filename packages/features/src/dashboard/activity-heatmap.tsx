@@ -2,6 +2,7 @@ import type { JournalSummary } from "@dailyflow/application";
 
 import { localDatesEndingAt } from "../date-utils.js";
 import { getAppMessages, type AppMessages } from "../preferences/app-messages.js";
+import { activityLevelClass } from "../timeline/activity-level.js";
 
 const defaultCopy = getAppMessages("zh-CN").dashboard;
 
@@ -53,16 +54,7 @@ export function ActivityHeatmap({
               aria-label={copy.journalCount(date, count)}
               aria-live="off"
               title={copy.journalCountTitle(date, count)}
-              className={[
-                "size-3 shrink-0 rounded-[2px] border",
-                count === 0
-                  ? "border-border bg-surface-muted"
-                  : count === 1
-                    ? "df-activity-green-1"
-                    : count === 2
-                      ? "df-activity-green-2"
-                      : "df-activity-green-4",
-              ].join(" ")}
+              className={`size-3 shrink-0 rounded-[2px] border ${activityLevelClass(count)}`}
             />
           );
         })}

@@ -1,5 +1,6 @@
 import type { TaskListView } from "@dailyflow/application";
 import type { LocalDate, Task, TaskPriority } from "@dailyflow/domain";
+import type { AppError, Result } from "@dailyflow/shared";
 import {
   Button,
   Dialog,
@@ -28,7 +29,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAppServices } from "../app-services-hooks.js";
 import { currentLocalDate, isLocalDate } from "../date-utils.js";
 import { useAppText, type AppText } from "../preferences/use-app-text.js";
-import type { TaskCreateInput, TaskUpdate } from "./task-services.js";
+import { taskFieldErrors, type TaskCreateInput, type TaskUpdate } from "./task-services.js";
 
 export interface TasksPageProps {
   readonly today?: string;
@@ -59,7 +60,7 @@ const priorityClasses: Record<TaskPriority, string> = {
 interface NewTaskDialogProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly onCreate: (input: TaskCreateInput) => Promise<boolean>;
+  readonly onCreate: (input: TaskCreateInput) => Promise<Result<Task, AppError>>;
 }
 
 function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): React.JSX.Element {
@@ -69,6 +70,9 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
   const [priority, setPriority] = useState<TaskPriority>("normal");
   const [dueDate, setDueDate] = useState("");
   const [saving, setSaving] = useState(false);
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [dueDateError, setDueDateError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -76,12 +80,24 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
       setDescriptionText("");
       setPriority("normal");
       setDueDate("");
+      setTitleError(null);
+      setDueDateError(null);
+      setFormError(null);
     }
   }, [open]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (title.trim() === "") {
+    const nextTitleError =
+      title.trim() === "" ? text("请输入待办标题", "Enter a task title") : null;
+    const nextDueDateError =
+      dueDate !== "" && !isLocalDate(dueDate)
+        ? text("请选择有效日期", "Choose a valid date")
+        : null;
+    setTitleError(nextTitleError);
+    setDueDateError(nextDueDateError);
+    setFormError(null);
+    if (nextTitleError !== null || nextDueDateError !== null) {
       return;
     }
     setSaving(true);
@@ -92,9 +108,20 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
         priority,
         ...(dueDate === "" ? {} : { dueDate: dueDate as LocalDate }),
       });
-      if (created) {
-        onOpenChange(false);
+      if (!created.ok) {
+        const fieldErrors = taskFieldErrors(
+          created.error,
+          text(
+            "待办创建失败，请检查标题和日期后重试",
+            "The task could not be created. Check the title and date, then try again.",
+          ),
+        );
+        setTitleError(fieldErrors.title ?? null);
+        setDueDateError(fieldErrors.dueDate ?? null);
+        setFormError(fieldErrors.form ?? null);
+        return;
       }
+      onOpenChange(false);
     } finally {
       setSaving(false);
     }
@@ -117,10 +144,20 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
             {text("任务标题", "Task title")}
             <Input
               value={title}
-              onChange={(event) => setTitle(event.currentTarget.value)}
+              onChange={(event) => {
+                setTitle(event.currentTarget.value);
+                setTitleError(null);
+              }}
               maxLength={500}
               autoFocus
+              aria-invalid={titleError !== null}
+              aria-describedby={titleError === null ? undefined : "new-task-title-error"}
             />
+            {titleError === null ? null : (
+              <p id="new-task-title-error" role="alert" className="text-xs text-danger">
+                {titleError}
+              </p>
+            )}
           </label>
           <label className="grid gap-1.5 text-xs font-medium text-foreground">
             {text("任务备注", "Notes")}
@@ -157,16 +194,34 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
                 aria-label={text("待办截止日期", "Task due date")}
                 type="date"
                 value={dueDate}
-                onChange={(event) => setDueDate(event.currentTarget.value)}
+                onChange={(event) => {
+                  setDueDate(event.currentTarget.value);
+                  setDueDateError(null);
+                }}
                 className="font-mono text-xs"
+                aria-invalid={dueDateError !== null}
+                aria-describedby={dueDateError === null ? undefined : "new-task-due-date-error"}
               />
+              {dueDateError === null ? null : (
+                <p id="new-task-due-date-error" role="alert" className="text-xs text-danger">
+                  {dueDateError}
+                </p>
+              )}
             </label>
           </div>
+          {formError === null ? null : (
+            <p
+              role="alert"
+              className="border border-danger/25 bg-danger/5 px-3 py-2 text-xs text-danger"
+            >
+              {formError}
+            </p>
+          )}
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
               {text("取消", "Cancel")}
             </Button>
-            <Button type="submit" disabled={saving || title.trim() === ""}>
+            <Button type="submit" disabled={saving}>
               {saving ? (
                 <RotateCw aria-hidden="true" className="size-4 animate-spin" />
               ) : (
@@ -426,19 +481,12 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
     updateVisibleTask(result.value);
   }
 
-  async function handleCreate(input: TaskCreateInput): Promise<boolean> {
+  async function handleCreate(input: TaskCreateInput): Promise<Result<Task, AppError>> {
     const result = await services.tasks.create(input);
-    if (!result.ok) {
-      setError(
-        text(
-          "待办创建失败，请检查标题和日期后重试",
-          "The task could not be created. Check the title and date, then try again.",
-        ),
-      );
-      return false;
+    if (result.ok) {
+      setReloadVersion((version) => version + 1);
     }
-    setReloadVersion((version) => version + 1);
-    return true;
+    return result;
   }
 
   const overdue = tasks.filter(
@@ -537,21 +585,29 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
                     aria-label={`${text("待办：", "Task: ")}${task.title}`}
                     className="group flex min-w-0 items-start gap-3 px-4 py-3 hover:bg-surface-muted/45"
                   >
-                    <IconButton
-                      label={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label={
+                        isDone
+                          ? text("重新打开待办", "Reopen task")
+                          : text("完成待办", "Complete task")
+                      }
+                      title={
                         isDone
                           ? text("重新打开待办", "Reopen task")
                           : text("完成待办", "Complete task")
                       }
                       onClick={() => void handleToggle(task)}
-                      className="mt-0.5"
+                      className="mt-0.5 shrink-0 px-2 [&_svg]:size-3.5"
                     >
                       {isDone ? (
                         <CheckSquare2 aria-hidden="true" className="text-success" />
                       ) : (
                         <Circle aria-hidden="true" className="text-muted-foreground" />
                       )}
-                    </IconButton>
+                      {isDone ? text("重新打开", "Reopen") : text("完成", "Complete")}
+                    </Button>
                     <div className="min-w-0 flex-1">
                       <p
                         className={`break-words text-sm font-medium ${

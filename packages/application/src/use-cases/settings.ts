@@ -11,36 +11,56 @@ export const ThemePreferenceSchema = z.enum(["light", "dark", "system"]);
 export const AccentPreferenceSchema = z.enum(["blue", "green", "amber", "rose", "neutral"]);
 export const DensityPreferenceSchema = z.enum(["comfortable", "compact", "spacious"]);
 export const EditorWidthPreferenceSchema = z.enum(["focused", "wide"]);
+export const CloseBehaviorSchema = z.enum(["ask", "minimize", "quit"]);
 
 export const HistoryRetentionSchema = z.object({
   maxVersions: z.number().int().min(10).max(1000).default(100),
   maxAgeDays: z.number().int().min(7).max(3650).default(180),
 });
 
-export const UserPreferencesSchema = z.object({
-  schemaVersion: z
-    .union([z.literal(1), z.literal(2)])
-    .transform(() => 2 as const)
-    .default(2),
-  locale: LocalePreferenceSchema.default("zh-CN"),
-  theme: ThemePreferenceSchema.default("system"),
-  accent: AccentPreferenceSchema.default("blue"),
-  density: DensityPreferenceSchema.default("comfortable"),
-  editorFontSize: z.number().int().min(13).max(20).default(15),
-  editorWidth: EditorWidthPreferenceSchema.default("wide"),
-  showOutline: z.boolean().default(true),
-  autosaveIntervalMs: z.number().int().min(200).max(10_000).default(800),
-  weekStartsOn: z.number().int().min(0).max(6).default(1),
-  showWarnings: z.boolean().default(true),
-  closeToTray: z.boolean().default(true),
-  autostart: z.boolean().default(false),
-  silentStart: z.boolean().default(false),
-  customDataDirectory: z.string().min(1).nullable().default(null),
-  historyRetention: HistoryRetentionSchema.default({
-    maxVersions: 100,
-    maxAgeDays: 180,
-  }),
-});
+const persistedPreferencesSchema = z
+  .object({
+    schemaVersion: z
+      .union([z.literal(1), z.literal(2)])
+      .transform(() => 2 as const)
+      .default(2),
+    locale: LocalePreferenceSchema.default("zh-CN"),
+    theme: ThemePreferenceSchema.default("system"),
+    accent: AccentPreferenceSchema.default("blue"),
+    density: DensityPreferenceSchema.default("comfortable"),
+    editorFontSize: z.number().int().min(13).max(20).default(15),
+    editorWidth: EditorWidthPreferenceSchema.default("wide"),
+    showOutline: z.boolean().default(true),
+    autosaveIntervalMs: z.number().int().min(200).max(10_000).default(800),
+    weekStartsOn: z.number().int().min(0).max(6).default(1),
+    showWarnings: z.boolean().default(true),
+    closeBehavior: CloseBehaviorSchema.default("ask"),
+    autostart: z.boolean().default(false),
+    silentStart: z.boolean().default(false),
+    customDataDirectory: z.string().min(1).nullable().default(null),
+    historyRetention: HistoryRetentionSchema.default({
+      maxVersions: 100,
+      maxAgeDays: 180,
+    }),
+  })
+  .strip();
+
+export const UserPreferencesSchema = z.preprocess((value) => {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+
+  const legacy = value as Record<string, unknown>;
+  if ("closeBehavior" in legacy || typeof legacy.closeToTray !== "boolean") {
+    return legacy;
+  }
+
+  const { closeToTray, ...preferences } = legacy;
+  return {
+    ...preferences,
+    closeBehavior: closeToTray ? "minimize" : "ask",
+  };
+}, persistedPreferencesSchema);
 
 export type LocalePreference = z.infer<typeof LocalePreferenceSchema>;
 export type ThemePreference = z.infer<typeof ThemePreferenceSchema>;
@@ -48,6 +68,7 @@ export type AccentPreference = z.infer<typeof AccentPreferenceSchema>;
 export type DensityPreference = z.infer<typeof DensityPreferenceSchema>;
 export type EditorWidthPreference = z.infer<typeof EditorWidthPreferenceSchema>;
 export type HistoryRetention = z.infer<typeof HistoryRetentionSchema>;
+export type CloseBehavior = z.infer<typeof CloseBehaviorSchema>;
 export type UserPreferences = z.infer<typeof UserPreferencesSchema>;
 
 export type SettingsWarningCode = "invalid_value" | "read_failed" | "write_failed";
@@ -84,7 +105,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = Object.freeze({
   autosaveIntervalMs: 800,
   weekStartsOn: 1,
   showWarnings: true,
-  closeToTray: true,
+  closeBehavior: "ask",
   autostart: false,
   silentStart: false,
   customDataDirectory: null,

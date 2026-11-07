@@ -50,6 +50,8 @@ describe("createKnowledge", () => {
       summary: "Verify the rollback path.",
       sourceJournalId: null,
       sourceBlockId: null,
+      contentMarkdown: "Deploy notes",
+      contentPlainText: "Deploy notes",
       contentHash: PROJECTED_HASH,
       projectionVersion: 1,
       content: {

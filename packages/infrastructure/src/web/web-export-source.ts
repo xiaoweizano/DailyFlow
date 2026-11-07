@@ -92,6 +92,8 @@ function toKnowledgeItem(row: KnowledgeItemRow): KnowledgeItem {
     status: row.status,
     title: row.title,
     content: createContentDocument(row.editorSchemaVersion, parseJson<JsonObject>(row.contentJson)),
+    contentMarkdown: row.contentMarkdown,
+    contentPlainText: row.contentPlainText,
     contentHash: row.contentHash,
     projectionVersion: row.projectionVersion,
     summary: row.summary,

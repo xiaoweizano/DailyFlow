@@ -76,6 +76,8 @@ async function seedAuthority(database: DailyFlowDb): Promise<void> {
       content: [{ type: "paragraph", content: [{ type: "text", text: "取消时回滚" }] }],
     }),
     editorSchemaVersion: 1,
+    contentMarkdown: "取消时回滚",
+    contentPlainText: "取消时回滚",
     contentHash: hash,
     projectionVersion: 1,
     summary: "取消时回滚",

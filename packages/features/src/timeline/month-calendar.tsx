@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useAppMessages } from "../preferences/use-app-messages.js";
 import { useAppText } from "../preferences/use-app-text.js";
 import { formatDate, formatMonthForLocale, parseMonth, shiftMonth } from "./calendar-utils.js";
+import { YearMonthPicker } from "./year-month-picker.js";
 
 export interface MonthCalendarProps {
   readonly month: string;
@@ -29,13 +30,6 @@ export function MonthCalendar({
   const { locale } = useAppMessages();
   const parsed = parseMonth(month);
   const selectedYear = parsed?.year ?? Number(month.slice(0, 4));
-  const selectedMonth = parsed?.monthIndex ?? 0;
-  const yearOptions = Array.from(
-    new Set([
-      ...Array.from({ length: 25 }, (_, index) => selectedYear - 12 + index),
-      ...(today === undefined ? [] : [Number(today.slice(0, 4))]),
-    ]),
-  ).sort((left, right) => left - right);
   const entriesByDate = new Map<string, TimelineDaySummary>(
     days.map((entry) => [entry.date, entry]),
   );
@@ -65,41 +59,7 @@ export function MonthCalendar({
             >
               <ChevronLeft aria-hidden="true" className="size-4" />
             </button>
-            <select
-              aria-label={text("选择年份", "Select year")}
-              value={selectedYear}
-              className="h-8 border border-border-strong bg-surface px-2 font-mono text-xs text-foreground outline-none focus:border-primary"
-              onChange={(event) =>
-                onMonthChange(
-                  `${event.currentTarget.value}-${String(selectedMonth + 1).padStart(2, "0")}`,
-                )
-              }
-            >
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {text(`${year} 年`, String(year))}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label={text("选择月份", "Select month")}
-              value={selectedMonth + 1}
-              className="h-8 border border-border-strong bg-surface px-2 text-xs text-foreground outline-none focus:border-primary"
-              onChange={(event) =>
-                onMonthChange(
-                  `${selectedYear}-${String(Number(event.currentTarget.value)).padStart(2, "0")}`,
-                )
-              }
-            >
-              {Array.from({ length: 12 }, (_, index) => (
-                <option key={index + 1} value={index + 1}>
-                  {new Intl.DateTimeFormat(locale, {
-                    month: locale === "zh-CN" ? "long" : "short",
-                    timeZone: "UTC",
-                  }).format(new Date(Date.UTC(2020, index, 1)))}
-                </option>
-              ))}
-            </select>
+            <YearMonthPicker year={selectedYear} month={month} onSelect={onMonthChange} />
             <button
               type="button"
               aria-label={text("下个月", "Next month")}

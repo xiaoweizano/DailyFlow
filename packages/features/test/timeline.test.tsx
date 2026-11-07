@@ -264,11 +264,12 @@ describe("Timeline experience", () => {
       />,
     );
 
-    await user.selectOptions(screen.getByLabelText("选择年份"), "2024");
-    expect(onMonthChange).toHaveBeenLastCalledWith("2024-10");
-
-    await user.selectOptions(screen.getByLabelText("选择月份"), "2");
-    expect(onMonthChange).toHaveBeenLastCalledWith("2026-02");
+    await user.click(screen.getByRole("button", { name: "2026 年" }));
+    const yearInput = screen.getByRole("spinbutton", { name: "年份" });
+    await user.clear(yearInput);
+    await user.type(yearInput, "1998");
+    await user.click(screen.getByRole("button", { name: "前往 1998 年 2 月" }));
+    expect(onMonthChange).toHaveBeenLastCalledWith("1998-02");
 
     await user.click(screen.getByRole("button", { name: "回到今天" }));
     expect(onMonthChange).toHaveBeenLastCalledWith("2026-10");
@@ -311,6 +312,30 @@ describe("Timeline experience", () => {
     expect(screen.getByText("按日志数量着色")).toBeTruthy();
     expect(screen.getByText(/每格代表一天/u)).toBeTruthy();
     expect(screen.getByLabelText("2026-10-30，1 篇日志，2 个任务到期")).toBeTruthy();
+  });
+
+  it("uses the shared six-level green scale for heatmap activity", () => {
+    const busyDay = { ...day, journalCount: 12 };
+    renderWithMessages(
+      <>
+        <AnnualHeatmap
+          year={2026}
+          today="2026-10-30"
+          days={[busyDay]}
+          weekStartsOn={1}
+          onYearChange={() => undefined}
+          onOpenDate={() => undefined}
+        />
+        <ActivityHeatmap endDate="2026-10-30" days={[busyDay]} weeks={12} />
+      </>,
+    );
+
+    expect(
+      screen.getByRole("gridcell", { name: "2026-10-30，12 篇日志，2 个任务到期" }),
+    ).toHaveClass("df-activity-green-5");
+    expect(
+      screen.getByRole("listitem", { name: "2026-10-30，12 篇日志，2 个任务到期" }),
+    ).toHaveClass("df-activity-green-5");
   });
 
   it("loads a natural year once and reuses the cached annual heatmap", async () => {

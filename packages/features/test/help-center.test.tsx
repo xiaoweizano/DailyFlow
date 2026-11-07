@@ -37,28 +37,50 @@ function renderHelp(locale: LocalePreference = "zh-CN"): void {
 }
 
 describe("offline help center", () => {
-  it("uses the persisted application language for one continuous manual", async () => {
-    renderHelp("en-US");
-
-    expect(
-      await screen.findByRole("heading", { name: "DailyFlow User Manual" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Manual contents" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Journals and Templates/u })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "English" })).not.toBeInTheDocument();
-  });
-
-  it("filters manual sections with help search", async () => {
+  it("starts with topics and opens one complete guide chapter", async () => {
     const user = userEvent.setup();
     renderHelp();
 
-    await user.type(screen.getByRole("searchbox", { name: "搜索帮助" }), "结构化块");
+    expect(await screen.findByRole("heading", { name: "DailyFlow 帮助中心" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "搜索帮助" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /创建并编辑每日日志/u })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /创建、完成和重新打开待办/u })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /使用时间线/u })).toBeInTheDocument();
 
-    const directory = screen.getByRole("navigation", { name: "手册目录" });
-    expect(within(directory).getByRole("button", { name: /每日日志与模板/u })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /创建、完成和重新打开待办/u }));
+
+    expect(screen.getByRole("heading", { name: "待办：创建、完成与重新打开" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /待办完成和重新打开按钮/u })).toBeInTheDocument();
     expect(
-      within(directory).queryByRole("button", { name: /数据、备份与恢复/u }),
-    ).not.toBeInTheDocument();
+      within(screen.getByRole("navigation", { name: "本章目录" })).getByRole("link", {
+        name: /完成与重新打开/u,
+      }),
+    ).toHaveAttribute("href", "#tasks-section-2");
+
+    await user.click(screen.getByRole("button", { name: "放大查看截图" }));
+    expect(screen.getByRole("dialog", { name: /待办完成和重新打开按钮/u })).toBeInTheDocument();
+  });
+
+  it("searches topics and opens the matching chapter", async () => {
+    const user = userEvent.setup();
+    renderHelp();
+
+    await user.type(await screen.findByRole("searchbox", { name: "搜索帮助" }), "重新打开");
+
+    expect(screen.getByText("2 条匹配结果")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /创建、完成和重新打开待办/u }));
+
+    expect(screen.getByRole("heading", { name: "待办：创建、完成与重新打开" })).toBeInTheDocument();
+  });
+
+  it("keeps the consolidated manual available offline", async () => {
+    const user = userEvent.setup();
+    renderHelp();
+
+    await user.click(await screen.findByRole("link", { name: "查看完整手册" }));
+
+    expect(screen.getByRole("heading", { name: "创建并编辑每日日志" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "使用时间线" })).toBeInTheDocument();
   });
 
   it("renders safe headings, grouped lists, and local anchors", () => {

@@ -74,6 +74,32 @@ describe("annual heatmap data", () => {
 });
 
 describe("AnnualHeatmap", () => {
+  it("jumps to any valid year without month controls", async () => {
+    const onYearChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AppServicesProvider services={createRuntimeSettingsStub() as AppRuntimeServices}>
+        <AnnualHeatmap
+          year={2024}
+          days={[]}
+          weekStartsOn={1}
+          onYearChange={onYearChange}
+          onOpenDate={() => undefined}
+        />
+      </AppServicesProvider>,
+    );
+
+    await user.click(screen.getByRole("button", { name: "2024 年" }));
+    expect(screen.queryByRole("group", { name: "选择月份" })).not.toBeInTheDocument();
+
+    const yearInput = screen.getByRole("spinbutton", { name: "年份" });
+    await user.clear(yearInput);
+    await user.type(yearInput, "1998");
+    await user.click(screen.getByRole("button", { name: "前往 1998 年" }));
+
+    expect(onYearChange).toHaveBeenCalledWith(1998);
+  });
+
   it("shows task markers, year controls, and accessible day details", async () => {
     const onYearChange = vi.fn();
     const onOpenDate = vi.fn();

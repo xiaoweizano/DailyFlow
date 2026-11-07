@@ -9,24 +9,11 @@ import {
   keyboardHeatmapDate,
   type AnnualHeatmapCell,
 } from "./annual-heatmap-data.js";
+import { activityLevelClass } from "./activity-level.js";
+import { YearMonthPicker } from "./year-month-picker.js";
 
 const GRID_COLUMNS = "repeat(53, 0.875rem)";
 const GRID_ROWS = "repeat(7, 0.875rem)";
-function activityClass(journalCount: number): string {
-  if (journalCount >= 4) {
-    return "df-activity-green-4";
-  }
-  if (journalCount === 3) {
-    return "df-activity-green-3";
-  }
-  if (journalCount === 2) {
-    return "df-activity-green-2";
-  }
-  if (journalCount === 1) {
-    return "df-activity-green-1";
-  }
-  return "border-border bg-surface-muted";
-}
 
 export interface AnnualHeatmapProps {
   readonly year: number;
@@ -115,7 +102,6 @@ export function AnnualHeatmap({
     focusDate(boundedDate);
   }
 
-  const optionYears = Array.from({ length: 21 }, (_, index) => year - 10 + index);
   const cellRows = Array.from({ length: 7 }, (_, rowIndex) =>
     data.cells.filter((_, cellIndex) => cellIndex % 7 === rowIndex),
   );
@@ -132,8 +118,8 @@ export function AnnualHeatmap({
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {text(
-              "每格代表一天，颜色按日志数量分为 0、1、2、3、4+ 五级。",
-              "Each cell is one day. Color intensity represents 0, 1, 2, 3, or 4+ journals.",
+              "每格代表一天，颜色按日志数量分为 0、1、2-3、4-5、6-11、12+ 六级。",
+              "Each cell is one day. Color intensity represents 0, 1, 2-3, 4-5, 6-11, or 12+ journals.",
             )}
           </p>
         </div>
@@ -146,18 +132,12 @@ export function AnnualHeatmap({
           >
             <ChevronLeft aria-hidden="true" className="size-4" />
           </button>
-          <select
-            aria-label={text("选择年份", "Select year")}
-            value={year}
-            className="h-8 border border-border-strong bg-surface px-2 text-sm font-semibold text-foreground outline-none focus:border-primary"
-            onChange={(event) => onYearChange(Number(event.currentTarget.value))}
-          >
-            {optionYears.map((option) => (
-              <option key={option} value={option}>
-                {text(`${option} 年`, String(option))}
-              </option>
-            ))}
-          </select>
+          <YearMonthPicker
+            year={year}
+            month={`${String(year).padStart(4, "0")}-01`}
+            showMonths={false}
+            onSelect={(nextMonth) => onYearChange(Number(nextMonth.slice(0, 4)))}
+          />
           <button
             type="button"
             aria-label={text("下一年", "Next year")}
@@ -239,7 +219,7 @@ export function AnnualHeatmap({
                       className={[
                         "relative size-3.5 shrink-0 rounded-[2px] border outline-none",
                         "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-                        activityClass(cell.journalCount),
+                        activityLevelClass(cell.journalCount),
                         cell.inYear ? "" : "opacity-40",
                         cell.isToday ? "ring-1 ring-foreground ring-offset-1" : "",
                       ].join(" ")}
@@ -278,17 +258,17 @@ export function AnnualHeatmap({
         <div
           role="img"
           aria-label={text(
-            "颜色图例：颜色越深表示日志数量越多，从 0 篇到 4 篇以上",
-            "Color legend: darker colors represent more journals, from 0 to 4 or more",
+            "颜色图例：颜色越深表示日志数量越多，从 0 篇到 12 篇以上",
+            "Color legend: darker colors represent more journals, from 0 to 12 or more",
           )}
           className="flex items-center gap-1.5"
         >
           <span aria-hidden="true">{text("少", "Less")}</span>
-          {[0, 1, 2, 3, 4].map((level) => (
+          {[0, 1, 2, 3, 4, 5].map((level) => (
             <span
               key={level}
               aria-hidden="true"
-              className={`size-3 rounded-[2px] border ${activityClass(level)}`}
+              className={`size-3 rounded-[2px] border ${activityLevelClass(level)}`}
             />
           ))}
           <span aria-hidden="true">{text("多", "More")}</span>

@@ -237,6 +237,8 @@ describe("promoteToKnowledge", () => {
     expect(result.value.id).toBe(KNOWLEDGE_ID);
     expect(result.value.sourceJournalId).toBe(JOURNAL_ID);
     expect(result.value.sourceBlockId).toBe(BLOCK_ID);
+    expect(result.value.contentMarkdown).toBe("Deploy notes");
+    expect(result.value.contentPlainText).toBe("Deploy notes");
     expect(result.value.contentHash).toBe(PROJECTED_HASH);
     expect(knowledge.savedItems).toEqual([
       {

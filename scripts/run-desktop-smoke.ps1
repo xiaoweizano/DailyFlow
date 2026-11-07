@@ -90,13 +90,18 @@ try {
     $previousBrowserArguments = $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS
     $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = "--remote-debugging-port=$cdpPort --remote-allow-origins=*"
     try {
+        $stdoutPath = Join-Path $applicationLogDirectory "application.stdout.log"
+        $stderrPath = Join-Path $applicationLogDirectory "application.stderr.log"
+        $applicationCommand = '{0} > "{1}" 2> "{2}"' -f `
+            $env:TAURI_APP_PATH,
+            $stdoutPath,
+            $stderrPath
         $applicationProcess = Start-Process `
-            -FilePath $env:TAURI_APP_PATH `
+            -FilePath $env:ComSpec `
+            -ArgumentList @('/d', '/s', '/c', $applicationCommand) `
             -WorkingDirectory (Split-Path -Parent $env:TAURI_APP_PATH) `
-            -RedirectStandardOutput (Join-Path $applicationLogDirectory "application.stdout.log") `
-            -RedirectStandardError (Join-Path $applicationLogDirectory "application.stderr.log") `
             -PassThru `
-            -WindowStyle Normal
+            -WindowStyle Hidden
     }
     finally {
         $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = $previousBrowserArguments
@@ -164,9 +169,11 @@ try {
         throw "DailyFlow did not exit within 15 seconds after lifecycle_quit."
     }
 
-    if ($applicationProcess.ExitCode -ne 0) {
+    $applicationProcess.WaitForExit()
+    $applicationExitCode = $applicationProcess.ExitCode
+    if ($applicationExitCode -ne 0) {
         Write-ApplicationDiagnostics
-        throw "DailyFlow exited with code $($applicationProcess.ExitCode) after lifecycle_quit."
+        throw "DailyFlow exited with code $applicationExitCode after lifecycle_quit."
     }
 }
 finally {

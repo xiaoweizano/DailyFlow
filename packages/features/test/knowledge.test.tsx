@@ -296,27 +296,46 @@ describe("Knowledge Base experience", () => {
   });
 
   it("keeps the standalone knowledge editor open when saving fails", async () => {
+    const cause = "knowledge_markdown column rejected the value";
     const knowledge = createKnowledgeServices({
       create: vi.fn(
         async (): Promise<Result<KnowledgeItem, AppError>> =>
           ({
             ok: false,
-            error: { code: "STORAGE_UNAVAILABLE", retryable: true },
+            error: { code: "STORAGE_UNAVAILABLE", retryable: true, cause },
           }) as const,
       ),
     });
     const user = userEvent.setup();
+    const onOpenChange = vi.fn();
 
-    renderWithServices(<KnowledgeCreateDialog open onOpenChange={() => undefined} />, {
-      ...createServices(knowledge),
-    });
+    renderWithServices(
+      <KnowledgeCreateDialog open onOpenChange={onOpenChange} />,
+      createServices(knowledge),
+    );
 
     await user.type(screen.getByLabelText("知识标题"), "发布检查清单");
     await user.type(screen.getByLabelText("Markdown 正文"), "记录发布步骤。");
     await user.click(screen.getByRole("button", { name: "保存到知识库" }));
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("保存到知识库失败，请重试");
+    expect(await screen.findByRole("alert")).toHaveTextContent(cause);
     expect(screen.getByLabelText("知识标题")).toHaveValue("发布检查清单");
+    expect(screen.getByLabelText("Markdown 正文")).toHaveValue("记录发布步骤。");
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps scrolling inside the knowledge editor instead of the dialog shell", () => {
+    renderWithServices(
+      <KnowledgeCreateDialog open onOpenChange={() => undefined} />,
+      createServices(),
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "新建知识" });
+    const editor = screen.getByLabelText("Markdown 正文");
+
+    expect(dialog).toHaveClass("h-[86vh]", "overflow-hidden");
+    expect(editor).toHaveClass("overflow-y-auto");
+    expect(editor).not.toHaveClass("resize-y");
   });
 
   it("shows a recoverable error without querying when the knowledge id is invalid", async () => {
@@ -365,6 +384,30 @@ describe("Knowledge Base experience", () => {
         title: "连接超时的排查记录",
       }),
     );
+  });
+
+  it("keeps promotion open and shows the real repository failure", async () => {
+    const cause = "knowledge_markdown column rejected the value";
+    const knowledge = createKnowledgeServices({
+      promote: vi.fn(async () => {
+        throw new Error(cause);
+      }),
+    });
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+
+    renderWithServices(
+      <KnowledgePromotionDialog open journal={journal} onOpenChange={onOpenChange} />,
+      createServices(knowledge),
+    );
+
+    await user.clear(screen.getByLabelText("知识标题"));
+    await user.type(screen.getByLabelText("知识标题"), "发布故障复盘");
+    await user.click(screen.getByRole("button", { name: "保存到知识库" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(cause);
+    expect(screen.getByLabelText("知识标题")).toHaveValue("发布故障复盘");
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 
   it("promotes a whole journal without inventing a source block", async () => {

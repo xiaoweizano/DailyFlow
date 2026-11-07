@@ -17,6 +17,19 @@ function createStore(value: string | null = null): SettingsStore {
 }
 
 describe("user preference settings", () => {
+  it("migrates legacy close-to-tray preferences to an explicit close behavior", () => {
+    expect(
+      UserPreferencesSchema.parse({ schemaVersion: 1, closeToTray: false }).closeBehavior,
+    ).toBe("ask");
+    expect(UserPreferencesSchema.parse({ schemaVersion: 1, closeToTray: true }).closeBehavior).toBe(
+      "minimize",
+    );
+    expect(
+      UserPreferencesSchema.parse({ schemaVersion: 2, closeBehavior: "minimize" }).closeBehavior,
+    ).toBe("minimize");
+    expect(DEFAULT_USER_PREFERENCES.closeBehavior).toBe("ask");
+  });
+
   it("migrates legacy preferences without losing valid values", () => {
     const parsed = UserPreferencesSchema.parse({
       theme: "dark",
@@ -30,7 +43,7 @@ describe("user preference settings", () => {
       density: "compact",
       autosaveIntervalMs: 1200,
       locale: "zh-CN",
-      closeToTray: true,
+      closeBehavior: "ask",
       autostart: false,
       silentStart: false,
       customDataDirectory: null,

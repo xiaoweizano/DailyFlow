@@ -1,3 +1,5 @@
+import type { CloseBehavior } from "@dailyflow/application";
+
 export interface CloseRequestEvent {
   preventDefault: () => void;
 }
@@ -11,8 +13,10 @@ export interface CloseGuardWindow {
 
 export interface CloseGuardLifecycle {
   flushAll: () => Promise<boolean>;
-  isCloseToTrayEnabled: () => boolean;
+  getCloseBehavior: () => CloseBehavior;
+  requestCloseConfirmation: () => Promise<void>;
   hideToTray: () => Promise<void>;
+  quit: () => Promise<void>;
 }
 
 export interface QuitLifecycle {
@@ -58,7 +62,13 @@ export async function installCloseGuard(
       return;
     }
 
-    if (lifecycle.isCloseToTrayEnabled()) {
+    const closeBehavior = lifecycle.getCloseBehavior();
+    if (closeBehavior === "ask") {
+      await lifecycle.requestCloseConfirmation();
+      return;
+    }
+
+    if (closeBehavior === "minimize") {
       closing = true;
       try {
         await lifecycle.hideToTray();
@@ -70,7 +80,7 @@ export async function installCloseGuard(
 
     closing = true;
     try {
-      await window.close();
+      await lifecycle.quit();
     } catch {
       closing = false;
     }

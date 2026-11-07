@@ -1,5 +1,4 @@
-import type { LocalePreference } from "@dailyflow/application";
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 
 import { getAppMessages } from "./app-messages.js";
 import { AppMessagesContext, type AppMessagesRuntime } from "./app-messages-runtime.js";
@@ -11,24 +10,18 @@ export function AppMessagesProvider({
   readonly children: ReactNode;
 }): React.JSX.Element {
   const { preferences } = useUserPreferences();
-  const [previewLocale, setPreviewLocale] = useState<LocalePreference | null>(null);
-  const locale = previewLocale ?? preferences.locale;
+  const locale = preferences.locale;
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
-  const setLocalePreview = useCallback((nextLocale: LocalePreference | null): void => {
-    setPreviewLocale(nextLocale);
-  }, []);
-
   const value = useMemo<AppMessagesRuntime>(
     () => ({
       locale,
       messages: getAppMessages(locale),
-      setLocalePreview,
     }),
-    [locale, setLocalePreview],
+    [locale],
   );
 
   return <AppMessagesContext.Provider value={value}>{children}</AppMessagesContext.Provider>;

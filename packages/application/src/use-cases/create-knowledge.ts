@@ -62,6 +62,8 @@ export async function createKnowledge(
     });
     const withProjection: KnowledgeItem = {
       ...item,
+      contentMarkdown: projected.contentMarkdown,
+      contentPlainText: projected.contentPlainText,
       contentHash: parseContentHash(projected.contentHash),
       summary:
         input.summary === undefined || input.summary === "" ? projected.excerpt : input.summary,

@@ -86,6 +86,8 @@ describe("DexieAnalyticsQuery", () => {
         title: "Release rollback",
         contentJson: "{}",
         editorSchemaVersion: 1,
+        contentMarkdown: "Rollback safely",
+        contentPlainText: "Rollback safely",
         contentHash: null,
         projectionVersion: 1,
         summary: "Rollback safely",

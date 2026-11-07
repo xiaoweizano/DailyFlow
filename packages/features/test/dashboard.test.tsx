@@ -262,4 +262,15 @@ describe("ActivityHeatmap", () => {
     expect(screen.getByLabelText("2026-10-30 有 1 篇日志")).toBeTruthy();
     expect(screen.getByLabelText("2026-10-29 有 0 篇日志")).toBeTruthy();
   });
+
+  it("uses the shared six-level green scale for busy days", () => {
+    render(
+      <ActivityHeatmap
+        endDate="2026-10-30"
+        summaries={Array.from({ length: 12 }, () => createSummary("2026-10-30", "发布复盘"))}
+      />,
+    );
+
+    expect(screen.getByLabelText("2026-10-30 有 12 篇日志")).toHaveClass("df-activity-green-5");
+  });
 });

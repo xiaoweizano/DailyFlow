@@ -527,6 +527,8 @@ pub struct KnowledgeItem {
     pub status: KnowledgeStatus,
     pub title: String,
     pub content_json: Value,
+    pub content_markdown: String,
+    pub content_plain_text: String,
     pub editor_schema_version: i64,
     pub content_hash: Option<String>,
     pub projection_version: i64,

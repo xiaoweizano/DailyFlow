@@ -39,6 +39,32 @@ export interface TaskCreateInput {
   readonly knowledgeItemId?: Task["knowledgeItemId"];
 }
 
+export interface TaskFieldErrors {
+  readonly title?: string;
+  readonly dueDate?: string;
+  readonly form?: string;
+}
+
+export function taskFieldErrors(error: AppError, fallback: string): TaskFieldErrors {
+  if (error.code !== "VALIDATION_ERROR") {
+    if (error.code === "STORAGE_UNAVAILABLE" && error.cause?.trim()) {
+      return { form: error.cause.trim() };
+    }
+    return { form: fallback };
+  }
+
+  const title = error.fields?.title?.trim();
+  const dueDate = error.fields?.dueDate?.trim();
+  const form = error.fields?.form?.trim();
+  const hasFieldError = Boolean(title || dueDate);
+
+  return {
+    ...(title ? { title } : {}),
+    ...(dueDate ? { dueDate } : {}),
+    ...(form ? { form } : hasFieldError ? {} : { form: error.message.trim() || fallback }),
+  };
+}
+
 export interface TaskRuntimeServices {
   list(view: TaskListView, page?: PageRequest): Promise<Page<Task>>;
   create(input: TaskCreateInput): Promise<Result<Task, AppError>>;

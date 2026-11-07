@@ -254,9 +254,9 @@ fn read_structured_blocks(
 
 fn read_knowledge(connection: &Connection) -> Result<Vec<ExportKnowledgeRecord>, StorageError> {
     let mut statement = connection.prepare(
-        "SELECT id, kind, status, title, content_json, editor_schema_version,
-                content_hash, projection_version, summary, revision, source_journal_id,
-                source_block_id, created_at, updated_at, deleted_at
+        "SELECT id, kind, status, title, content_json, content_markdown, content_plain_text,
+                editor_schema_version, content_hash, projection_version, summary, revision,
+                source_journal_id, source_block_id, created_at, updated_at, deleted_at
          FROM knowledge_items
          ORDER BY id",
     )?;
@@ -272,16 +272,18 @@ fn read_knowledge(connection: &Connection) -> Result<Vec<ExportKnowledgeRecord>,
                 title: row.get(3)?,
                 content_json: serde_json::from_str(&content_json)
                     .map_err(|error| sql_conversion_error(4, "content_json", error))?,
-                editor_schema_version: row.get(5)?,
-                content_hash: row.get(6)?,
-                projection_version: row.get(7)?,
-                summary: row.get(8)?,
-                revision: row.get(9)?,
-                source_journal_id: row.get(10)?,
-                source_block_id: row.get(11)?,
-                created_at: row.get(12)?,
-                updated_at: row.get(13)?,
-                deleted_at: row.get(14)?,
+                content_markdown: row.get(5)?,
+                content_plain_text: row.get(6)?,
+                editor_schema_version: row.get(7)?,
+                content_hash: row.get(8)?,
+                projection_version: row.get(9)?,
+                summary: row.get(10)?,
+                revision: row.get(11)?,
+                source_journal_id: row.get(12)?,
+                source_block_id: row.get(13)?,
+                created_at: row.get(14)?,
+                updated_at: row.get(15)?,
+                deleted_at: row.get(16)?,
             },
             tags: Vec::new(),
         })

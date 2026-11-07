@@ -64,6 +64,8 @@ function snapshot(): ExportSnapshotDto {
           title: "导出问题",
           contentJson: { heading: "排查导出" },
           editorSchemaVersion: 1,
+          contentMarkdown: "STALE KNOWLEDGE MARKDOWN",
+          contentPlainText: "stale knowledge plain text",
           contentHash: parseContentHash("c".repeat(64)),
           projectionVersion: 1,
           summary: "",

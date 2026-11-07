@@ -15,7 +15,7 @@ import { ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createAnalyticsServicesStub } from "./analytics-stub.js";
 import { createBackupServicesStub } from "./backup-stub.js";
@@ -61,12 +61,17 @@ function promotedKnowledge() {
   );
 }
 
-function createServices(content?: TiptapJsonNode) {
+interface JournalServiceOptions {
+  readonly isPersisted?: boolean;
+  readonly title?: string;
+}
+
+function createServices(content?: TiptapJsonNode, options: JournalServiceOptions = {}) {
   const journal = createJournal(
     {
       journalDate: "2026-11-05",
       timezone: "Asia/Shanghai",
-      title: "块编辑测试",
+      title: options.title ?? "块编辑测试",
       content: {
         schemaVersion: 2,
         doc: content ?? {
@@ -95,7 +100,7 @@ function createServices(content?: TiptapJsonNode) {
       promote: vi.fn(),
     },
     journal: {
-      get: vi.fn(async () => ok({ journal, isPersisted: true })),
+      get: vi.fn(async () => ok({ journal, isPersisted: options.isPersisted ?? true })),
       save: vi.fn(async (input: unknown): Promise<Result<SavedJournalSnapshot, AppError>> => {
         const expectedRevision = (input as { expectedRevision: number | null }).expectedRevision;
         return ok({
@@ -161,8 +166,8 @@ function createServices(content?: TiptapJsonNode) {
   };
 }
 
-function renderJournal(content?: TiptapJsonNode) {
-  const services = createServices(content);
+function renderJournal(content?: TiptapJsonNode, options: JournalServiceOptions = {}) {
+  const services = createServices(content, options);
   render(
     <MemoryRouter initialEntries={["/journal/2026-11-05"]}>
       <AppServicesProvider services={services}>
@@ -174,6 +179,78 @@ function renderJournal(content?: TiptapJsonNode) {
 }
 
 describe("Journal editor blocks", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("starts an empty journal with templates and focuses the body after selection", async () => {
+    const user = userEvent.setup();
+    renderJournal(
+      { type: "doc", content: [{ type: "paragraph" }] },
+      { isPersisted: false, title: "" },
+    );
+
+    expect(await screen.findByRole("heading", { name: "选择日志模板" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /问题排查/ }));
+
+    const editor = await screen.findByLabelText("日志正文");
+    await waitFor(() => expect(editor).toHaveFocus());
+  });
+
+  it("focuses the journal body when the blank template is selected", async () => {
+    const user = userEvent.setup();
+    renderJournal(
+      { type: "doc", content: [{ type: "paragraph" }] },
+      { isPersisted: false, title: "" },
+    );
+
+    await screen.findByRole("heading", { name: "选择日志模板" });
+    await user.click(screen.getByRole("button", { name: /空白日志/ }));
+
+    const editor = await screen.findByLabelText("日志正文");
+    await waitFor(() => expect(editor).toHaveFocus());
+  });
+
+  it("persists the selected template as structured Tiptap JSON", async () => {
+    const user = userEvent.setup();
+    const services = renderJournal(
+      { type: "doc", content: [{ type: "paragraph" }] },
+      { isPersisted: false, title: "" },
+    );
+
+    await screen.findByRole("heading", { name: "选择日志模板" });
+    await user.click(screen.getByRole("button", { name: /问题排查/ }));
+
+    await waitFor(() => {
+      const input = services.journal.save.mock.calls.at(-1)?.[0] as
+        | {
+            contentJson?: {
+              content?: readonly { type?: string; content?: readonly { text?: string }[] }[];
+            };
+          }
+        | undefined;
+      const headings = input?.contentJson?.content?.filter((node) => node.type === "heading");
+      expect(headings?.map((heading) => heading.content?.[0]?.text)).toContain("问题现象");
+    });
+  });
+
+  it("shows one cursor insertion control without a visible six-dot drag handle", async () => {
+    renderJournal({
+      type: "doc",
+      content: [
+        { type: "paragraph", content: [{ type: "text", text: "第一段" }] },
+        { type: "paragraph", content: [{ type: "text", text: "第二段" }] },
+      ],
+    });
+
+    const editor = await screen.findByLabelText("日志正文");
+    await userEvent.click(editor);
+
+    expect(await screen.findByRole("button", { name: "在光标处插入内容" })).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("⠿");
+  });
+
   it("opens the insertion menu from the plus control at the current block", async () => {
     renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
     const user = userEvent.setup();
@@ -312,6 +389,45 @@ describe("Journal editor blocks", () => {
     const outline = await screen.findByRole("complementary", { name: "文档大纲" });
     expect(within(outline).getByRole("button", { name: "问题定位" })).toBeInTheDocument();
     expect(within(outline).getByRole("button", { name: "排查步骤" })).toBeInTheDocument();
+  });
+
+  it("adds a full-width-space Markdown heading to the document outline", async () => {
+    const user = userEvent.setup();
+    renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
+
+    const editor = await screen.findByLabelText("日志正文");
+    await user.click(editor);
+    await user.keyboard("##　你好");
+
+    expect(editor.querySelector("h2")).toHaveTextContent("你好");
+    const outline = await screen.findByRole("complementary", { name: "文档大纲" });
+    expect(await within(outline).findByRole("button", { name: "你好" })).toBeInTheDocument();
+  });
+
+  it("opens and closes the responsive document outline drawer", async () => {
+    const user = userEvent.setup();
+    renderJournal({
+      type: "doc",
+      content: [
+        {
+          type: "heading",
+          attrs: { level: 2 },
+          content: [{ type: "text", text: "移动端大纲" }],
+        },
+      ],
+    });
+
+    const editor = await screen.findByLabelText("日志正文");
+    await user.click(screen.getByRole("button", { name: "打开文档大纲" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "文档大纲" });
+    expect(within(dialog).getByRole("button", { name: "移动端大纲" })).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "关闭" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "文档大纲" })).not.toBeInTheDocument(),
+    );
+    expect(editor).toBeInTheDocument();
   });
 
   it("uploads images through the slash menu and inserts only attachment metadata", async () => {

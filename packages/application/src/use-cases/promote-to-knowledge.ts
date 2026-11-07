@@ -143,6 +143,8 @@ export async function promoteToKnowledge(
     );
     const withHash: KnowledgeItem = {
       ...item,
+      contentMarkdown: projected.contentMarkdown,
+      contentPlainText: projected.contentPlainText,
       contentHash: parseContentHash(projected.contentHash),
       updatedAt: nowUtc(dependencies.clock),
     };

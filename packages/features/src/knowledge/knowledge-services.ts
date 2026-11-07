@@ -32,6 +32,32 @@ export interface KnowledgeRuntimeDependencies {
   readonly ids: IdGenerator;
 }
 
+function isAppError(error: unknown): error is AppError {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof (error as { readonly code?: unknown }).code === "string"
+  );
+}
+
+export function knowledgeErrorMessage(error: unknown, fallback: string): string {
+  if (isAppError(error)) {
+    switch (error.code) {
+      case "VALIDATION_ERROR":
+        return Object.values(error.fields ?? {})[0] ?? fallback;
+      case "STORAGE_UNAVAILABLE":
+        return error.cause?.trim() || fallback;
+      case "AI_UNAVAILABLE":
+        return error.reason.trim() || fallback;
+      default:
+        return fallback;
+    }
+  }
+
+  return error instanceof Error && error.message.trim() !== "" ? error.message : fallback;
+}
+
 export function createKnowledgeRuntimeServices(
   dependencies: KnowledgeRuntimeDependencies,
 ): KnowledgeRuntimeServices {

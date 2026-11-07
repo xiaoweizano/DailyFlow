@@ -68,6 +68,8 @@ function toKnowledgeItem(dto: KnowledgeItemDto): KnowledgeItem {
     status: dto.status,
     title: dto.title,
     content: createContentDocument(dto.editorSchemaVersion, dto.contentJson),
+    contentMarkdown: dto.contentMarkdown,
+    contentPlainText: dto.contentPlainText,
     contentHash: dto.contentHash,
     projectionVersion: dto.projectionVersion,
     summary: dto.summary,

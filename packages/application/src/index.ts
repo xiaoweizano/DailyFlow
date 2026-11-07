@@ -225,6 +225,7 @@ export {
 export type { SettingsStore } from "./ports/settings-store.js";
 export {
   AccentPreferenceSchema,
+  CloseBehaviorSchema,
   DEFAULT_USER_PREFERENCES,
   DensityPreferenceSchema,
   EditorWidthPreferenceSchema,
@@ -236,6 +237,7 @@ export {
   loadUserPreferences,
   saveUserPreferences,
   type AccentPreference,
+  type CloseBehavior,
   type DensityPreference,
   type EditorWidthPreference,
   type HistoryRetention,

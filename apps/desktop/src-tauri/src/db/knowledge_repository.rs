@@ -21,9 +21,9 @@ struct KnowledgeCursor {
 }
 
 fn knowledge_select() -> &'static str {
-    "SELECT id, kind, status, title, content_json, editor_schema_version, content_hash,
-            projection_version, summary, revision, source_journal_id, source_block_id,
-            created_at, updated_at, deleted_at
+    "SELECT id, kind, status, title, content_json, content_markdown, content_plain_text,
+            editor_schema_version, content_hash, projection_version, summary, revision,
+            source_journal_id, source_block_id, created_at, updated_at, deleted_at
      FROM knowledge_items"
 }
 
@@ -56,16 +56,18 @@ fn knowledge_from_row(row: &Row<'_>) -> rusqlite::Result<KnowledgeItem> {
                 Box::new(error),
             )
         })?,
-        editor_schema_version: row.get(5)?,
-        content_hash: Some(row.get(6)?),
-        projection_version: row.get(7)?,
-        summary: row.get(8)?,
-        revision: row.get(9)?,
-        source_journal_id: row.get(10)?,
-        source_block_id: row.get(11)?,
-        created_at: row.get(12)?,
-        updated_at: row.get(13)?,
-        deleted_at: row.get(14)?,
+        content_markdown: row.get(5)?,
+        content_plain_text: row.get(6)?,
+        editor_schema_version: row.get(7)?,
+        content_hash: Some(row.get(8)?),
+        projection_version: row.get(9)?,
+        summary: row.get(10)?,
+        revision: row.get(11)?,
+        source_journal_id: row.get(12)?,
+        source_block_id: row.get(13)?,
+        created_at: row.get(14)?,
+        updated_at: row.get(15)?,
+        deleted_at: row.get(16)?,
     })
 }
 
@@ -326,7 +328,7 @@ pub fn save(
            editor_schema_version, projection_version, content_hash, summary, revision,
            source_journal_id, source_block_id, created_at, updated_at, deleted_at
          ) VALUES (
-           ?1, ?2, ?3, ?4, ?5, '', ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, NULL
+           ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, NULL
          )
          ON CONFLICT(id) DO UPDATE SET
            kind = excluded.kind,
@@ -351,7 +353,8 @@ pub fn save(
             command.item.status.as_str(),
             command.item.title,
             content_json,
-            command.item.summary,
+            command.item.content_markdown,
+            command.item.content_plain_text,
             command.item.editor_schema_version,
             command.item.projection_version,
             content_hash,

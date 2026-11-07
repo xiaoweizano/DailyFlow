@@ -158,17 +158,17 @@ describe("settings page", () => {
     expect(screen.getByRole("tablist", { name: "设置分类" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "常规" })).toHaveAttribute("aria-selected", "true");
     await userEvent.click(screen.getByRole("tab", { name: "外观" }));
-    expect(await screen.findByRole("group", { name: "主题" })).toBeInTheDocument();
+    expect(await screen.findByRole("radiogroup", { name: "主题" })).toBeInTheDocument();
     expect(
-      within(screen.getByRole("group", { name: "主题" })).getByRole("button", {
+      within(screen.getByRole("radiogroup", { name: "主题" })).getByRole("radio", {
         name: "深色",
       }),
-    ).toHaveAttribute("aria-pressed", "true");
+    ).toHaveAttribute("aria-checked", "true");
     expect(
-      within(screen.getByRole("group", { name: "密度" })).getByRole("button", {
+      within(screen.getByRole("radiogroup", { name: "密度" })).getByRole("radio", {
         name: "紧凑",
       }),
-    ).toHaveAttribute("aria-pressed", "true");
+    ).toHaveAttribute("aria-checked", "true");
     await userEvent.click(screen.getByRole("tab", { name: "关于" }));
     expect(screen.getByText("未配置")).toBeInTheDocument();
     expect(screen.getByText(/当前标签页内存/)).toBeInTheDocument();
@@ -192,12 +192,12 @@ describe("settings page", () => {
     }));
     const themeStates: string[] = [];
     const observer = new MutationObserver(() => {
-      const theme = screen.queryByRole("group", { name: "主题" });
+      const theme = screen.queryByRole("radiogroup", { name: "主题" });
       if (theme === null) {
         return;
       }
       themeStates.push(
-        within(theme).getByRole("button", { name: "深色" }).getAttribute("aria-pressed") ?? "",
+        within(theme).getByRole("radio", { name: "深色" }).getAttribute("aria-checked") ?? "",
       );
     });
 
@@ -222,10 +222,10 @@ describe("settings page", () => {
       await userEvent.click(screen.getByRole("tab", { name: "外观" }));
       await vi.waitFor(() => {
         expect(
-          within(screen.getByRole("group", { name: "主题" })).getByRole("button", {
+          within(screen.getByRole("radiogroup", { name: "主题" })).getByRole("radio", {
             name: "深色",
           }),
-        ).toHaveAttribute("aria-pressed", "true");
+        ).toHaveAttribute("aria-checked", "true");
       });
 
       expect(themeStates).not.toContain("false");
@@ -253,8 +253,8 @@ describe("settings page", () => {
     applyRuntimePreferences.mockClear();
 
     await userEvent.click(screen.getByRole("tab", { name: "外观" }));
-    const theme = await screen.findByRole("group", { name: "主题" });
-    await user.click(within(theme).getByRole("button", { name: "深色" }));
+    const theme = await screen.findByRole("radiogroup", { name: "主题" });
+    await user.click(within(theme).getByRole("radio", { name: "深色" }));
     await user.click(screen.getByRole("tab", { name: "编辑器" }));
     const interval = screen.getByLabelText(/自动保存间隔/);
     await user.clear(interval);
@@ -303,8 +303,8 @@ describe("settings page", () => {
     applyRuntimePreferences.mockClear();
 
     await userEvent.click(screen.getByRole("tab", { name: "外观" }));
-    const density = await screen.findByRole("group", { name: "密度" });
-    await user.click(within(density).getByRole("button", { name: "紧凑" }));
+    const density = await screen.findByRole("radiogroup", { name: "密度" });
+    await user.click(within(density).getByRole("radio", { name: "紧凑" }));
     await user.click(screen.getByRole("button", { name: "保存设置" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("无法保存设置");
@@ -336,7 +336,7 @@ describe("settings page", () => {
     );
   });
 
-  it("previews the selected language across the application shell before saving", async () => {
+  it("updates the application shell language only after saving", async () => {
     const user = userEvent.setup();
     const load = vi.fn(async () => loaded());
     const save = vi.fn(async (input: unknown) => ({
@@ -348,14 +348,18 @@ describe("settings page", () => {
     renderSettingsInsideShell(createSettingsServices({ load, save }));
 
     expect(await screen.findByRole("link", { name: "工作台" })).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("界面语言"), "en-US");
+    await user.click(screen.getByRole("radio", { name: "English" }));
 
-    expect(screen.getByRole("link", { name: "Workbench" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "工作台" })).toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "保存设置" }));
+
+    expect(await screen.findByRole("link", { name: "Workbench" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Daily Journal" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open today's journal" })).toBeInTheDocument();
     expect(screen.getByText("Local data ready")).toBeInTheDocument();
-    expect(save).not.toHaveBeenCalled();
   });
 
   it("presents interface feedback outside the startup settings group", async () => {
@@ -388,7 +392,7 @@ describe("settings page", () => {
     renderSettings(createSettingsServices({ load, save }));
 
     expect(await screen.findByRole("tab", { name: "常规" })).toBeInTheDocument();
-    expect(screen.getByLabelText("界面语言")).toHaveValue("zh-CN");
+    expect(screen.getByRole("radio", { name: "简体中文" })).toHaveAttribute("aria-checked", "true");
     expect(screen.getByRole("switch", { name: "开机自启" })).toHaveAttribute(
       "aria-checked",
       "false",
@@ -397,17 +401,14 @@ describe("settings page", () => {
       "aria-checked",
       "false",
     );
-    expect(screen.getByRole("switch", { name: "关闭到托盘" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(screen.queryByRole("switch", { name: "关闭到托盘" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "外观" }));
-    const accent = screen.getByRole("group", { name: "强调色" });
+    const accent = screen.getByRole("radiogroup", { name: "强调色" });
     expect(accent).toBeInTheDocument();
     expect(accent).not.toHaveClass("overflow-x-auto");
-    expect(accent).toHaveClass("flex-wrap");
-    expect(screen.getByRole("group", { name: "密度" })).toBeInTheDocument();
+    expect(accent).not.toHaveClass("overflow-y-auto");
+    expect(screen.getByRole("radiogroup", { name: "密度" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "编辑器" }));
     expect(screen.getByRole("spinbutton", { name: "编辑器字号" })).toHaveValue(15);
@@ -425,6 +426,68 @@ describe("settings page", () => {
     expect(screen.getByRole("heading", { name: "关于与扩展" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "快捷键" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "打开帮助中心" })).toHaveAttribute("href", "/help");
+  });
+
+  it("uses three direct close behavior choices instead of a close-to-tray switch", async () => {
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+
+    renderSettings(createSettingsServices({ load, save }));
+
+    const choices = await screen.findByRole("radiogroup", { name: "关闭窗口时" });
+    expect(choices).not.toHaveClass("overflow-x-auto");
+    expect(choices).not.toHaveClass("overflow-y-auto");
+    expect(within(choices).getByRole("radio", { name: "每次询问" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(within(choices).getByRole("radio", { name: "最小化到托盘" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(within(choices).getByRole("radio", { name: "直接退出" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(screen.queryByRole("switch", { name: "关闭到托盘" })).not.toBeInTheDocument();
+  });
+
+  it("lists theme, accent, and density as direct single-choice controls", async () => {
+    const user = userEvent.setup();
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+
+    renderSettings(createSettingsServices({ load, save }));
+
+    await user.click(await screen.findByRole("tab", { name: "外观" }));
+
+    for (const name of ["主题", "强调色", "密度"]) {
+      const choices = screen.getByRole("radiogroup", { name });
+      expect(choices).not.toHaveClass("overflow-x-auto");
+      expect(choices).not.toHaveClass("overflow-y-auto");
+      expect(screen.queryByRole("combobox", { name })).not.toBeInTheDocument();
+    }
+
+    const theme = screen.getByRole("radiogroup", { name: "主题" });
+    await user.click(within(theme).getByRole("radio", { name: "深色" }));
+    expect(within(theme).getByRole("radio", { name: "深色" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    const accent = screen.getByRole("radiogroup", { name: "强调色" });
+    expect(within(accent).getAllByRole("radio")).toHaveLength(5);
+
+    const density = screen.getByRole("radiogroup", { name: "密度" });
+    expect(within(density).getAllByRole("radio")).toHaveLength(3);
   });
 
   it("migrates the complete preference document and shows the verified destination", async () => {
@@ -469,7 +532,7 @@ describe("settings page", () => {
         schemaVersion: DEFAULT_USER_PREFERENCES.schemaVersion,
         autostart: DEFAULT_USER_PREFERENCES.autostart,
         silentStart: DEFAULT_USER_PREFERENCES.silentStart,
-        closeToTray: DEFAULT_USER_PREFERENCES.closeToTray,
+        closeBehavior: DEFAULT_USER_PREFERENCES.closeBehavior,
         editorFontSize: DEFAULT_USER_PREFERENCES.editorFontSize,
         editorWidth: DEFAULT_USER_PREFERENCES.editorWidth,
         autosaveIntervalMs: DEFAULT_USER_PREFERENCES.autosaveIntervalMs,
@@ -504,7 +567,7 @@ describe("settings page", () => {
     expect(storageLocation.get).not.toHaveBeenCalled();
   });
 
-  it("switches the settings language without saving prematurely", async () => {
+  it("switches the settings language only after saving", async () => {
     const user = userEvent.setup();
     const load = vi.fn(async () => loaded());
     const save = vi.fn(async (input: unknown) => ({
@@ -516,11 +579,15 @@ describe("settings page", () => {
     renderSettings(createSettingsServices({ load, save }));
 
     expect(await screen.findByRole("heading", { name: "设置" })).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("界面语言"), "en-US");
+    await user.click(screen.getByRole("radio", { name: "English" }));
 
-    expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "General" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "设置" })).toBeInTheDocument();
     expect(save).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "保存设置" }));
+
+    expect(await screen.findByRole("heading", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "General" })).toBeInTheDocument();
   });
 
   it("renders secondary settings panels in English when the persisted locale is en-US", async () => {

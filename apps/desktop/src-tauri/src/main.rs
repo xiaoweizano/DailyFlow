@@ -64,16 +64,29 @@ fn main() {
                 .get("silentStart")
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(false);
-            let close_to_tray = preferences
-                .get("closeToTray")
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true);
+            let close_behavior = preferences
+                .get("closeBehavior")
+                .and_then(serde_json::Value::as_str)
+                .and_then(|value| lifecycle::parse_close_behavior(value).ok())
+                .or_else(|| {
+                    preferences
+                        .get("closeToTray")
+                        .and_then(serde_json::Value::as_bool)
+                        .map(|close_to_tray| {
+                            if close_to_tray {
+                                lifecycle::CloseBehavior::Minimize
+                            } else {
+                                lifecycle::CloseBehavior::Ask
+                            }
+                        })
+                })
+                .unwrap_or(lifecycle::CloseBehavior::Ask);
             let silent_start_argument =
                 std::env::args().any(|argument| argument == "--silent-start");
             let start_hidden =
                 lifecycle::should_start_hidden(silent_start_argument, silent_start_preference);
 
-            lifecycle::set_close_to_tray(close_to_tray);
+            lifecycle::set_close_behavior(close_behavior);
             app.manage(database);
             app.manage(AttachmentStore::open(data_directory.clone())?);
             app.manage(storage_commands::StorageLocationState::new(
@@ -137,7 +150,7 @@ fn main() {
             import_commands::import_record_failure,
             import_commands::import_scan_txt,
             import_commands::import_read_txt,
-            lifecycle::lifecycle_set_close_to_tray,
+            lifecycle::lifecycle_set_close_behavior,
             lifecycle::lifecycle_hide_to_tray,
             lifecycle::lifecycle_quit
         ])

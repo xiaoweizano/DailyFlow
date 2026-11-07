@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -6,8 +6,53 @@ use tauri::{
     App, AppHandle, Emitter, Manager, WindowEvent,
 };
 
-static CLOSE_TO_TRAY: AtomicBool = AtomicBool::new(true);
+static CLOSE_BEHAVIOR: AtomicU8 = AtomicU8::new(CloseBehavior::Ask as u8);
 static EXPLICIT_QUIT: AtomicBool = AtomicBool::new(false);
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CloseBehavior {
+    Ask,
+    Minimize,
+    Quit,
+}
+
+impl CloseBehavior {
+    fn from_stored(value: u8) -> Self {
+        match value {
+            1 => Self::Minimize,
+            2 => Self::Quit,
+            _ => Self::Ask,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CloseAction {
+    Ask,
+    Minimize,
+    Exit,
+}
+
+pub fn parse_close_behavior(value: &str) -> Result<CloseBehavior, String> {
+    match value {
+        "ask" => Ok(CloseBehavior::Ask),
+        "minimize" => Ok(CloseBehavior::Minimize),
+        "quit" => Ok(CloseBehavior::Quit),
+        _ => Err("unsupported close behavior".to_owned()),
+    }
+}
+
+fn close_action(close_behavior: CloseBehavior, explicit_quit: bool) -> CloseAction {
+    if explicit_quit {
+        return CloseAction::Exit;
+    }
+
+    match close_behavior {
+        CloseBehavior::Ask => CloseAction::Ask,
+        CloseBehavior::Minimize => CloseAction::Minimize,
+        CloseBehavior::Quit => CloseAction::Exit,
+    }
+}
 
 pub fn install(app: &mut App, start_hidden: bool) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, "open", "打开 DailyFlow", true, None::<&str>)?;
@@ -51,12 +96,19 @@ pub fn install(app: &mut App, start_hidden: bool) -> tauri::Result<()> {
         let window_to_hide = window.clone();
         window.on_window_event(move |event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                if should_hide_on_close(
-                    CLOSE_TO_TRAY.load(Ordering::SeqCst),
+                match close_action(
+                    CloseBehavior::from_stored(CLOSE_BEHAVIOR.load(Ordering::SeqCst)),
                     EXPLICIT_QUIT.load(Ordering::SeqCst),
                 ) {
-                    api.prevent_close();
-                    let _ = window_to_hide.hide();
+                    CloseAction::Ask => {
+                        api.prevent_close();
+                        let _ = window_to_hide.emit("dailyflow:close-requested", ());
+                    }
+                    CloseAction::Minimize => {
+                        api.prevent_close();
+                        let _ = window_to_hide.hide();
+                    }
+                    CloseAction::Exit => {}
                 }
             }
         });
@@ -65,16 +117,12 @@ pub fn install(app: &mut App, start_hidden: bool) -> tauri::Result<()> {
     Ok(())
 }
 
-fn should_hide_on_close(close_to_tray: bool, explicit_quit: bool) -> bool {
-    close_to_tray && !explicit_quit
-}
-
 pub fn should_start_hidden(silent_start_argument: bool, silent_start_preference: bool) -> bool {
     silent_start_argument && silent_start_preference
 }
 
-pub fn set_close_to_tray(enabled: bool) {
-    CLOSE_TO_TRAY.store(enabled, Ordering::SeqCst);
+pub fn set_close_behavior(behavior: CloseBehavior) {
+    CLOSE_BEHAVIOR.store(behavior as u8, Ordering::SeqCst);
 }
 
 fn show_main_window(app: &AppHandle) {
@@ -95,8 +143,9 @@ fn request_quit(app: &AppHandle) {
 }
 
 #[tauri::command]
-pub fn lifecycle_set_close_to_tray(enabled: bool) {
-    set_close_to_tray(enabled);
+pub fn lifecycle_set_close_behavior(behavior: String) -> Result<(), String> {
+    set_close_behavior(parse_close_behavior(&behavior)?);
+    Ok(())
 }
 
 #[tauri::command]
@@ -111,13 +160,45 @@ pub fn lifecycle_quit(app: AppHandle) {
 
 #[cfg(test)]
 mod tests {
-    use super::{should_hide_on_close, should_start_hidden};
+    use super::{
+        close_action, parse_close_behavior, should_start_hidden, CloseAction, CloseBehavior,
+    };
 
     #[test]
-    fn hides_on_close_only_while_close_to_tray_is_enabled() {
-        assert!(should_hide_on_close(true, false));
-        assert!(!should_hide_on_close(false, false));
-        assert!(!should_hide_on_close(true, true));
+    fn chooses_the_action_for_each_close_behavior() {
+        assert_eq!(close_action(CloseBehavior::Ask, false), CloseAction::Ask);
+        assert_eq!(
+            close_action(CloseBehavior::Minimize, false),
+            CloseAction::Minimize
+        );
+        assert_eq!(close_action(CloseBehavior::Quit, false), CloseAction::Exit);
+    }
+
+    #[test]
+    fn explicit_quit_overrides_interactive_close_behavior() {
+        assert_eq!(close_action(CloseBehavior::Ask, true), CloseAction::Exit);
+        assert_eq!(
+            close_action(CloseBehavior::Minimize, true),
+            CloseAction::Exit
+        );
+    }
+
+    #[test]
+    fn parses_the_three_supported_close_behaviors() {
+        assert_eq!(parse_close_behavior("ask"), Ok(CloseBehavior::Ask));
+        assert_eq!(
+            parse_close_behavior("minimize"),
+            Ok(CloseBehavior::Minimize)
+        );
+        assert_eq!(parse_close_behavior("quit"), Ok(CloseBehavior::Quit));
+    }
+
+    #[test]
+    fn rejects_unknown_close_behaviors() {
+        assert_eq!(
+            parse_close_behavior("close-to-tray"),
+            Err("unsupported close behavior".to_owned())
+        );
     }
 
     #[test]

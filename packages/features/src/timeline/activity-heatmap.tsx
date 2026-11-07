@@ -2,24 +2,12 @@ import type { TimelineDaySummary } from "@dailyflow/application";
 
 import { localDatesEndingAt } from "../date-utils.js";
 import { useAppText } from "../preferences/use-app-text.js";
+import { activityLevelClass } from "./activity-level.js";
 
 export interface ActivityHeatmapProps {
   readonly endDate: string;
   readonly days: readonly TimelineDaySummary[];
   readonly weeks?: number;
-}
-
-function activityClass(journalCount: number): string {
-  if (journalCount === 1) {
-    return "df-activity-green-1";
-  }
-  if (journalCount === 2) {
-    return "df-activity-green-2";
-  }
-  if (journalCount >= 3) {
-    return "df-activity-green-4";
-  }
-  return "border-border bg-surface-muted";
 }
 
 export function ActivityHeatmap({
@@ -46,11 +34,11 @@ export function ActivityHeatmap({
         </div>
         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
           <span>{text("少", "Less")}</span>
-          {[0, 1, 2, 3].map((level) => (
+          {[0, 1, 2, 3, 4, 5].map((level) => (
             <span
               key={level}
               aria-hidden="true"
-              className={`size-3 rounded-[2px] border ${activityClass(level)}`}
+              className={`size-3 rounded-[2px] border ${activityLevelClass(level)}`}
             />
           ))}
           <span>{text("多", "More")}</span>
@@ -85,7 +73,7 @@ export function ActivityHeatmap({
                 `${date} · ${journalCount} 篇日志 · ${taskDueCount} 个任务到期`,
                 `${date} · ${journalCount} journal${journalCount === 1 ? "" : "s"} · ${taskDueCount} task${taskDueCount === 1 ? "" : "s"} due`,
               )}
-              className={`size-3.5 shrink-0 rounded-[2px] border ${activityClass(journalCount)}`}
+              className={`size-3.5 shrink-0 rounded-[2px] border ${activityLevelClass(journalCount)}`}
             />
           );
         })}

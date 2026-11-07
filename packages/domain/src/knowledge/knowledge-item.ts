@@ -28,6 +28,8 @@ export interface KnowledgeItem {
   readonly status: KnowledgeStatus;
   readonly title: string;
   readonly content: ContentDocument;
+  readonly contentMarkdown: string;
+  readonly contentPlainText: string;
   readonly contentHash: ContentHash | null;
   readonly projectionVersion: number;
   readonly summary: string;
@@ -43,6 +45,8 @@ export interface CreateKnowledgeItemInput {
   readonly kind: KnowledgeKind;
   readonly title: string;
   readonly content: ContentDocument;
+  readonly contentMarkdown?: string;
+  readonly contentPlainText?: string;
   readonly projectionVersion: number;
   readonly summary?: string;
   readonly sourceJournalId?: string | null;
@@ -65,6 +69,8 @@ export function createKnowledgeItem(
     status: "active",
     title: input.title,
     content: createContentDocument(input.content.schemaVersion, input.content.doc),
+    contentMarkdown: input.contentMarkdown ?? "",
+    contentPlainText: input.contentPlainText ?? "",
     contentHash: null,
     projectionVersion,
     summary: input.summary ?? "",

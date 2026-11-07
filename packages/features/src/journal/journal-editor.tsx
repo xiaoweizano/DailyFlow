@@ -9,10 +9,18 @@ import {
   type AttachmentAttrs,
   type TiptapJsonNode,
 } from "@dailyflow/editor";
-import { Button, Input, SaveStatus, type SaveState } from "@dailyflow/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Input,
+  SaveStatus,
+  type SaveState,
+} from "@dailyflow/ui";
 import type { AppError } from "@dailyflow/shared";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { BookPlus, History, LayoutTemplate, Save } from "lucide-react";
+import { BookPlus, History, LayoutTemplate, ListTree, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "zustand";
@@ -98,6 +106,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const [promotionBlockId, setPromotionBlockId] = useState<EntityId | null>(null);
   const [promotedItem, setPromotedItem] = useState<KnowledgeItem | null>(null);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [outlineDrawerOpen, setOutlineDrawerOpen] = useState(false);
   const titleRef = useRef(title);
   const tagsTextRef = useRef(tagsText);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
@@ -336,12 +345,17 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   function applyTemplate(template: JournalTemplate | null): void {
     setInitialTemplateChoicePending(false);
     setTemplatePickerOpen(false);
-    if (template === null || editor === null) {
+    if (editor === null) {
+      return;
+    }
+    if (template === null) {
+      editor.commands.focus("start");
       return;
     }
 
     const content = journalTemplateEditorContent(template);
     editor.commands.setContent(content, { emitUpdate: false });
+    editor.commands.focus("start");
     setCurrentMarkdown(jsonToPlainText(content));
     coordinator.update(currentDraft());
     void coordinator.flush("explicit");
@@ -365,10 +379,10 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   return (
     <section
       aria-label={text("日志编辑器", "Journal editor")}
-      className="flex h-full min-h-0 flex-col bg-surface"
+      className="flex h-full min-h-0 flex-col overflow-hidden bg-surface"
       onKeyDown={handleKeyDown}
     >
-      <div className="flex min-h-12 shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
+      <header className="df-journal-commandbar flex min-h-12 shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
         <div className="min-w-32 flex-1">
           <Input
             aria-label={text("日志标题", "Journal title")}
@@ -384,6 +398,17 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           labels={getSaveStatusLabels(text)}
           {...(savedAt === null ? {} : { savedAt })}
         />
+        {editor !== null && preferences.showOutline && !historyOpen ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={text("打开文档大纲", "Open document outline")}
+            className="min-[1100px]:hidden"
+            onClick={() => setOutlineDrawerOpen(true)}
+          >
+            <ListTree aria-hidden="true" className="size-4" />
+          </Button>
+        ) : null}
         <Button variant="secondary" size="sm" onClick={() => setTemplatePickerOpen(true)}>
           <LayoutTemplate aria-hidden="true" className="size-4" />
           {text("模板", "Template")}
@@ -443,10 +468,10 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           </Link>
         )}
         <JournalImportExport editor={editor} />
-      </div>
+      </header>
 
-      <div className="df-journal-editor-body flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="df-journal-editor-body flex min-h-0 flex-1 flex-col overflow-hidden min-[1100px]:flex-row">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {editor === null ? (
             <p className="p-6 text-sm text-muted-foreground">
               {text("正在初始化编辑器", "Initializing editor")}
@@ -478,7 +503,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
                   />
                 </div>
               )}
-              <div className="df-journal-editor-scroll min-h-0 flex-1 overflow-y-auto">
+              <div className="df-journal-editor-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain">
                 <EditorContent editor={editor} className="min-h-full" />
                 <SlashCommandMenu
                   editor={editor}
@@ -508,7 +533,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
         </div>
 
         {editor !== null && preferences.showOutline && !historyOpen ? (
-          <EditorOutline editor={editor} />
+          <EditorOutline editor={editor} variant="sidebar" />
         ) : null}
 
         {historyOpen ? (
@@ -521,6 +546,15 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           />
         ) : null}
       </div>
+
+      {editor !== null && preferences.showOutline && !historyOpen ? (
+        <Dialog open={outlineDrawerOpen} onOpenChange={setOutlineDrawerOpen}>
+          <DialogContent className="flex h-[min(82vh,720px)] max-h-[min(82vh,720px)] w-[min(92vw,26rem)] grid-cols-1 grid-rows-[1fr] gap-0 overflow-hidden p-0">
+            <DialogTitle className="sr-only">{text("文档大纲", "Document outline")}</DialogTitle>
+            <EditorOutline editor={editor} variant="drawer" />
+          </DialogContent>
+        </Dialog>
+      ) : null}
 
       {promotionOpen ? (
         <KnowledgePromotionDialog

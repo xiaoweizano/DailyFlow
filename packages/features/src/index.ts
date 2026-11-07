@@ -17,6 +17,7 @@ export {
 } from "./preferences/user-preferences-context.js";
 export { type UserPreferencesRuntime } from "./preferences/user-preferences-runtime.js";
 export { useUserPreferences } from "./preferences/use-user-preferences.js";
+export { useAppText } from "./preferences/use-app-text.js";
 export {
   createAttachmentRuntimeServices,
   type AttachmentRuntimeDependencies,

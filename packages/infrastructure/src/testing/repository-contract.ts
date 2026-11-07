@@ -614,6 +614,24 @@ export function describeKnowledgeRepositoryContract(
       expect((await knowledge.list({ limit: 20 })).items).toHaveLength(0);
     });
 
+    it("preserves distinct summary, Markdown, and plain-text projections", async () => {
+      const { knowledge, clock } = createHarness();
+      const draft = makeKnowledgeItem({
+        id: CONTRACT_IDS.knowledge,
+        title: "Projection roundtrip",
+        clock,
+      });
+      const projections = {
+        summary: "摘要只用于摘要",
+        contentMarkdown: "## 正文 Markdown",
+        contentPlainText: "正文纯文本",
+      };
+
+      await knowledge.save({ ...draft, ...projections }, null);
+
+      expect(await knowledge.getById(CONTRACT_IDS.knowledge)).toMatchObject(projections);
+    });
+
     it("filters and paginates knowledge summaries", async () => {
       const { knowledge, clock } = createHarness();
       for (const [id, title] of [

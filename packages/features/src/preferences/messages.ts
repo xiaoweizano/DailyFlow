@@ -28,8 +28,14 @@ export interface SettingsMessages {
     readonly autostartDescription: string;
     readonly silentStart: string;
     readonly silentStartDescription: string;
-    readonly closeToTray: string;
-    readonly closeToTrayDescription: string;
+    readonly closeBehavior: string;
+    readonly closeBehaviorDescription: string;
+    readonly ask: string;
+    readonly askDescription: string;
+    readonly minimize: string;
+    readonly minimizeDescription: string;
+    readonly quit: string;
+    readonly quitDescription: string;
     readonly interfaceFeedback: string;
     readonly interfaceFeedbackDescription: string;
     readonly warnings: string;
@@ -117,15 +123,21 @@ const zhCN: SettingsMessages = {
     title: "常规",
     description: "选择界面语言，并控制 DailyFlow 在桌面上的启动与关闭行为。",
     language: "界面语言",
-    languageDescription: "切换后立即预览语言，点击“保存设置”后持久化。",
+    languageDescription: "选择后点击“保存设置”，整个应用的界面语言会一起切换。",
     startup: "启动与后台",
     startupDescription: "这些选项只影响 Windows 与 macOS 桌面端。",
     autostart: "开机自启",
     autostartDescription: "登录系统后自动启动 DailyFlow。",
     silentStart: "静默启动",
     silentStartDescription: "开机启动时只保留托盘入口，不主动显示主窗口。",
-    closeToTray: "关闭到托盘",
-    closeToTrayDescription: "点击关闭按钮时隐藏窗口，而不退出应用。",
+    closeBehavior: "关闭窗口时",
+    closeBehaviorDescription: "选择点击窗口关闭按钮后的默认操作。",
+    ask: "每次询问",
+    askDescription: "显示关闭确认，由你选择最小化、退出或取消。",
+    minimize: "最小化到托盘",
+    minimizeDescription: "隐藏主窗口，应用继续在后台运行。",
+    quit: "直接退出",
+    quitDescription: "完成保存后退出 DailyFlow。",
     interfaceFeedback: "界面反馈",
     interfaceFeedbackDescription: "控制应用在设置读写异常时的提示方式。",
     warnings: "显示设置提示",
@@ -214,15 +226,21 @@ const enUS: SettingsMessages = {
     title: "General",
     description: "Choose the interface language and control desktop startup and close behavior.",
     language: "Interface language",
-    languageDescription: "The language changes immediately and is saved with the settings.",
+    languageDescription: "Choose a language and save settings to update the entire application.",
     startup: "Startup and background",
     startupDescription: "These options only affect the Windows and macOS desktop apps.",
     autostart: "Start with system",
     autostartDescription: "Launch DailyFlow after you sign in.",
     silentStart: "Silent startup",
     silentStartDescription: "Start in the tray without opening the main window.",
-    closeToTray: "Close to tray",
-    closeToTrayDescription: "Hide the window instead of quitting when closing it.",
+    closeBehavior: "When closing the window",
+    closeBehaviorDescription: "Choose what happens when the window close button is clicked.",
+    ask: "Ask every time",
+    askDescription: "Show a confirmation with minimize, quit, and cancel actions.",
+    minimize: "Minimize to tray",
+    minimizeDescription: "Hide the main window while DailyFlow keeps running.",
+    quit: "Quit immediately",
+    quitDescription: "Save pending changes and exit DailyFlow.",
     interfaceFeedback: "Interface feedback",
     interfaceFeedbackDescription: "Control how settings read and write failures are surfaced.",
     warnings: "Show settings warnings",

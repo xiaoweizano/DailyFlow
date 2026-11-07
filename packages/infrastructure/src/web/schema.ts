@@ -90,6 +90,8 @@ export interface KnowledgeItemRow {
   readonly title: string;
   readonly contentJson: string;
   readonly editorSchemaVersion: number;
+  readonly contentMarkdown: string;
+  readonly contentPlainText: string;
   readonly contentHash: ContentHash | null;
   readonly projectionVersion: number;
   readonly summary: string;
