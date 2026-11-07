@@ -1,7 +1,23 @@
 import type { TimelineDaySummary } from "@dailyflow/application";
+import type { LocalePreference } from "@dailyflow/application";
 
 const CELL_COUNT = 53 * 7;
 const CHINESE_WEEKDAYS = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"] as const;
+const ENGLISH_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const ENGLISH_MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
 
 export interface AnnualHeatmapInput {
   readonly year: number;
@@ -9,6 +25,7 @@ export interface AnnualHeatmapInput {
   readonly weekStartsOn: number;
   readonly days: readonly TimelineDaySummary[];
   readonly today?: string;
+  readonly locale?: LocalePreference;
 }
 
 export interface AnnualHeatmapCell {
@@ -112,16 +129,19 @@ export function buildAnnualHeatmapData(input: AnnualHeatmapInput): AnnualHeatmap
     const cellIndex = cells.findIndex((cell) => cell.date === date);
     return {
       month,
-      label: `${month} 月`,
+      label:
+        input.locale === "en-US" ? (ENGLISH_MONTHS[monthIndex] ?? String(month)) : `${month} 月`,
       weekIndex: Math.max(0, Math.floor(cellIndex / 7)),
     };
   });
 
-  const weekdayLabels = CHINESE_WEEKDAYS.map((label, weekday) => ({
-    weekday,
-    label,
-    rowIndex: (weekday - input.weekStartsOn + 7) % 7,
-  })).sort((left, right) => left.rowIndex - right.rowIndex);
+  const weekdayLabels = (input.locale === "en-US" ? ENGLISH_WEEKDAYS : CHINESE_WEEKDAYS)
+    .map((label, weekday) => ({
+      weekday,
+      label,
+      rowIndex: (weekday - input.weekStartsOn + 7) % 7,
+    }))
+    .sort((left, right) => left.rowIndex - right.rowIndex);
 
   return {
     year: input.year,

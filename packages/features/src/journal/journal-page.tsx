@@ -14,6 +14,7 @@ import { Button, Input } from "@dailyflow/ui";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { currentLocalDate, isLocalDate, shiftLocalDate } from "../date-utils.js";
+import { useAppText } from "../preferences/use-app-text.js";
 import { JournalEditor } from "./journal-editor.js";
 
 function resolveTimezone(): string {
@@ -28,6 +29,7 @@ export interface JournalPageProps {
 
 export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
   const navigate = useNavigate();
   const params = useParams();
   const journalDate = date ?? params.date ?? "";
@@ -43,7 +45,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
 
   const loadJournal = useCallback(async () => {
     if (!journalDate) {
-      setError("日志日期无效");
+      setError(text("日志日期无效", "The journal date is invalid"));
       setLoading(false);
       return;
     }
@@ -56,18 +58,22 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
         timezone: localTimezone,
       });
       if (!result.ok) {
-        setError(result.error.code === "VALIDATION_ERROR" ? "日志日期无效" : "日志加载失败");
+        setError(
+          result.error.code === "VALIDATION_ERROR"
+            ? text("日志日期无效", "The journal date is invalid")
+            : text("日志加载失败", "The journal could not be loaded"),
+        );
         setLookup(null);
         return;
       }
       setLookup(result.value);
     } catch {
-      setError("日志加载失败");
+      setError(text("日志加载失败", "The journal could not be loaded"));
       setLookup(null);
     } finally {
       setLoading(false);
     }
-  }, [journalDate, services.journal]);
+  }, [journalDate, services.journal, text]);
 
   useEffect(() => {
     void loadJournal();
@@ -92,28 +98,30 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
 
   return (
     <div className="df-journal-page flex h-full min-h-0 flex-col">
-      <h1 className="sr-only">每日日志 {journalDate}</h1>
+      <h1 className="sr-only">
+        {text("每日日志", "Daily Journal")} {journalDate}
+      </h1>
       <nav
-        aria-label="日志日期导航"
+        aria-label={text("日志日期导航", "Journal date navigation")}
         className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-surface-raised px-3 py-2"
       >
         <Button
           variant="ghost"
           size="sm"
-          aria-label="前一天"
+          aria-label={text("前一天", "Previous day")}
           onClick={() => openDate(shiftLocalDate(navigationDate, -1))}
         >
           <ChevronLeft aria-hidden="true" className="size-4" />
-          <span className="hidden sm:inline">前一天</span>
+          <span className="hidden sm:inline">{text("前一天", "Previous day")}</span>
         </Button>
         <div className="flex min-w-0 items-center gap-2">
           <CalendarDays aria-hidden="true" className="size-4 shrink-0 text-primary" />
           <label htmlFor="journal-date" className="sr-only">
-            选择日志日期
+            {text("选择日志日期", "Choose journal date")}
           </label>
           <Input
             id="journal-date"
-            aria-label="选择日志日期"
+            aria-label={text("选择日志日期", "Choose journal date")}
             type="text"
             inputMode="numeric"
             pattern="\d{4}-\d{2}-\d{2}"
@@ -126,10 +134,10 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
         <Button
           variant="ghost"
           size="sm"
-          aria-label="后一天"
+          aria-label={text("后一天", "Next day")}
           onClick={() => openDate(shiftLocalDate(navigationDate, 1))}
         >
-          <span className="hidden sm:inline">后一天</span>
+          <span className="hidden sm:inline">{text("后一天", "Next day")}</span>
           <ChevronRight aria-hidden="true" className="size-4" />
         </Button>
         <Link
@@ -137,7 +145,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
           className="ml-auto inline-flex h-8 items-center gap-1.5 px-2 text-xs font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft aria-hidden="true" className="size-3.5" />
-          返回今天
+          {text("返回今天", "Back to workbench")}
         </Link>
       </nav>
 
@@ -147,7 +155,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
           className="flex min-h-0 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground"
         >
           <RotateCw aria-hidden="true" className="size-4 animate-spin" />
-          正在加载日志
+          {text("正在加载日志", "Loading journal")}
         </div>
       ) : error !== null || lookup === null ? (
         <div className="flex min-h-0 flex-1 items-center justify-center p-6">
@@ -155,9 +163,11 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
             <div className="flex items-start gap-3">
               <AlertCircle aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-danger" />
               <div className="min-w-0">
-                <h1 className="text-base font-semibold text-foreground">无法打开日志</h1>
+                <h1 className="text-base font-semibold text-foreground">
+                  {text("无法打开日志", "Journal unavailable")}
+                </h1>
                 <p className="mt-1 break-words text-sm text-muted-foreground">
-                  {error ?? "日志数据不可用"}
+                  {error ?? text("日志数据不可用", "Journal data is unavailable")}
                 </p>
                 <Button
                   variant="secondary"
@@ -168,7 +178,7 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
                   }}
                 >
                   <RotateCw aria-hidden="true" className="size-3.5" />
-                  重试
+                  {text("重试", "Try again")}
                 </Button>
               </div>
             </div>
@@ -180,10 +190,12 @@ export function JournalPage({ date }: JournalPageProps): React.JSX.Element {
             <span className="truncate">{lookup.journal.timezone}</span>
             <span aria-hidden="true">·</span>
             <span className="truncate">
-              {lookup.isPersisted ? "本地日志" : "新日志，首次编辑后保存"}
+              {lookup.isPersisted
+                ? text("本地日志", "Local journal")
+                : text("新日志，首次编辑后保存", "New journal, saved after the first edit")}
             </span>
             <span className="ml-auto shrink-0 font-mono">
-              {lookup.isPersisted ? `r${lookup.journal.revision}` : "未保存"}
+              {lookup.isPersisted ? `r${lookup.journal.revision}` : text("未保存", "Not saved")}
             </span>
           </header>
           <div className="flex min-h-0 flex-1 flex-col">

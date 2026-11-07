@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogTitle } from "@dailyflow/ui";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { useAppText } from "../preferences/use-app-text.js";
 import { searchResultPath } from "./search-result-path.js";
 
 export interface SearchCommandProps {
@@ -15,6 +16,7 @@ export interface SearchCommandProps {
 
 export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
   const navigate = useNavigate();
   const listboxId = useId();
   const optionId = useId();
@@ -108,19 +110,19 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="top-[18vh] max-h-[min(70vh,620px)] translate-y-0 p-0">
-        <DialogTitle className="sr-only">全局搜索</DialogTitle>
+        <DialogTitle className="sr-only">{text("全局搜索", "Global search")}</DialogTitle>
         <div className="flex items-center gap-2 border-b border-border px-4">
           <Search aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
           <Input
             role="combobox"
-            aria-label="搜索关键词"
+            aria-label={text("搜索关键词", "Search keywords")}
             aria-autocomplete="list"
             aria-controls={listboxId}
             aria-expanded={results.length > 0}
             aria-activedescendant={selectedIndex < 0 ? undefined : `${optionId}-${selectedIndex}`}
             autoFocus
             value={query}
-            placeholder="搜索日志、知识和待办"
+            placeholder={text("搜索日志、知识和待办", "Search journals, knowledge, and tasks")}
             className="h-12 border-0 bg-transparent px-0 shadow-none focus:ring-0"
             onChange={(event) => setQuery(event.currentTarget.value)}
             onKeyDown={handleKeyDown}
@@ -130,16 +132,18 @@ export function SearchCommand({ open, onOpenChange }: SearchCommandProps): React
         <div className="min-h-24 overflow-y-auto p-2">
           {query.trim() === "" ? (
             <p className="px-3 py-8 text-center text-xs text-muted-foreground">
-              输入关键词开始搜索
+              {text("输入关键词开始搜索", "Enter keywords to start searching")}
             </p>
           ) : loading && results.length === 0 ? (
             <p role="status" className="px-3 py-8 text-center text-xs text-muted-foreground">
-              正在搜索
+              {text("正在搜索", "Searching")}
             </p>
           ) : results.length === 0 ? (
-            <p className="px-3 py-8 text-center text-xs text-muted-foreground">没有匹配结果</p>
+            <p className="px-3 py-8 text-center text-xs text-muted-foreground">
+              {text("没有匹配结果", "No matching results")}
+            </p>
           ) : (
-            <ul id={listboxId} role="listbox" aria-label="搜索结果">
+            <ul id={listboxId} role="listbox" aria-label={text("搜索结果", "Search results")}>
               {results.map((result, index) => (
                 <li
                   id={`${optionId}-${index}`}

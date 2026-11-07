@@ -8,6 +8,7 @@ interface SaveStatusProps {
   status: SaveState;
   savedAt?: string;
   className?: string;
+  labels?: Partial<Record<SaveState, string>>;
 }
 
 const statusCopy: Record<Exclude<SaveState, "saved">, string> = {
@@ -18,7 +19,12 @@ const statusCopy: Record<Exclude<SaveState, "saved">, string> = {
   offline: "本地存储不可用",
 };
 
-export function SaveStatus({ status, savedAt, className }: SaveStatusProps): React.JSX.Element {
+export function SaveStatus({
+  status,
+  savedAt,
+  className,
+  labels,
+}: SaveStatusProps): React.JSX.Element {
   const Icon =
     status === "saved"
       ? Check
@@ -31,7 +37,10 @@ export function SaveStatus({ status, savedAt, className }: SaveStatusProps): Rea
             : status === "error"
               ? AlertCircle
               : CircleDashed;
-  const copy = status === "saved" ? `已保存${savedAt ? ` ${savedAt}` : ""}` : statusCopy[status];
+  const copy =
+    status === "saved"
+      ? `${labels?.saved ?? "已保存"}${savedAt ? ` ${savedAt}` : ""}`
+      : (labels?.[status] ?? statusCopy[status]);
 
   return (
     <span

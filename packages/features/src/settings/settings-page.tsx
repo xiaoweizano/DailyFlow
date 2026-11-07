@@ -15,8 +15,10 @@ import { useLocation } from "react-router-dom";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { detectShortcutPlatform, type ShortcutPlatform } from "../platform/command-registry.js";
+import { useAppMessages } from "../preferences/use-app-messages.js";
 import { applyVisualPreferences } from "../preferences/apply-visual-preferences.js";
 import { getSettingsMessages } from "../preferences/messages.js";
+import { useAppText } from "../preferences/use-app-text.js";
 import { useUserPreferences } from "../preferences/use-user-preferences.js";
 import { AboutSettings } from "./about-settings.js";
 import { DataStorageSettings } from "./data-storage-settings.js";
@@ -39,7 +41,9 @@ export function SettingsPage({
   version = "0.3.0",
 }: SettingsPageProps): React.JSX.Element {
   const { ai, storageLocation } = useAppServices();
+  const text = useAppText();
   const { preferences, warning, loading, save: savePreferences } = useUserPreferences();
+  const { setLocalePreview } = useAppMessages();
   const location = useLocation();
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(() =>
     location.hash === "#shortcut-help" ? "about" : "general",
@@ -68,6 +72,15 @@ export function SettingsPage({
       applyVisualPreferences(preferences);
     };
   }, [draft, loading, preferences]);
+
+  useEffect(() => {
+    if (loading) {
+      return;
+    }
+
+    setLocalePreview(effectiveDraft.locale);
+    return () => setLocalePreview(null);
+  }, [effectiveDraft.locale, loading, setLocalePreview]);
 
   useEffect(() => {
     if (location.hash !== "#shortcut-help") {
@@ -104,7 +117,10 @@ export function SettingsPage({
     } catch {
       setFailureWarning({
         code: "write_failed",
-        message: "无法保存设置，请稍后重试。",
+        message: text(
+          "无法保存设置，请稍后重试。",
+          "Unable to save settings. Please try again later.",
+        ),
       });
       setSaveStatus("idle");
     } finally {
@@ -228,11 +244,17 @@ export function SettingsPage({
                           <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                             {isDesktop
                               ? messages.general.startupDescription
-                              : "Web 端由浏览器标签页生命周期管理，不提供系统启动或托盘选项。"}
+                              : text(
+                                  "Web 端由浏览器标签页生命周期管理，不提供系统启动或托盘选项。",
+                                  "The browser manages the web app lifecycle; startup and tray options are unavailable.",
+                                )}
                           </p>
                         </div>
                       </div>
-                      <div className="grid divide-y divide-border border-y border-border">
+                      <div
+                        data-settings-group="startup-background"
+                        className="grid divide-y divide-border border-y border-border"
+                      >
                         <SettingSwitchRow
                           label={messages.general.autostart}
                           description={messages.general.autostartDescription}
@@ -254,6 +276,17 @@ export function SettingsPage({
                           disabled={!isDesktop}
                           onCheckedChange={(closeToTray) => updateDraft({ closeToTray })}
                         />
+                      </div>
+                    </div>
+
+                    <div data-settings-group="interface-feedback" className="py-4">
+                      <h3 className="text-sm font-medium text-foreground">
+                        {messages.general.interfaceFeedback}
+                      </h3>
+                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+                        {messages.general.interfaceFeedbackDescription}
+                      </p>
+                      <div className="mt-3 border-y border-border">
                         <SettingSwitchRow
                           label={messages.general.warnings}
                           description={messages.general.warningsDescription}
@@ -409,13 +442,13 @@ export function SettingsPage({
                           }
                         >
                           {[
-                            [0, "周日"],
-                            [1, "周一"],
-                            [2, "周二"],
-                            [3, "周三"],
-                            [4, "周四"],
-                            [5, "周五"],
-                            [6, "周六"],
+                            [0, text("周日", "Sunday")],
+                            [1, text("周一", "Monday")],
+                            [2, text("周二", "Tuesday")],
+                            [3, text("周三", "Wednesday")],
+                            [4, text("周四", "Thursday")],
+                            [5, text("周五", "Friday")],
+                            [6, text("周六", "Saturday")],
                           ].map(([value, label]) => (
                             <option key={value} value={value}>
                               {label}
@@ -434,7 +467,10 @@ export function SettingsPage({
                         className="mt-0.5 size-4 shrink-0 text-primary"
                       />
                       <p className="text-xs leading-5 text-muted-foreground">
-                        自动保存与每周起始日会同时影响编辑器和日历分析，但不会改变既有日志内容。
+                        {text(
+                          "自动保存与每周起始日会同时影响编辑器和日历分析，但不会改变既有日志内容。",
+                          "Autosave and the week start affect the editor and calendar analysis without changing existing journal content.",
+                        )}
                       </p>
                     </div>
                   </div>

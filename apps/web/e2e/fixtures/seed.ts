@@ -94,6 +94,22 @@ export async function seedJournal(page: Page, input: SeedJournalInput): Promise<
   );
 }
 
+export async function chooseBlankJournal(
+  page: Page,
+  options: { readonly keyboard?: boolean } = {},
+): Promise<void> {
+  const blankJournal = page.getByRole("button", { name: /空白日志/u });
+  await blankJournal.waitFor({ state: "visible" });
+
+  if (options.keyboard === true) {
+    await blankJournal.focus();
+    await page.keyboard.press("Enter");
+    return;
+  }
+
+  await blankJournal.click();
+}
+
 export async function seedKnowledge(page: Page, input: SeedKnowledgeInput): Promise<string> {
   return page.evaluate(
     async ({ journalDate, title, summary, kind }) => {

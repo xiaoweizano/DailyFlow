@@ -7,6 +7,7 @@ import {
   type ShortcutConflict,
   type ShortcutPlatform,
 } from "../platform/command-registry.js";
+import { useAppText } from "../preferences/use-app-text.js";
 
 export interface ShortcutHelpPanelProps {
   readonly platform: ShortcutPlatform;
@@ -19,6 +20,34 @@ export function ShortcutHelpPanel({
   commands = defaultShortcutCommands,
   conflicts = [],
 }: ShortcutHelpPanelProps): React.JSX.Element {
+  const text = useAppText();
+
+  function commandLabel(command: ShortcutCommand): string {
+    if (command.id === "global-search") {
+      return text("全局搜索", "Global search");
+    }
+    if (command.id === "shortcut-help") {
+      return text("快捷键帮助", "Keyboard shortcut help");
+    }
+    if (command.id === "open-settings") {
+      return text("打开设置", "Open settings");
+    }
+    return command.label;
+  }
+
+  function commandDescription(command: ShortcutCommand): string | undefined {
+    if (command.id === "global-search") {
+      return text("打开搜索结果并输入关键词。", "Open search and enter keywords.");
+    }
+    if (command.id === "shortcut-help") {
+      return text("查看当前平台可用的快捷键。", "View shortcuts available on this platform.");
+    }
+    if (command.id === "open-settings") {
+      return text("打开 DailyFlow 设备设置。", "Open DailyFlow device settings.");
+    }
+    return command.description;
+  }
+
   return (
     <div
       id="shortcut-help"
@@ -33,10 +62,13 @@ export function ShortcutHelpPanel({
         </span>
         <div>
           <h2 id="shortcut-help-title" className="text-sm font-semibold text-foreground">
-            快捷键
+            {text("快捷键", "Keyboard shortcuts")}
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            输入框、代码块和对话框内始终优先保留文本编辑。
+            {text(
+              "输入框、代码块和对话框内始终优先保留文本编辑。",
+              "Text editing always takes priority in inputs, code blocks, and dialogs.",
+            )}
           </p>
         </div>
       </div>
@@ -48,9 +80,14 @@ export function ShortcutHelpPanel({
         >
           <span className="flex items-center gap-2 font-medium">
             <AlertTriangle aria-hidden="true" className="size-3.5 text-warning" />
-            快捷键冲突
+            {text("快捷键冲突", "Shortcut conflict")}
           </span>
-          <p className="mt-1 text-muted-foreground">冲突命令已暂停触发，请调整绑定后再使用。</p>
+          <p className="mt-1 text-muted-foreground">
+            {text(
+              "冲突命令已暂停触发，请调整绑定后再使用。",
+              "Conflicting commands are disabled until their bindings are changed.",
+            )}
+          </p>
         </div>
       ) : null}
 
@@ -60,10 +97,10 @@ export function ShortcutHelpPanel({
             key={command.id}
             className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 border-t border-border pt-3 first:border-t-0 first:pt-0"
           >
-            <dt className="min-w-0 text-sm font-medium text-foreground">{command.label}</dt>
-            {command.description === undefined ? null : (
+            <dt className="min-w-0 text-sm font-medium text-foreground">{commandLabel(command)}</dt>
+            {commandDescription(command) === undefined ? null : (
               <dd className="col-start-1 mt-0.5 text-xs leading-5 text-muted-foreground">
-                {command.description}
+                {commandDescription(command)}
               </dd>
             )}
             <dd className="col-start-2 row-span-2 row-start-1 shrink-0 font-mono text-xs text-foreground">

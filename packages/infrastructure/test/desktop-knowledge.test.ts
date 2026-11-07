@@ -99,7 +99,7 @@ describe("DesktopKnowledgeRepository", () => {
       },
     });
     expect(invoke).toHaveBeenNthCalledWith(3, "knowledge_save", {
-      input: {
+      command: {
         item: expect.objectContaining({
           id: KNOWLEDGE_ID,
           kind: "issue",

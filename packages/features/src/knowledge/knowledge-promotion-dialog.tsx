@@ -14,6 +14,8 @@ import { Check, RotateCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { useAppText } from "../preferences/use-app-text.js";
+import { knowledgeKindOptions } from "./knowledge-labels.js";
 
 export interface KnowledgePromotionDialogProps {
   readonly open: boolean;
@@ -31,6 +33,7 @@ export function KnowledgePromotionDialog({
   onPromoted,
 }: KnowledgePromotionDialogProps): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
   const [kind, setKind] = useState<KnowledgeKind>("note");
   const [title, setTitle] = useState(journal.title);
   const [saving, setSaving] = useState(false);
@@ -59,13 +62,17 @@ export function KnowledgePromotionDialog({
         title: title.trim(),
       });
       if (!result.ok) {
-        setError("保存到知识库失败，请重试");
+        setError(
+          text("保存到知识库失败，请重试", "Failed to save to the knowledge base. Try again."),
+        );
         return;
       }
       onPromoted?.(result.value);
       onOpenChange(false);
     } catch {
-      setError("保存到知识库失败，请重试");
+      setError(
+        text("保存到知识库失败，请重试", "Failed to save to the knowledge base. Try again."),
+      );
     } finally {
       setSaving(false);
     }
@@ -75,30 +82,29 @@ export function KnowledgePromotionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent aria-describedby="knowledge-promotion-description">
         <DialogHeader>
-          <DialogTitle>保存为知识</DialogTitle>
+          <DialogTitle>{text("保存为知识", "Save as knowledge")}</DialogTitle>
           <DialogDescription id="knowledge-promotion-description">
-            保留原日志和结构化块来源，生成可独立维护的知识条目。
+            {text(
+              "保留原日志和结构化块来源，生成可独立维护的知识条目。",
+              "Keep the source journal and structured block while creating independently maintainable knowledge.",
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <p className="text-xs font-medium text-foreground">知识类型</p>
+            <p className="text-xs font-medium text-foreground">
+              {text("知识类型", "Knowledge type")}
+            </p>
             <SegmentedControl
-              label="知识类型"
+              label={text("知识类型", "Knowledge type")}
               value={kind}
               onChange={setKind}
-              options={[
-                { label: "问题", value: "issue" },
-                { label: "方案", value: "solution" },
-                { label: "决策", value: "decision" },
-                { label: "笔记", value: "note" },
-                { label: "参考", value: "reference" },
-              ]}
+              options={knowledgeKindOptions(text)}
             />
           </div>
           <label className="grid gap-1.5 text-xs font-medium text-foreground">
-            知识标题
+            {text("知识标题", "Knowledge title")}
             <Input
               value={title}
               maxLength={200}
@@ -107,11 +113,14 @@ export function KnowledgePromotionDialog({
           </label>
           {sourceBlockId === undefined || sourceBlockId === null ? (
             <p className="border border-border bg-surface-muted/60 px-3 py-2 text-xs text-muted-foreground">
-              将整篇日志保存为独立知识快照。
+              {text(
+                "将整篇日志保存为独立知识快照。",
+                "Save the complete journal as an independent knowledge snapshot.",
+              )}
             </p>
           ) : (
             <p className="break-all border border-border bg-surface-muted/60 px-3 py-2 font-mono text-[10px] text-muted-foreground">
-              来源块 {sourceBlockId}
+              {text(`来源块 ${sourceBlockId}`, `Source block ${sourceBlockId}`)}
             </p>
           )}
           {error === null ? null : (
@@ -123,7 +132,7 @@ export function KnowledgePromotionDialog({
 
         <DialogFooter>
           <Button variant="secondary" onClick={() => onOpenChange(false)}>
-            取消
+            {text("取消", "Cancel")}
           </Button>
           <Button disabled={saving || title.trim() === ""} onClick={() => void handlePromote()}>
             {saving ? (
@@ -131,7 +140,7 @@ export function KnowledgePromotionDialog({
             ) : (
               <Check aria-hidden="true" className="size-4" />
             )}
-            保存到知识库
+            {text("保存到知识库", "Save to knowledge base")}
           </Button>
         </DialogFooter>
       </DialogContent>

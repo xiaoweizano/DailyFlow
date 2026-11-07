@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { todayInShanghai } from "./fixtures/seed.js";
+import { chooseBlankJournal, todayInShanghai } from "./fixtures/seed.js";
 
 test("opens the personal dashboard on first launch", async ({ page }) => {
   await page.goto("/");
@@ -17,6 +17,7 @@ test("autosaves after 800ms, persists after reload, and restores a history versi
   page,
 }) => {
   await page.goto("/journal/2026-11-04");
+  await chooseBlankJournal(page);
 
   await expect(page.getByLabel("日志标题")).toBeVisible();
   await page.getByLabel("日志标题").fill("Task 23 journal workflow");
@@ -62,6 +63,7 @@ test("autosaves after 800ms, persists after reload, and restores a history versi
 
 test("supports the date navigator and explicit keyboard save", async ({ page }) => {
   await page.goto(`/journal/${todayInShanghai()}`);
+  await chooseBlankJournal(page);
   await page.getByLabel("日志标题").fill("Keyboard save");
   await page.getByLabel("日志正文").click();
   await page.keyboard.type("使用快捷键立即保存");
@@ -75,6 +77,7 @@ test("supports the date navigator and explicit keyboard save", async ({ page }) 
 
 test("autolinks typed URLs and preserves the link after saving", async ({ page }) => {
   await page.goto("/journal/2026-11-04");
+  await chooseBlankJournal(page);
 
   const editor = page.getByLabel("日志正文");
   await editor.click();
@@ -94,6 +97,7 @@ test("autolinks typed URLs and preserves the link after saving", async ({ page }
 
 test("converts Markdown heading shortcuts while typing", async ({ page }) => {
   await page.goto("/journal/2026-11-04");
+  await chooseBlankJournal(page);
 
   const editor = page.getByLabel("日志正文");
   await editor.click();

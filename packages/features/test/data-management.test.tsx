@@ -70,9 +70,12 @@ const report: DataHealthReport = {
   ],
 };
 
-function renderPage(services: DataManagementRuntimeServices): void {
+function renderPage(
+  services: DataManagementRuntimeServices,
+  locale: "zh-CN" | "en-US" = "zh-CN",
+): void {
   const runtime = {
-    ...createRuntimeSettingsStub(),
+    ...createRuntimeSettingsStub({ locale }),
     dataManagement: services,
   } as unknown as AppRuntimeServices;
   render(
@@ -142,5 +145,23 @@ describe("DataManagementPage", () => {
     });
     expect(await screen.findByText("索引重建已取消，旧索引保持不变。")).toBeInTheDocument();
     await waitFor(() => expect(rebuildSearchIndex).toHaveBeenCalledOnce());
+  });
+
+  it("renders data health and maintenance in English by issue code", async () => {
+    const services: DataManagementRuntimeServices = {
+      inspect: vi.fn(async () => report),
+      rebuildSearchIndex: vi.fn(),
+    };
+
+    renderPage(services, "en-US");
+
+    expect(await screen.findByRole("heading", { name: "Data management" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Local storage" })).toBeInTheDocument();
+    expect(screen.getByText("Used space")).toBeInTheDocument();
+    expect(screen.getByText("4 KB")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Data health" })).toBeInTheDocument();
+    expect(screen.getByText("Search projections need rebuilding")).toBeInTheDocument();
+    expect(screen.getByText("Orphaned attachments")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Inspect and rebuild index" })).toBeInTheDocument();
   });
 });

@@ -11,9 +11,12 @@ import {
 import { useRef, useState } from "react";
 
 import type { DataManagementRuntimeServices } from "../app-services-context.js";
+import { useAppText, type AppText } from "../preferences/use-app-text.js";
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "索引重建失败，旧索引保持不变。";
+function errorMessage(error: unknown, text: AppText): string {
+  return error instanceof Error
+    ? error.message
+    : text("索引重建失败，旧索引保持不变。", "Index rebuild failed. The old index was kept.");
 }
 
 export interface IndexMaintenanceProps {
@@ -25,6 +28,7 @@ export function IndexMaintenance({
   services,
   onCompleted,
 }: IndexMaintenanceProps): React.JSX.Element {
+  const text = useAppText();
   const abortRef = useRef<AbortController | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
@@ -52,7 +56,7 @@ export function IndexMaintenance({
       }
     } catch (cause) {
       if (!controller.signal.aborted) {
-        setError(errorMessage(cause));
+        setError(errorMessage(cause, text));
       }
     } finally {
       if (abortRef.current === controller) {
@@ -76,10 +80,13 @@ export function IndexMaintenance({
           </span>
           <div>
             <h2 id="index-maintenance-title" className="text-sm font-semibold text-foreground">
-              搜索索引维护
+              {text("搜索索引维护", "Search index maintenance")}
             </h2>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">
-              从权威内容重新生成搜索正文、结构化块、知识和任务的索引。重建失败或取消时保留旧索引。
+              {text(
+                "从权威内容重新生成搜索正文、结构化块、知识和任务的索引。重建失败或取消时保留旧索引。",
+                "Rebuild search coverage for journal text, structured blocks, knowledge, and tasks from authoritative content. Failed or cancelled rebuilds keep the old index.",
+              )}
             </p>
           </div>
         </div>
@@ -95,7 +102,7 @@ export function IndexMaintenance({
           }}
         >
           <RefreshCw aria-hidden="true" className="size-3.5" />
-          检查并重建索引
+          {text("检查并重建索引", "Inspect and rebuild index")}
         </Button>
       </div>
 
@@ -104,35 +111,46 @@ export function IndexMaintenance({
           <div className="flex items-start gap-3 border border-warning/30 bg-warning/5 px-3 py-3">
             <ShieldAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warning" />
             <div>
-              <p className="text-sm font-medium text-foreground">重建期间保持应用开启</p>
+              <p className="text-sm font-medium text-foreground">
+                {text("重建期间保持应用开启", "Keep the app open during rebuild")}
+              </p>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                新索引会先写入临时状态，全部完成后原子替换旧索引。日志正文和历史版本不会在本操作中修改。
+                {text(
+                  "新索引会先写入临时状态，全部完成后原子替换旧索引。日志正文和历史版本不会在本操作中修改。",
+                  "The new index is written to temporary storage and atomically replaces the old index when complete. Journal content and history are not modified.",
+                )}
               </p>
             </div>
           </div>
           <label className="mt-3 flex cursor-pointer items-start gap-3 border border-border bg-surface px-3 py-3">
             <input
               type="checkbox"
-              aria-label="我了解重建期间不应关闭应用"
+              aria-label={text(
+                "我了解重建期间不应关闭应用",
+                "I understand the app should stay open during rebuild",
+              )}
               checked={acknowledged}
               disabled={running}
               onChange={(event) => setAcknowledged(event.currentTarget.checked)}
               className="mt-0.5 size-4 shrink-0 accent-primary"
             />
             <span className="text-xs leading-5 text-foreground">
-              我了解重建期间不应关闭应用，并确认从权威内容重新生成索引。
+              {text(
+                "我了解重建期间不应关闭应用，并确认从权威内容重新生成索引。",
+                "I understand the app should stay open during rebuild and confirm regeneration from authoritative content.",
+              )}
             </span>
           </label>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {running ? (
               <Button variant="secondary" size="sm" onClick={cancel}>
                 <AlertCircle aria-hidden="true" className="size-3.5" />
-                取消重建
+                {text("取消重建", "Cancel rebuild")}
               </Button>
             ) : (
               <Button size="sm" disabled={!acknowledged} onClick={() => void rebuild()}>
                 <RefreshCw aria-hidden="true" className="size-3.5" />
-                确认重建
+                {text("确认重建", "Confirm rebuild")}
               </Button>
             )}
           </div>
@@ -148,8 +166,11 @@ export function IndexMaintenance({
                 className={`size-4 text-primary ${running ? "animate-spin" : ""}`}
               />
               {progress === null
-                ? "正在准备权威内容快照"
-                : `已处理 ${progress.processedCount} / ${progress.totalCount}`}
+                ? text("正在准备权威内容快照", "Preparing authoritative content snapshot")
+                : text(
+                    `已处理 ${progress.processedCount} / ${progress.totalCount}`,
+                    `Processed ${progress.processedCount} / ${progress.totalCount}`,
+                  )}
             </div>
             {progress === null ? null : (
               <span className="font-mono text-[10px] text-muted-foreground">{progress.phase}</span>
@@ -174,7 +195,12 @@ export function IndexMaintenance({
           className="flex items-start gap-2 border-t border-warning/25 bg-warning/5 px-4 py-3"
         >
           <AlertCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-warning" />
-          <p className="text-xs leading-5 text-foreground">索引重建已取消，旧索引保持不变。</p>
+          <p className="text-xs leading-5 text-foreground">
+            {text(
+              "索引重建已取消，旧索引保持不变。",
+              "Index rebuild cancelled. The old index was kept.",
+            )}
+          </p>
         </div>
       ) : null}
       {result === "completed" ? (
@@ -184,7 +210,10 @@ export function IndexMaintenance({
         >
           <CheckCircle2 aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-success" />
           <p className="text-xs leading-5 text-foreground">
-            搜索索引已重建，权威正文和历史版本未修改。
+            {text(
+              "搜索索引已重建，权威正文和历史版本未修改。",
+              "Search index rebuilt. Authoritative content and history were not modified.",
+            )}
           </p>
         </div>
       ) : null}

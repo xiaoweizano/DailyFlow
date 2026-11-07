@@ -2,7 +2,12 @@
 
 import "./setup-dom.js";
 
-import type { Page, SavedJournalSnapshot, StoredAttachment } from "@dailyflow/application";
+import {
+  DEFAULT_USER_PREFERENCES,
+  type Page,
+  type SavedJournalSnapshot,
+  type StoredAttachment,
+} from "@dailyflow/application";
 import type { AppError, Result } from "@dailyflow/shared";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -72,10 +77,25 @@ function createServices(): AppRuntimeServices {
   };
 }
 
-function renderShell(): void {
+function renderShell(locale: "zh-CN" | "en-US" = "zh-CN"): void {
+  const baseServices = createServices();
+  const services: AppRuntimeServices = {
+    ...baseServices,
+    settings: {
+      ...baseServices.settings,
+      load: async () => ({
+        preferences: {
+          ...DEFAULT_USER_PREFERENCES,
+          locale,
+        },
+        warning: null,
+      }),
+    },
+  };
+
   render(
     <MemoryRouter initialEntries={["/"]}>
-      <AppServicesProvider services={createServices()}>
+      <AppServicesProvider services={services}>
         <Routes>
           <Route element={<AppShell platform="web" storageLabel="IndexedDB" version="0.1.0" />}>
             <Route index element={<p>工作台</p>} />
@@ -87,6 +107,20 @@ function renderShell(): void {
 }
 
 describe("application shell search shortcut", () => {
+  it("translates navigation and shell chrome for the persisted language", async () => {
+    renderShell("en-US");
+
+    expect(await screen.findByRole("link", { name: "Workbench" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Daily Journal" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
+    expect(
+      screen.getByRole("searchbox", { name: "Search journals, knowledge, and tasks" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open today's journal" })).toBeInTheDocument();
+    expect(screen.getByText("Local data ready")).toBeInTheDocument();
+    expect(screen.getByText("Not edited yet")).toBeInTheDocument();
+  });
+
   it("keeps runtime storage details out of the persistent shell chrome", () => {
     renderShell();
 
@@ -113,7 +147,7 @@ describe("application shell search shortcut", () => {
     const user = userEvent.setup();
     renderShell();
 
-    const input = screen.getByRole("textbox", { name: "搜索日志、知识和任务" });
+    const input = screen.getByRole("searchbox", { name: "搜索日志、知识和任务" });
     await user.click(input);
     await user.type(input, "/");
 

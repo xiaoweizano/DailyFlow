@@ -1,17 +1,22 @@
 import type { JournalSummary } from "@dailyflow/application";
 
 import { localDatesEndingAt } from "../date-utils.js";
+import { getAppMessages, type AppMessages } from "../preferences/app-messages.js";
+
+const defaultCopy = getAppMessages("zh-CN").dashboard;
 
 export interface ActivityHeatmapProps {
   readonly endDate: string;
   readonly summaries: readonly JournalSummary[];
   readonly todayHasJournal?: boolean;
+  readonly copy?: AppMessages["dashboard"];
 }
 
 export function ActivityHeatmap({
   endDate,
   summaries,
   todayHasJournal = false,
+  copy = defaultCopy,
 }: ActivityHeatmapProps): React.JSX.Element {
   const dates = localDatesEndingAt(endDate, 84);
   const countsByDate = new Map<string, number>();
@@ -25,19 +30,19 @@ export function ActivityHeatmap({
 
   return (
     <section aria-labelledby="activity-heatmap-title" className="min-w-0">
-      <p className="font-mono text-[10px] uppercase text-muted-foreground">Consistency</p>
+      <p className="font-mono text-[10px] uppercase text-muted-foreground">{copy.heatmapEyebrow}</p>
       <div className="mt-1 flex items-center justify-between gap-3">
         <h2 id="activity-heatmap-title" className="text-base font-semibold text-foreground">
-          记录热力图
+          {copy.heatmapTitle}
         </h2>
-        <span className="text-xs text-muted-foreground">过去 12 周</span>
+        <span className="text-xs text-muted-foreground">{copy.heatmapPeriod}</span>
       </div>
       {hasActivity ? null : (
-        <p className="mt-3 text-sm text-muted-foreground">过去 12 周还没有记录</p>
+        <p className="mt-3 text-sm text-muted-foreground">{copy.heatmapEmpty}</p>
       )}
       <div
         className="mt-4 grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-1"
-        aria-label="过去 12 周日志热力图"
+        aria-label={copy.heatmapLabel}
       >
         {dates.map((date) => {
           const count = countsByDate.get(date) ?? 0;
@@ -45,18 +50,18 @@ export function ActivityHeatmap({
             <div
               key={date}
               role="status"
-              aria-label={`${date} 有 ${count} 篇日志`}
+              aria-label={copy.journalCount(date, count)}
               aria-live="off"
-              title={`${date} · ${count} 篇日志`}
+              title={copy.journalCountTitle(date, count)}
               className={[
                 "size-3 shrink-0 rounded-[2px] border",
                 count === 0
                   ? "border-border bg-surface-muted"
                   : count === 1
-                    ? "border-primary/30 bg-primary/30"
+                    ? "df-activity-green-1"
                     : count === 2
-                      ? "border-primary/45 bg-primary/50"
-                      : "border-primary bg-primary/80",
+                      ? "df-activity-green-2"
+                      : "df-activity-green-4",
               ].join(" ")}
             />
           );

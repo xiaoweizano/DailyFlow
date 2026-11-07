@@ -248,18 +248,18 @@ export class TauriCommandClient {
   async saveTask(input: TaskSaveCommandDto): Promise<TaskDto> {
     return this.request(
       TAURI_COMMANDS.taskSave,
-      { input },
+      { command: input },
       TaskDtoSchema,
-      z.object({ input: TaskSaveCommandDtoSchema }),
+      z.object({ command: TaskSaveCommandDtoSchema }),
     );
   }
 
   async completeTask(input: TaskCompleteCommandDto): Promise<TaskDto> {
     return this.request(
       TAURI_COMMANDS.taskComplete,
-      { input },
+      { command: input },
       TaskDtoSchema,
-      z.object({ input: TaskCompleteCommandDtoSchema }),
+      z.object({ command: TaskCompleteCommandDtoSchema }),
     );
   }
 
@@ -292,9 +292,9 @@ export class TauriCommandClient {
   async saveKnowledge(input: KnowledgeSaveCommandDto): Promise<KnowledgeItemDto> {
     return this.request(
       TAURI_COMMANDS.knowledgeSave,
-      { input },
+      { command: input },
       KnowledgeItemDtoSchema,
-      z.object({ input: KnowledgeSaveCommandDtoSchema }),
+      z.object({ command: KnowledgeSaveCommandDtoSchema }),
     );
   }
 
@@ -350,9 +350,9 @@ export class TauriCommandClient {
   async saveReport(input: ReportSaveCommandDto): Promise<ReportDto> {
     return this.request(
       TAURI_COMMANDS.reportSave,
-      { input },
+      { command: input },
       ReportDtoSchema,
-      z.object({ input: ReportSaveCommandDtoSchema }),
+      z.object({ command: ReportSaveCommandDtoSchema }),
     );
   }
 

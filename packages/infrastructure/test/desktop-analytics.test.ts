@@ -152,7 +152,7 @@ describe("DesktopReportRepository", () => {
       },
     });
     expect(invoke).toHaveBeenNthCalledWith(2, "report_save", {
-      input: {
+      command: {
         report: expect.objectContaining({
           id: REPORT_ID,
           title: "Edited report",

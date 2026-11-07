@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import type { SettingsMessages } from "../preferences/messages.js";
 import type { ShortcutPlatform } from "../platform/command-registry.js";
+import { useAppText } from "../preferences/use-app-text.js";
 import { AiSettings } from "./ai-settings.js";
 import { SettingsSection } from "./settings-section.js";
 import { ShortcutHelpPanel } from "./shortcut-settings.js";
@@ -25,6 +26,7 @@ export function AboutSettings({
   providers,
   secretBackend,
 }: AboutSettingsProps): React.JSX.Element {
+  const text = useAppText();
   const isDesktop = platform === "windows" || platform === "macos";
 
   return (
@@ -72,7 +74,7 @@ export function AboutSettings({
           className="mt-4 inline-flex h-9 items-center gap-2 border border-border-strong bg-surface px-3 text-sm font-medium text-foreground hover:border-primary/40"
         >
           <BookOpenText aria-hidden="true" className="size-4 text-primary" />
-          打开帮助中心
+          {text("打开帮助中心", "Open help center")}
         </Link>
       </SettingsSection>
 
@@ -81,8 +83,11 @@ export function AboutSettings({
       <SettingsSection
         id="ai-settings"
         eyebrow="Optional extension"
-        title="AI 扩展"
-        description="AI 不参与日志保存、搜索和知识沉淀。"
+        title={text("AI 扩展", "AI extension")}
+        description={text(
+          "AI 不参与日志保存、搜索和知识沉淀。",
+          "AI is not part of journal saving, search, or knowledge capture.",
+        )}
         icon={Bot}
       >
         <AiSettings providers={providers} secretBackend={secretBackend} />

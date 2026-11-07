@@ -8,6 +8,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
+import { AppServicesProvider } from "../src/app-services-provider.js";
+import type { AppRuntimeServices } from "../src/app-services-context.js";
 import { AnnualHeatmap } from "../src/timeline/annual-heatmap.js";
 import {
   buildAnnualHeatmapData,
@@ -76,14 +79,16 @@ describe("AnnualHeatmap", () => {
     const onOpenDate = vi.fn();
     const user = userEvent.setup();
     render(
-      <AnnualHeatmap
-        year={2024}
-        today="2024-02-29"
-        days={[day]}
-        weekStartsOn={1}
-        onYearChange={onYearChange}
-        onOpenDate={onOpenDate}
-      />,
+      <AppServicesProvider services={createRuntimeSettingsStub() as AppRuntimeServices}>
+        <AnnualHeatmap
+          year={2024}
+          today="2024-02-29"
+          days={[day]}
+          weekStartsOn={1}
+          onYearChange={onYearChange}
+          onOpenDate={onOpenDate}
+        />
+      </AppServicesProvider>,
     );
 
     expect(screen.getAllByRole("gridcell")).toHaveLength(371);

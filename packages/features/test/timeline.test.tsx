@@ -34,6 +34,7 @@ import type { AppRuntimeServices } from "../src/app-services-context.js";
 import type { TaskCreateInput, TaskRuntimeServices } from "../src/tasks/task-services.js";
 import { isLocalDate, shiftLocalDate } from "../src/date-utils.js";
 import { ActivityHeatmap } from "../src/timeline/activity-heatmap.js";
+import { AnnualHeatmap } from "../src/timeline/annual-heatmap.js";
 import { MonthCalendar } from "../src/timeline/month-calendar.js";
 import { TimelinePage } from "../src/timeline/timeline-page.js";
 import { TasksPage } from "../src/tasks/tasks-page.js";
@@ -181,6 +182,14 @@ function renderPage(page: React.ReactNode, services = createServices()): void {
   );
 }
 
+function renderWithMessages(page: React.ReactNode): void {
+  render(
+    <AppServicesProvider services={createRuntimeSettingsStub() as AppRuntimeServices}>
+      {page}
+    </AppServicesProvider>,
+  );
+}
+
 describe("local date boundaries", () => {
   it("handles leap day, month end, year crossing, and strict local dates", () => {
     expect(isLocalDate("2024-02-29")).toBe(true);
@@ -197,7 +206,7 @@ describe("Timeline experience", () => {
   it("renders accessible month date cells that support keyboard selection", async () => {
     const onSelectDate = vi.fn();
     const user = userEvent.setup();
-    render(
+    renderWithMessages(
       <MonthCalendar
         month="2024-02"
         selectedDate="2024-02-29"
@@ -239,6 +248,61 @@ describe("Timeline experience", () => {
     await user.click(screen.getByRole("button", { name: "热力图" }));
     expect(await screen.findByRole("grid", { name: "2026 年全年日志热力图" })).toBeTruthy();
     expect(screen.getByLabelText("2026-10-30，1 篇日志，2 个任务到期")).toBeTruthy();
+  });
+
+  it("jumps directly to a year and month instead of stepping backward repeatedly", async () => {
+    const user = userEvent.setup();
+    const onMonthChange = vi.fn();
+    renderWithMessages(
+      <MonthCalendar
+        month="2026-10"
+        selectedDate="2026-10-30"
+        days={[day]}
+        today="2026-10-30"
+        onSelectDate={() => undefined}
+        onMonthChange={onMonthChange}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("选择年份"), "2024");
+    expect(onMonthChange).toHaveBeenLastCalledWith("2024-10");
+
+    await user.selectOptions(screen.getByLabelText("选择月份"), "2");
+    expect(onMonthChange).toHaveBeenLastCalledWith("2026-02");
+
+    await user.click(screen.getByRole("button", { name: "回到今天" }));
+    expect(onMonthChange).toHaveBeenLastCalledWith("2026-10");
+  });
+
+  it("keeps calendar activity green when the interface accent changes", () => {
+    renderWithMessages(
+      <>
+        <MonthCalendar
+          month="2026-10"
+          selectedDate="2026-10-30"
+          days={[day]}
+          onSelectDate={() => undefined}
+        />
+        <AnnualHeatmap
+          year={2026}
+          today="2026-10-30"
+          days={[day]}
+          weekStartsOn={1}
+          onYearChange={() => undefined}
+          onOpenDate={() => undefined}
+        />
+        <ActivityHeatmap endDate="2026-10-30" days={[day]} weeks={12} />
+      </>,
+    );
+
+    const monthActivity = screen.getByRole("button", { name: /2026-10-30/u });
+    expect(monthActivity.className).toContain("activity-green");
+    expect(
+      screen.getByRole("gridcell", { name: "2026-10-30，1 篇日志，2 个任务到期" }).className,
+    ).toContain("activity-green");
+    expect(
+      screen.getByRole("listitem", { name: "2026-10-30，1 篇日志，2 个任务到期" }).className,
+    ).toContain("activity-green");
   });
 
   it("shows the heatmap definition and per-day values", () => {
@@ -301,6 +365,7 @@ describe("Tasks experience", () => {
       dueDate: "2026-10-31",
     });
     expect(await screen.findByRole("article", { name: "待办：整理发布记录" })).toBeTruthy();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it.each<readonly [string, TaskListView]>([

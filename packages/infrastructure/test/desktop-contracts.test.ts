@@ -618,7 +618,7 @@ describe("desktop Tauri contracts", () => {
     await tasks.softDelete(taskDto.id, 4);
 
     expect(invoke).toHaveBeenNthCalledWith(1, "task_save", {
-      input: expect.objectContaining({
+      command: expect.objectContaining({
         task: expect.objectContaining({
           id: taskDto.id,
           status: "in_progress",
@@ -628,7 +628,7 @@ describe("desktop Tauri contracts", () => {
       }),
     });
     expect(invoke).toHaveBeenNthCalledWith(2, "task_complete", {
-      input: {
+      command: {
         taskId: taskDto.id,
         completedAt: "2026-10-30T05:20:11.123Z",
         expectedRevision: 3,

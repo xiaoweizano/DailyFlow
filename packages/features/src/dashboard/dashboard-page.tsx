@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import { useAppServices } from "../app-services-hooks.js";
 import { currentLocalDate, shiftLocalDate } from "../date-utils.js";
 import { JournalList } from "../journal/journal-list.js";
+import { useAppMessages } from "../preferences/use-app-messages.js";
+import { getSaveStatusLabels, useAppText } from "../preferences/use-app-text.js";
 import { ActivityHeatmap } from "./activity-heatmap.js";
 import { TodayJournalPanel } from "./today-journal-panel.js";
 import { TodayTasksPanel } from "./today-tasks-panel.js";
@@ -23,7 +25,7 @@ interface DashboardState {
   readonly summaries: readonly JournalSummary[];
 }
 
-function DashboardLoading(): React.JSX.Element {
+function DashboardLoading({ label }: { readonly label: string }): React.JSX.Element {
   return (
     <div
       role="status"
@@ -31,7 +33,7 @@ function DashboardLoading(): React.JSX.Element {
     >
       <span className="flex items-center gap-2">
         <RotateCw aria-hidden="true" className="size-4 animate-spin" />
-        正在加载工作台
+        {label}
       </span>
     </div>
   );
@@ -41,6 +43,9 @@ export function DashboardPage({
   today = currentLocalDate(),
 }: DashboardPageProps): React.JSX.Element {
   const services = useAppServices();
+  const { messages } = useAppMessages();
+  const text = useAppText();
+  const copy = messages.dashboard;
   const [state, setState] = useState<DashboardState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +66,7 @@ export function DashboardPage({
       ]);
 
       if (!lookupResult.ok) {
-        setError("工作台加载失败");
+        setError(copy.errorTitle);
         setState(null);
         return;
       }
@@ -71,19 +76,19 @@ export function DashboardPage({
         summaries: summaries.items,
       });
     } catch {
-      setError("工作台加载失败");
+      setError(copy.errorTitle);
       setState(null);
     } finally {
       setLoading(false);
     }
-  }, [services.journal, today]);
+  }, [copy.errorTitle, services.journal, today]);
 
   useEffect(() => {
     void loadDashboard();
   }, [loadDashboard, reloadVersion]);
 
   if (loading) {
-    return <DashboardLoading />;
+    return <DashboardLoading label={copy.loading} />;
   }
 
   if (error !== null || state === null) {
@@ -92,11 +97,9 @@ export function DashboardPage({
         <div role="alert" className="w-full max-w-md border border-danger/25 bg-danger/5 p-5">
           <AlertCircle aria-hidden="true" className="size-5 text-danger" />
           <h1 id="dashboard-error" className="mt-3 text-base font-semibold text-foreground">
-            工作台加载失败
+            {copy.errorTitle}
           </h1>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            无法读取本地日志，请检查存储状态后重试。
-          </p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{copy.errorDescription}</p>
           <Button
             variant="secondary"
             size="sm"
@@ -104,7 +107,7 @@ export function DashboardPage({
             onClick={() => setReloadVersion((version) => version + 1)}
           >
             <RotateCw aria-hidden="true" className="size-3.5" />
-            重试
+            {copy.retry}
           </Button>
         </div>
       </section>
@@ -117,34 +120,39 @@ export function DashboardPage({
     <div className="min-h-full bg-surface-muted/35 p-4 sm:p-6">
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase text-primary">Daily workspace</p>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground">工作台</h1>
+          <p className="font-mono text-[10px] uppercase text-primary">{copy.eyebrow}</p>
+          <h1 className="mt-1 text-2xl font-semibold text-foreground">{copy.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             <time dateTime={today}>{today}</time>
             <span aria-hidden="true"> · </span>
-            从当前记录继续推进
+            {copy.continue}
           </p>
         </div>
         <Link
           to={`/journal/${today}`}
           className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-control)] border border-primary bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary-hover"
         >
-          打开今日日志
+          {copy.openTodayJournal}
           <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
       </header>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div className="grid min-w-0 content-start gap-5">
-          <TodayJournalPanel lookup={state.lookup} />
+          <TodayJournalPanel
+            copy={copy}
+            lookup={state.lookup}
+            saveLabels={getSaveStatusLabels(text)}
+          />
 
           <div className="grid gap-5 lg:grid-cols-2">
             <section className="min-w-0 border border-border bg-surface p-4">
-              <JournalList summaries={recentActivity.slice(0, 6)} />
+              <JournalList copy={copy} summaries={recentActivity.slice(0, 6)} />
             </section>
             <section className="min-w-0 border border-border bg-surface p-4">
               <ActivityHeatmap
                 endDate={today}
+                copy={copy}
                 summaries={state.summaries}
                 todayHasJournal={state.lookup.isPersisted}
               />
@@ -152,8 +160,8 @@ export function DashboardPage({
           </div>
         </div>
 
-        <aside aria-label="工作台侧栏" className="grid content-start gap-5">
-          <TodayTasksPanel />
+        <aside aria-label={copy.sidebarLabel} className="grid content-start gap-5">
+          <TodayTasksPanel copy={copy} />
           <section
             aria-labelledby="recent-knowledge-title"
             className="border border-border bg-surface p-4"
@@ -165,20 +173,20 @@ export function DashboardPage({
                   id="recent-knowledge-title"
                   className="mt-1 text-sm font-semibold text-foreground"
                 >
-                  最近知识
+                  {copy.recentKnowledge}
                 </h2>
               </div>
               <LibraryBig aria-hidden="true" className="size-4 shrink-0 text-primary" />
             </div>
-            <p className="mt-6 text-sm font-medium text-foreground">暂无最近知识</p>
+            <p className="mt-6 text-sm font-medium text-foreground">{copy.noRecentKnowledge}</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              从日志沉淀的问题与解决方案会出现在这里。
+              {copy.recentKnowledgeDescription}
             </p>
             <Link
               to="/knowledge"
               className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
             >
-              打开知识库
+              {copy.openKnowledge}
               <ArrowRight aria-hidden="true" className="size-3.5" />
             </Link>
           </section>

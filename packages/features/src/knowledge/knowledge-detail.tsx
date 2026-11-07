@@ -5,19 +5,14 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { useAppText } from "../preferences/use-app-text.js";
+import { knowledgeKindLabel } from "./knowledge-labels.js";
 import type { KnowledgeDetail } from "./knowledge-services.js";
 import { KnowledgeSourceLink } from "./knowledge-source-link.js";
 
-const kindLabels = {
-  note: "笔记",
-  issue: "问题",
-  solution: "方案",
-  decision: "决策",
-  reference: "参考",
-} as const;
-
 export function KnowledgeDetailPage(): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
   const { id } = useParams();
   const [detail, setDetail] = useState<KnowledgeDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +36,7 @@ export function KnowledgeDetailPage(): React.JSX.Element {
       entityId = parseEntityId(id);
     } catch {
       setDetail(null);
-      setError("知识条目编号无效");
+      setError(text("知识条目编号无效", "Invalid knowledge item ID"));
       setLoading(false);
       return () => {
         active = false;
@@ -53,13 +48,13 @@ export function KnowledgeDetailPage(): React.JSX.Element {
       .then((result) => {
         if (active) {
           setDetail(result);
-          setError(result === null ? "知识条目不存在" : null);
+          setError(result === null ? text("知识条目不存在", "Knowledge item not found") : null);
         }
       })
       .catch(() => {
         if (active) {
           setDetail(null);
-          setError("知识条目加载失败");
+          setError(text("知识条目加载失败", "Failed to load the knowledge item"));
         }
       })
       .finally(() => {
@@ -71,13 +66,13 @@ export function KnowledgeDetailPage(): React.JSX.Element {
     return () => {
       active = false;
     };
-  }, [id, services.knowledge]);
+  }, [id, services.knowledge, text]);
 
   if (loading) {
     return (
       <div role="status" className="flex min-h-72 items-center justify-center gap-2 text-sm">
         <LoaderCircle aria-hidden="true" className="size-4 animate-spin text-primary" />
-        正在加载知识条目
+        {text("正在加载知识条目", "Loading knowledge item")}
       </div>
     );
   }
@@ -86,14 +81,14 @@ export function KnowledgeDetailPage(): React.JSX.Element {
     return (
       <div className="p-6">
         <div role="alert" className="border border-danger/25 bg-danger/5 px-4 py-3 text-sm">
-          {error ?? "知识条目不存在"}
+          {error ?? text("知识条目不存在", "Knowledge item not found")}
         </div>
         <Link
           to="/knowledge"
           className="mt-4 inline-flex h-9 items-center justify-center gap-2 border border-transparent px-3.5 text-sm font-medium text-foreground hover:bg-surface-muted"
         >
           <ArrowLeft aria-hidden="true" className="size-4" />
-          返回知识库
+          {text("返回知识库", "Back to knowledge base")}
         </Link>
       </div>
     );
@@ -109,17 +104,20 @@ export function KnowledgeDetailPage(): React.JSX.Element {
         className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary"
       >
         <ArrowLeft aria-hidden="true" className="size-3.5" />
-        返回知识库
+        {text("返回知识库", "Back to knowledge base")}
       </Link>
 
       <header className="mt-5 border-b border-border pb-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-medium text-primary">
-            {kindLabels[item.kind]}
+            {knowledgeKindLabel(item.kind, text)}
           </span>
           <span className="font-mono text-[10px] text-muted-foreground">r{item.revision}</span>
           <span className="ml-auto font-mono text-[10px] text-muted-foreground">
-            更新于 {item.updatedAt.slice(0, 10)}
+            {text(
+              `更新于 ${item.updatedAt.slice(0, 10)}`,
+              `Updated ${item.updatedAt.slice(0, 10)}`,
+            )}
           </span>
         </div>
         <h1 className="mt-3 break-words text-2xl font-semibold text-foreground">{item.title}</h1>
@@ -129,7 +127,7 @@ export function KnowledgeDetailPage(): React.JSX.Element {
       </header>
 
       <div className="mt-6 whitespace-pre-wrap text-[15px] leading-7 text-foreground">
-        {plainText || "该知识条目没有正文。"}
+        {plainText || text("该知识条目没有正文。", "This knowledge item has no body.")}
       </div>
 
       {item.sourceJournalId === null ? null : (

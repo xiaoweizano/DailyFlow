@@ -7,23 +7,23 @@ import { useCallback, useEffect, useState } from "react";
 import { Button, HistoryList, type HistoryListItem } from "@dailyflow/ui";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { useOptionalAppMessages } from "../preferences/use-app-messages.js";
+import { useAppText } from "../preferences/use-app-text.js";
 import { VersionComparison } from "./version-comparison.js";
 
 const HISTORY_PAGE_SIZE = 20;
 
-const versionDateFormatter = new Intl.DateTimeFormat("zh-CN", {
-  month: "2-digit",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
-function formatVersionDate(timestamp: string): string {
-  return versionDateFormatter.format(new Date(timestamp));
+function formatVersionDate(timestamp: string, locale: "zh-CN" | "en-US"): string {
+  return new Intl.DateTimeFormat(locale, {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
 }
 
-function previewVersion(version: DomainJournalVersion): string {
-  return jsonToPlainText(version.content.doc as TiptapJsonNode).trim() || "该版本没有正文";
+function previewVersion(version: DomainJournalVersion, emptyLabel: string): string {
+  return jsonToPlainText(version.content.doc as TiptapJsonNode).trim() || emptyLabel;
 }
 
 export interface HistoryPanelProps {
@@ -42,6 +42,8 @@ export function HistoryPanel({
   onClose,
 }: HistoryPanelProps): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
+  const locale = useOptionalAppMessages()?.locale ?? "zh-CN";
   const [summaries, setSummaries] = useState<readonly JournalVersionSummary[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [selected, setSelected] = useState<DomainJournalVersion | null>(null);
@@ -64,12 +66,12 @@ export function HistoryPanel({
         );
         setNextCursor(page.nextCursor);
       } catch {
-        setError("历史版本加载失败");
+        setError(text("历史版本加载失败", "Failed to load version history"));
       } finally {
         setLoading(false);
       }
     },
-    [journalId, services.journal],
+    [journalId, services.journal, text],
   );
 
   useEffect(() => {
@@ -82,13 +84,13 @@ export function HistoryPanel({
     try {
       const version = await services.journal.getVersion(journalId, revision);
       if (version === null) {
-        setError("该历史版本已不存在");
+        setError(text("该历史版本已不存在", "This historical version no longer exists"));
         setSelected(null);
         return;
       }
       setSelected(version);
     } catch {
-      setError("历史版本读取失败");
+      setError(text("历史版本读取失败", "Failed to read the historical version"));
     } finally {
       setSelectingRevision(null);
     }
@@ -109,13 +111,18 @@ export function HistoryPanel({
       });
       if (!result.ok) {
         setError(
-          result.error.code === "CONFLICT" ? "当前日志已变化，请重新加载历史版本" : "版本恢复失败",
+          result.error.code === "CONFLICT"
+            ? text(
+                "当前日志已变化，请重新加载历史版本",
+                "The journal changed. Reload version history and try again.",
+              )
+            : text("版本恢复失败", "Failed to restore this version"),
         );
         return;
       }
       onRestored(result.value);
     } catch {
-      setError("版本恢复失败");
+      setError(text("版本恢复失败", "Failed to restore this version"));
     } finally {
       setRestoring(false);
     }
@@ -123,22 +130,36 @@ export function HistoryPanel({
 
   const items: readonly HistoryListItem[] = summaries.map((summary) => ({
     id: String(summary.revision),
-    label: `版本 ${summary.revision} · ${summary.title.trim() || "无标题日志"}`,
-    timestamp: formatVersionDate(summary.createdAt),
-    ...(summary.revision === currentRevision ? { detail: "当前版本" } : {}),
+    label: text(
+      `版本 ${summary.revision} · ${summary.title.trim() || "无标题日志"}`,
+      `Version ${summary.revision} · ${summary.title.trim() || "Untitled journal"}`,
+    ),
+    timestamp: formatVersionDate(summary.createdAt, locale),
+    ...(summary.revision === currentRevision
+      ? { detail: text("当前版本", "Current version") }
+      : {}),
   }));
 
   return (
     <aside
-      aria-label="日志历史版本"
+      aria-label={text("日志历史版本", "Journal version history")}
       className="flex min-h-0 min-w-0 flex-col border-border bg-surface max-[899px]:border-t lg:w-80 lg:border-l"
     >
       <div className="flex h-12 shrink-0 items-center justify-between border-b border-border px-3">
         <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold text-foreground">历史版本</h2>
-          <p className="truncate text-xs text-muted-foreground">恢复会生成新的 revision</p>
+          <h2 className="truncate text-sm font-semibold text-foreground">
+            {text("历史版本", "Version history")}
+          </h2>
+          <p className="truncate text-xs text-muted-foreground">
+            {text("恢复会生成新的 revision", "Restoring creates a new revision")}
+          </p>
         </div>
-        <Button variant="ghost" size="sm" aria-label="关闭历史版本" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={text("关闭历史版本", "Close version history")}
+          onClick={onClose}
+        >
           <X aria-hidden="true" className="size-4" />
         </Button>
       </div>
@@ -156,7 +177,9 @@ export function HistoryPanel({
       <HistoryList
         items={items}
         selectedId={selected === null ? null : String(selected.revision)}
-        emptyLabel="还没有历史版本"
+        emptyLabel={text("还没有历史版本", "No version history yet")}
+        loadingLabel={text("正在加载版本", "Loading versions")}
+        loadMoreLabel={text("加载更多版本", "Load more versions")}
         loading={loading || selectingRevision !== null}
         hasMore={nextCursor !== null}
         onSelect={(id) => {
@@ -171,12 +194,15 @@ export function HistoryPanel({
 
       {selected ? (
         <section
-          aria-label={`版本 ${selected.revision} 预览`}
+          aria-label={text(
+            `版本 ${selected.revision} 预览`,
+            `Version ${selected.revision} preview`,
+          )}
           className="shrink-0 border-t border-border p-3"
         >
           <div className="mb-2 flex min-w-0 items-center justify-between gap-2">
             <p className="truncate text-xs font-semibold text-foreground">
-              版本 {selected.revision} 预览
+              {text(`版本 ${selected.revision} 预览`, `Version ${selected.revision} preview`)}
             </p>
             <span className="shrink-0 text-[11px] text-muted-foreground">
               {selected.changeSource}
@@ -184,7 +210,10 @@ export function HistoryPanel({
           </div>
           <VersionComparison
             currentMarkdown={currentMarkdown}
-            previousMarkdown={previewVersion(selected)}
+            previousMarkdown={previewVersion(
+              selected,
+              text("该版本没有正文", "This version has no content"),
+            )}
             previousRevision={selected.revision}
           />
           <Button
@@ -196,7 +225,7 @@ export function HistoryPanel({
             }}
           >
             <RotateCcw aria-hidden="true" className="size-3.5" />
-            {restoring ? "正在恢复" : "恢复此版本"}
+            {restoring ? text("正在恢复", "Restoring") : text("恢复此版本", "Restore this version")}
           </Button>
         </section>
       ) : null}

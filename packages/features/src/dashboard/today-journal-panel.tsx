@@ -3,15 +3,23 @@ import { SaveStatus, type SaveState } from "@dailyflow/ui";
 import { ArrowRight, BookOpenText, FileUp } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { getAppMessages, type AppMessages } from "../preferences/app-messages.js";
+
+const defaultCopy = getAppMessages("zh-CN").dashboard;
+
 export interface TodayJournalPanelProps {
   readonly lookup: JournalLookup;
+  readonly copy?: AppMessages["dashboard"];
   readonly status?: SaveState;
+  readonly saveLabels?: Partial<Record<SaveState, string>>;
   readonly onRetry?: () => void;
 }
 
 export function TodayJournalPanel({
   lookup,
+  copy = defaultCopy,
   status = "idle",
+  saveLabels,
   onRetry,
 }: TodayJournalPanelProps): React.JSX.Element {
   const { journal, isPersisted } = lookup;
@@ -29,12 +37,13 @@ export function TodayJournalPanel({
             <BookOpenText aria-hidden="true" className="size-4" />
           </span>
           <div className="min-w-0">
-            <p className="font-mono text-[10px] uppercase text-muted-foreground">Today</p>
+            <p className="font-mono text-[10px] uppercase text-muted-foreground">{copy.today}</p>
             <h2 id="today-journal-title" className="mt-1 text-lg font-semibold text-foreground">
-              今天还没有记录
+              {copy.defaultJournalTitle}
             </h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              从一段简短的记录开始，把今天的工作、问题和解决过程留在本地。
+              <span className="font-medium text-foreground">{copy.noJournalTitle}</span>
+              <span className="mt-1 block">{copy.noJournalDescription}</span>
             </p>
           </div>
         </div>
@@ -43,7 +52,7 @@ export function TodayJournalPanel({
             to={journalPath}
             className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-control)] border border-primary bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary-hover"
           >
-            创建第一篇日志
+            {copy.createFirstJournal}
             <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
           <Link
@@ -51,7 +60,7 @@ export function TodayJournalPanel({
             className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-control)] border border-border-strong bg-surface px-3.5 text-sm font-medium text-foreground shadow-sm hover:border-primary/45 hover:bg-surface-muted"
           >
             <FileUp aria-hidden="true" className="size-4" />
-            导入历史 TXT
+            {copy.importTxt}
           </Link>
         </div>
       </section>
@@ -63,25 +72,25 @@ export function TodayJournalPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <BookOpenText aria-hidden="true" className="size-4 shrink-0 text-primary" />
-          <p className="font-mono text-[10px] uppercase text-muted-foreground">Today</p>
+          <p className="font-mono text-[10px] uppercase text-muted-foreground">{copy.today}</p>
           <time dateTime={journal.journalDate} className="text-xs text-muted-foreground">
             {journal.journalDate}
           </time>
         </div>
-        <SaveStatus status={status} />
+        <SaveStatus status={status} {...(saveLabels === undefined ? {} : { labels: saveLabels })} />
       </div>
       <h2 id="today-journal-title" className="mt-4 text-xl font-semibold leading-7 text-foreground">
-        {journal.title.trim() || "今天的日志"}
+        {journal.title.trim() || copy.defaultJournalTitle}
       </h2>
       <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-        {excerpt || "今天的日志还没有正文。"}
+        {excerpt || copy.noJournalBody}
       </p>
       <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-4">
         <Link
           to={journalPath}
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
         >
-          继续记录今天
+          {copy.continueJournal}
           <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
         {status === "error" && onRetry !== undefined ? (
@@ -90,7 +99,7 @@ export function TodayJournalPanel({
             className="text-xs font-medium text-danger hover:underline"
             onClick={onRetry}
           >
-            重试保存
+            {copy.retrySave}
           </button>
         ) : null}
         <span className="ml-auto font-mono text-[10px] text-muted-foreground">

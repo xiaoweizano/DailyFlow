@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { chooseBlankJournal } from "./fixtures/seed.js";
+
 test("creates a dated task and promotes its journal into the knowledge base", async ({ page }) => {
   await page.goto("/tasks");
   await page.getByRole("group", { name: "待办视图" }).getByRole("button", { name: "全部" }).click();
@@ -17,6 +19,7 @@ test("creates a dated task and promotes its journal into the knowledge base", as
   await expect(task).toContainText("2026-11-05");
 
   await page.goto("/journal/2026-11-05");
+  await chooseBlankJournal(page);
   await page.getByLabel("日志标题").fill("发布候选复盘");
   await page.getByLabel("日志正文").click();
   await page.keyboard.type("记录发布候选的验证过程与最终结论。");

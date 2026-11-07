@@ -27,18 +27,27 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { currentLocalDate, isLocalDate } from "../date-utils.js";
+import { useAppText, type AppText } from "../preferences/use-app-text.js";
 import type { TaskCreateInput, TaskUpdate } from "./task-services.js";
 
 export interface TasksPageProps {
   readonly today?: string;
 }
 
-const priorityLabels: Record<TaskPriority, string> = {
-  low: "低",
-  normal: "普通",
-  high: "高",
-  urgent: "紧急",
-};
+const taskPriorities: readonly TaskPriority[] = ["low", "normal", "high", "urgent"];
+
+function priorityLabel(priority: TaskPriority, text: AppText): string {
+  switch (priority) {
+    case "low":
+      return text("低", "Low");
+    case "high":
+      return text("高", "High");
+    case "urgent":
+      return text("紧急", "Urgent");
+    default:
+      return text("普通", "Normal");
+  }
+}
 
 const priorityClasses: Record<TaskPriority, string> = {
   low: "border-border bg-surface-muted text-muted-foreground",
@@ -54,6 +63,7 @@ interface NewTaskDialogProps {
 }
 
 function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): React.JSX.Element {
+  const text = useAppText();
   const [title, setTitle] = useState("");
   const [descriptionText, setDescriptionText] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("normal");
@@ -95,13 +105,16 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
       <DialogContent aria-describedby="new-task-description">
         <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
           <DialogHeader>
-            <DialogTitle>新建待办</DialogTitle>
+            <DialogTitle>{text("新建待办", "New task")}</DialogTitle>
             <DialogDescription id="new-task-description">
-              记录需要跟进的工作，可稍后补充关联信息。
+              {text(
+                "记录需要跟进的工作，可稍后补充关联信息。",
+                "Capture work that needs follow-up. You can add links and details later.",
+              )}
             </DialogDescription>
           </DialogHeader>
           <label className="grid gap-1.5 text-xs font-medium text-foreground">
-            任务标题
+            {text("任务标题", "Task title")}
             <Input
               value={title}
               onChange={(event) => setTitle(event.currentTarget.value)}
@@ -110,35 +123,38 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
             />
           </label>
           <label className="grid gap-1.5 text-xs font-medium text-foreground">
-            任务备注
+            {text("任务备注", "Notes")}
             <textarea
               value={descriptionText}
               onChange={(event) => setDescriptionText(event.currentTarget.value)}
               rows={3}
               maxLength={20_000}
               className="min-h-20 w-full resize-y rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15"
-              placeholder="补充上下文、验收条件或下一步"
+              placeholder={text(
+                "补充上下文、验收条件或下一步",
+                "Add context, acceptance criteria, or next steps",
+              )}
             />
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-1.5 text-xs font-medium text-foreground">
-              优先级
+              {text("优先级", "Priority")}
               <select
                 value={priority}
                 onChange={(event) => setPriority(event.currentTarget.value as TaskPriority)}
                 className="h-9 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-sm text-foreground shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
               >
-                {Object.entries(priorityLabels).map(([value, label]) => (
+                {taskPriorities.map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {priorityLabel(value, text)}
                   </option>
                 ))}
               </select>
             </label>
             <label className="grid gap-1.5 text-xs font-medium text-foreground">
-              截止日期
+              {text("截止日期", "Due date")}
               <Input
-                aria-label="待办截止日期"
+                aria-label={text("待办截止日期", "Task due date")}
                 type="date"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.currentTarget.value)}
@@ -148,7 +164,7 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
           </div>
           <DialogFooter>
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-              取消
+              {text("取消", "Cancel")}
             </Button>
             <Button type="submit" disabled={saving || title.trim() === ""}>
               {saving ? (
@@ -156,7 +172,7 @@ function NewTaskDialog({ open, onOpenChange, onCreate }: NewTaskDialogProps): Re
               ) : (
                 <Plus aria-hidden="true" className="size-4" />
               )}
-              创建待办
+              {text("创建待办", "Create task")}
             </Button>
           </DialogFooter>
         </form>
@@ -178,6 +194,7 @@ function TaskDetailDialog({
   onSave,
   onUnlink,
 }: TaskDetailDialogProps): React.JSX.Element {
+  const text = useAppText();
   const [title, setTitle] = useState("");
   const [descriptionText, setDescriptionText] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("normal");
@@ -216,9 +233,12 @@ function TaskDetailDialog({
     <Dialog open={task !== null} onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogContent aria-describedby="task-detail-description">
         <DialogHeader>
-          <DialogTitle>待办详情</DialogTitle>
+          <DialogTitle>{text("待办详情", "Task details")}</DialogTitle>
           <DialogDescription id="task-detail-description">
-            编辑任务内容、优先级和日期。关联日志用于追溯任务来源。
+            {text(
+              "编辑任务内容、优先级和日期。关联日志用于追溯任务来源。",
+              "Edit the task, priority, and date. Linked journals preserve where the task came from.",
+            )}
           </DialogDescription>
         </DialogHeader>
         {task === null ? null : (
@@ -231,7 +251,8 @@ function TaskDetailDialog({
                 aria-hidden="true"
               />
               <span className="truncate text-xs text-muted-foreground">
-                {task.status === "done" ? "已完成" : "待处理"} · r{task.revision}
+                {task.status === "done" ? text("已完成", "Completed") : text("待处理", "Open")} · r
+                {task.revision}
               </span>
               <span className="ml-auto truncate font-mono text-[10px] text-muted-foreground">
                 {task.id.slice(0, 8)}
@@ -239,38 +260,41 @@ function TaskDetailDialog({
             </div>
 
             <label className="grid gap-1.5 text-xs font-medium text-foreground">
-              任务标题
+              {text("任务标题", "Task title")}
               <Input value={title} onChange={(event) => setTitle(event.currentTarget.value)} />
             </label>
             <label className="grid gap-1.5 text-xs font-medium text-foreground">
-              任务备注
+              {text("任务备注", "Notes")}
               <textarea
                 value={descriptionText}
                 onChange={(event) => setDescriptionText(event.currentTarget.value)}
                 rows={4}
                 className="min-h-24 w-full resize-y rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 py-2 text-sm text-foreground shadow-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15"
-                placeholder="补充上下文、验收条件或下一步"
+                placeholder={text(
+                  "补充上下文、验收条件或下一步",
+                  "Add context, acceptance criteria, or next steps",
+                )}
               />
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-1.5 text-xs font-medium text-foreground">
-                优先级
+                {text("优先级", "Priority")}
                 <select
                   value={priority}
                   onChange={(event) => setPriority(event.currentTarget.value as TaskPriority)}
                   className="h-9 w-full rounded-[var(--radius-control)] border border-border-strong bg-surface px-3 text-sm text-foreground shadow-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
                 >
-                  {Object.entries(priorityLabels).map(([value, label]) => (
+                  {taskPriorities.map((value) => (
                     <option key={value} value={value}>
-                      {label}
+                      {priorityLabel(value, text)}
                     </option>
                   ))}
                 </select>
               </label>
               <label className="grid gap-1.5 text-xs font-medium text-foreground">
-                截止日期
+                {text("截止日期", "Due date")}
                 <Input
-                  aria-label="待办截止日期"
+                  aria-label={text("待办截止日期", "Task due date")}
                   type="date"
                   value={dueDate}
                   onChange={(event) => setDueDate(event.currentTarget.value)}
@@ -282,14 +306,18 @@ function TaskDetailDialog({
             <div className="border-t border-border pt-4">
               <div className="flex items-center gap-2">
                 <Link2 aria-hidden="true" className="size-4 text-primary" />
-                <p className="text-xs font-semibold text-foreground">关联日志</p>
+                <p className="text-xs font-semibold text-foreground">
+                  {text("关联日志", "Linked journal")}
+                </p>
               </div>
               {task.journalId === null ? (
-                <p className="mt-2 text-xs text-muted-foreground">当前任务没有关联日志。</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {text("当前任务没有关联日志。", "This task is not linked to a journal.")}
+                </p>
               ) : (
                 <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
                   <label className="grid gap-1.5 text-xs font-medium text-foreground">
-                    关联日志日期
+                    {text("关联日志日期", "Journal date")}
                     <Input
                       type="text"
                       value={journalDate}
@@ -304,7 +332,7 @@ function TaskDetailDialog({
                       void onUnlink(task);
                     }}
                   >
-                    解除关联
+                    {text("解除关联", "Unlink")}
                   </Button>
                 </div>
               )}
@@ -313,7 +341,7 @@ function TaskDetailDialog({
         )}
         <DialogFooter>
           <Button variant="secondary" onClick={onClose}>
-            取消
+            {text("取消", "Cancel")}
           </Button>
           <Button
             disabled={task === null || saving || title.trim() === ""}
@@ -324,7 +352,7 @@ function TaskDetailDialog({
             ) : (
               <Check aria-hidden="true" className="size-4" />
             )}
-            保存待办
+            {text("保存待办", "Save task")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -334,6 +362,7 @@ function TaskDetailDialog({
 
 export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
   const currentDate = (isLocalDate(today) ? today : currentLocalDate()) as LocalDate;
   const [view, setView] = useState<TaskListView>("today");
   const [tasks, setTasks] = useState<readonly Task[]>([]);
@@ -351,11 +380,11 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
       setTasks(page.items);
     } catch {
       setTasks([]);
-      setError("待办加载失败");
+      setError(text("待办加载失败", "Tasks could not be loaded"));
     } finally {
       setLoading(false);
     }
-  }, [services.tasks, view]);
+  }, [services.tasks, text, view]);
 
   useEffect(() => {
     void loadTasks();
@@ -372,7 +401,7 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
         ? await services.tasks.reopen(task)
         : await services.tasks.complete(task);
     if (!result.ok) {
-      setError("待办更新失败，请重试");
+      setError(text("待办更新失败，请重试", "The task could not be updated. Try again."));
       return;
     }
     updateVisibleTask(result.value);
@@ -381,7 +410,7 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
   async function handleSave(task: Task, changes: TaskUpdate): Promise<void> {
     const result = await services.tasks.update(task, changes);
     if (!result.ok) {
-      setError("待办保存失败，请重试");
+      setError(text("待办保存失败，请重试", "The task could not be saved. Try again."));
       return;
     }
     updateVisibleTask(result.value);
@@ -391,7 +420,7 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
   async function handleUnlink(task: Task): Promise<void> {
     const result = await services.tasks.update(task, { journalId: null });
     if (!result.ok) {
-      setError("解除关联失败，请重试");
+      setError(text("解除关联失败，请重试", "The journal link could not be removed. Try again."));
       return;
     }
     updateVisibleTask(result.value);
@@ -400,7 +429,12 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
   async function handleCreate(input: TaskCreateInput): Promise<boolean> {
     const result = await services.tasks.create(input);
     if (!result.ok) {
-      setError("待办创建失败，请检查标题和日期后重试");
+      setError(
+        text(
+          "待办创建失败，请检查标题和日期后重试",
+          "The task could not be created. Check the title and date, then try again.",
+        ),
+      );
       return false;
     }
     setReloadVersion((version) => version + 1);
@@ -420,24 +454,24 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5">
         <div>
           <p className="font-mono text-[10px] uppercase text-primary">Personal focus</p>
-          <h1 className="mt-1 text-2xl font-semibold text-foreground">待办</h1>
+          <h1 className="mt-1 text-2xl font-semibold text-foreground">{text("待办", "Tasks")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {tasks.length} 项正在显示
-            {overdue > 0 ? ` · ${overdue} 项已逾期` : ""}
+            {text(`${tasks.length} 项正在显示`, `${tasks.length} task(s) shown`)}
+            {overdue > 0 ? text(` · ${overdue} 项已逾期`, ` · ${overdue} overdue`) : ""}
           </p>
         </div>
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Button size="sm" onClick={() => setNewTaskOpen(true)}>
             <Plus aria-hidden="true" className="size-4" />
-            新建待办
+            {text("新建待办", "New task")}
           </Button>
           <SegmentedControl
-            label="待办视图"
+            label={text("待办视图", "Task view")}
             options={[
-              { label: "今天", value: "today" },
-              { label: "即将到期", value: "upcoming" },
-              { label: "全部", value: "all" },
-              { label: "已完成", value: "completed" },
+              { label: text("今天", "Today"), value: "today" },
+              { label: text("即将到期", "Upcoming"), value: "upcoming" },
+              { label: text("全部", "All"), value: "all" },
+              { label: text("已完成", "Completed"), value: "completed" },
             ]}
             value={view}
             onChange={setView}
@@ -458,7 +492,7 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
           >
             <RotateCw aria-hidden="true" className="size-3.5" />
-            重试
+            {text("重试", "Try again")}
           </button>
         </div>
       )}
@@ -467,21 +501,25 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <ListChecks aria-hidden="true" className="size-4 text-primary" />
           <h2 id="task-list-title" className="text-sm font-semibold text-foreground">
-            任务清单
+            {text("任务清单", "Task list")}
           </h2>
           <span className="ml-auto font-mono text-[10px] text-muted-foreground">{currentDate}</span>
         </div>
         {loading ? (
           <div role="status" className="flex min-h-56 items-center justify-center gap-2 text-sm">
             <RotateCw aria-hidden="true" className="size-4 animate-spin text-primary" />
-            正在加载待办
+            {text("正在加载待办", "Loading tasks")}
           </div>
         ) : tasks.length === 0 ? (
           <div className="grid min-h-56 place-items-center text-center">
             <div>
               <CheckSquare2 aria-hidden="true" className="mx-auto size-5 text-muted-foreground" />
-              <p className="mt-3 text-sm font-medium text-foreground">这个视图没有待办</p>
-              <p className="mt-1 text-xs text-muted-foreground">切换视图查看其他任务。</p>
+              <p className="mt-3 text-sm font-medium text-foreground">
+                {text("这个视图没有待办", "No tasks in this view")}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {text("切换视图查看其他任务。", "Switch views to see other tasks.")}
+              </p>
             </div>
           </div>
         ) : (
@@ -496,11 +534,15 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
               return (
                 <li key={task.id}>
                   <article
-                    aria-label={`待办：${task.title}`}
+                    aria-label={`${text("待办：", "Task: ")}${task.title}`}
                     className="group flex min-w-0 items-start gap-3 px-4 py-3 hover:bg-surface-muted/45"
                   >
                     <IconButton
-                      label={isDone ? "重新打开待办" : "完成待办"}
+                      label={
+                        isDone
+                          ? text("重新打开待办", "Reopen task")
+                          : text("完成待办", "Complete task")
+                      }
                       onClick={() => void handleToggle(task)}
                       className="mt-0.5"
                     >
@@ -527,7 +569,7 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
                         <span
                           className={`rounded-[3px] border px-1.5 py-0.5 text-[10px] ${priorityClasses[task.priority]}`}
                         >
-                          {priorityLabels[task.priority]}
+                          {priorityLabel(task.priority, text)}
                         </span>
                         {task.dueDate ? (
                           <span
@@ -535,22 +577,26 @@ export function TasksPage({ today = currentLocalDate() }: TasksPageProps): React
                               isOverdue ? "text-danger" : "text-muted-foreground"
                             }`}
                           >
-                            {isOverdue ? "已逾期 · " : "截止 · "}
+                            {isOverdue
+                              ? text("已逾期 · ", "Overdue · ")
+                              : text("截止 · ", "Due · ")}
                             {task.dueDate}
                           </span>
                         ) : (
-                          <span className="text-[10px] text-muted-foreground">无截止日期</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {text("无截止日期", "No due date")}
+                          </span>
                         )}
                         {task.journalId === null ? null : (
                           <span className="inline-flex items-center gap-1 text-[10px] text-primary">
                             <Link2 aria-hidden="true" className="size-3" />
-                            关联日志
+                            {text("关联日志", "Linked journal")}
                           </span>
                         )}
                       </div>
                     </div>
                     <IconButton
-                      label="打开待办详情"
+                      label={text("打开待办详情", "Open task details")}
                       onClick={() => setSelectedTask(task)}
                       className="mt-0.5"
                     >

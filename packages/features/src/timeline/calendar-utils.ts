@@ -20,9 +20,20 @@ export function parseMonth(
 }
 
 export function formatMonth(month: string): string {
+  return formatMonthForLocale(month, "zh-CN");
+}
+
+export function formatMonthForLocale(month: string, locale: "zh-CN" | "en-US"): string {
   const parts = parseMonth(month);
   if (parts === null) {
     return month;
+  }
+  if (locale === "en-US") {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(new Date(Date.UTC(parts.year, parts.monthIndex, 1)));
   }
   return `${parts.year} 年 ${parts.monthIndex + 1} 月`;
 }

@@ -5,7 +5,7 @@ import {
   installTxtImportFixture,
   installBrowserDownloadFallback,
 } from "./fixtures/import-directory.js";
-import { seedJournal } from "./fixtures/seed.js";
+import { chooseBlankJournal, seedJournal } from "./fixtures/seed.js";
 
 test("previews and imports UTF-8, UTF-8 BOM, GB18030, conflict, and invalid TXT files", async ({
   page,
@@ -84,6 +84,7 @@ test("imports rich Markdown into a journal and exports it back as a Markdown fil
   ].join("\n");
 
   await page.goto("/journal/2026-11-04");
+  await chooseBlankJournal(page);
   await page.getByLabel("导入 Markdown 文件").setInputFiles({
     name: "incident.md",
     mimeType: "text/markdown",

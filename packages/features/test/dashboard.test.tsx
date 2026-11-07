@@ -8,6 +8,7 @@ import type {
   SavedJournalSnapshot,
   StoredAttachment,
 } from "@dailyflow/application";
+import { DEFAULT_USER_PREFERENCES } from "@dailyflow/application";
 import { createJournal, parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
 import { err, ok, type AppError, type Result } from "@dailyflow/shared";
 import { render, screen } from "@testing-library/react";
@@ -142,10 +143,24 @@ function createServices(
   } satisfies AppRuntimeServices;
 }
 
-function renderDashboard(services: AppRuntimeServices): void {
+function renderDashboard(services: AppRuntimeServices, locale: "zh-CN" | "en-US" = "zh-CN"): void {
+  const localizedServices: AppRuntimeServices = {
+    ...services,
+    settings: {
+      ...services.settings,
+      load: async () => ({
+        preferences: {
+          ...DEFAULT_USER_PREFERENCES,
+          locale,
+        },
+        warning: null,
+      }),
+    },
+  };
+
   render(
     <MemoryRouter>
-      <AppServicesProvider services={services}>
+      <AppServicesProvider services={localizedServices}>
         <DashboardPage today="2026-10-30" />
       </AppServicesProvider>
     </MemoryRouter>,
@@ -153,6 +168,16 @@ function renderDashboard(services: AppRuntimeServices): void {
 }
 
 describe("DashboardPage", () => {
+  it("translates the workbench when the persisted language is English", async () => {
+    renderDashboard(createServices(), "en-US");
+
+    expect(await screen.findByRole("heading", { name: "Workbench" })).toBeTruthy();
+    expect(screen.getByText("Continue from today's work")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open today's journal" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Today's journal" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Recent knowledge" })).toBeTruthy();
+  });
+
   it("renders actionable empty states without inventing activity", async () => {
     const services = createServices();
     renderDashboard(services);

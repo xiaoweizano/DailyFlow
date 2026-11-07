@@ -3,6 +3,7 @@
 import "./setup-dom.js";
 
 import type { JournalVersionSummary, Page } from "@dailyflow/application";
+import { DEFAULT_USER_PREFERENCES } from "@dailyflow/application";
 import { parseEntityId, parseRevision, parseUtcTimestamp } from "@dailyflow/domain";
 import { ok } from "@dailyflow/shared";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -205,5 +206,29 @@ describe("HistoryPanel", () => {
     const comparison = await screen.findByRole("region", { name: "版本对比" });
     expect(within(comparison).getByText("当前草稿正文")).toBeInTheDocument();
     expect(within(comparison).getByText("旧版本正文")).toBeInTheDocument();
+  });
+
+  it("renders history controls in English when the persisted locale is en-US", async () => {
+    const services = createServices();
+    services.settings.load = vi.fn(async () => ({
+      preferences: {
+        ...DEFAULT_USER_PREFERENCES,
+        locale: "en-US" as const,
+      },
+      warning: null,
+    }));
+    const user = userEvent.setup();
+    renderHistoryPanel(services);
+
+    expect(
+      await screen.findByRole("complementary", { name: "Journal version history" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Version history" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close version history" })).toBeInTheDocument();
+
+    await user.click(await screen.findByRole("button", { name: /Version 2/u }));
+
+    expect(await screen.findByRole("region", { name: "Version 2 preview" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Restore this version" })).toBeInTheDocument();
   });
 });

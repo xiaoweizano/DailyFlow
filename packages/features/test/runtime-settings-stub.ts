@@ -1,16 +1,23 @@
-import { DEFAULT_USER_PREFERENCES } from "@dailyflow/application";
+import { DEFAULT_USER_PREFERENCES, type UserPreferences } from "@dailyflow/application";
 
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 
-export function createRuntimeSettingsStub(): Pick<AppRuntimeServices, "settings" | "ai"> {
+export function createRuntimeSettingsStub(
+  overrides: Partial<UserPreferences> = {},
+): Pick<AppRuntimeServices, "settings" | "ai"> {
+  const preferences: UserPreferences = {
+    ...DEFAULT_USER_PREFERENCES,
+    ...overrides,
+  };
+
   return {
     settings: {
       load: async () => ({
-        preferences: DEFAULT_USER_PREFERENCES,
+        preferences,
         warning: null,
       }),
       save: async () => ({
-        preferences: DEFAULT_USER_PREFERENCES,
+        preferences,
         persisted: true,
         warning: null,
       }),

@@ -20,6 +20,8 @@
     --warning: 35 78% 40%;
     --danger: 2 64% 48%;
     --info: 210 62% 44%;
+    --activity-green-soft: #dff2e8;
+    --activity-green-strong: #247454;
     --muted-foreground: 220 9% 43%;
     --focus: 172 54% 38%;
     --sidebar-width: 232px;
@@ -60,6 +62,8 @@
     --warning: 38 76% 58%;
     --danger: 2 68% 62%;
     --info: 210 68% 62%;
+    --activity-green-soft: #183a2c;
+    --activity-green-strong: #6ec99e;
     --muted-foreground: 220 9% 67%;
     --focus: 172 56% 57%;
     color-scheme: dark;
@@ -194,6 +198,26 @@
   }
 }
 
+.df-activity-green-1 {
+  border-color: color-mix(in srgb, var(--activity-green-strong) 34%, transparent);
+  background-color: color-mix(in srgb, var(--activity-green-soft) 72%, transparent);
+}
+
+.df-activity-green-2 {
+  border-color: color-mix(in srgb, var(--activity-green-strong) 52%, transparent);
+  background-color: color-mix(in srgb, var(--activity-green-strong) 42%, transparent);
+}
+
+.df-activity-green-3 {
+  border-color: color-mix(in srgb, var(--activity-green-strong) 68%, transparent);
+  background-color: color-mix(in srgb, var(--activity-green-strong) 64%, transparent);
+}
+
+.df-activity-green-4 {
+  border-color: var(--activity-green-strong);
+  background-color: color-mix(in srgb, var(--activity-green-strong) 84%, transparent);
+}
+
 @layer components {
   .df-shell {
     display: grid;
@@ -297,6 +321,64 @@
     margin-bottom: 0;
   }
 
+  .df-journal-prosemirror h1,
+  .df-journal-prosemirror h2,
+  .df-journal-prosemirror h3,
+  .df-journal-prosemirror h4 {
+    margin: 1.4em 0 0.55em;
+    color: hsl(var(--foreground));
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .df-journal-prosemirror h1 {
+    font-size: 1.85em;
+  }
+
+  .df-journal-prosemirror h2 {
+    font-size: 1.5em;
+  }
+
+  .df-journal-prosemirror h3 {
+    font-size: 1.24em;
+  }
+
+  .df-journal-prosemirror h4 {
+    font-size: 1.08em;
+  }
+
+  .df-journal-prosemirror p {
+    margin: 0.7em 0;
+  }
+
+  .df-journal-prosemirror ul,
+  .df-journal-prosemirror ol {
+    display: grid;
+    gap: 0.3em;
+    margin: 0.8em 0;
+    padding-left: 1.5em;
+  }
+
+  .df-journal-prosemirror ul {
+    list-style: disc;
+  }
+
+  .df-journal-prosemirror ol {
+    list-style: decimal;
+  }
+
+  .df-journal-prosemirror li > p {
+    margin: 0;
+  }
+
+  .df-journal-prosemirror blockquote {
+    margin: 1em 0;
+    border-left: 3px solid hsl(var(--primary) / 0.45);
+    background: hsl(var(--primary) / 0.05);
+    padding: 0.35em 1em;
+    color: hsl(var(--muted-foreground));
+  }
+
   .df-block-drag-handle {
     display: inline-flex;
     width: 20px;
@@ -329,6 +411,34 @@
 
   .df-block-drag-handle:active {
     cursor: grabbing;
+  }
+
+  .df-block-insert-button {
+    position: fixed;
+    z-index: 40;
+    display: inline-flex;
+    width: 26px;
+    height: 26px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 5px;
+    background: hsl(var(--surface-muted) / 0.92);
+    color: hsl(var(--muted-foreground));
+    opacity: 0.45;
+    transition:
+      opacity 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+
+  .df-block-insert-button:hover,
+  .df-block-insert-button:focus-visible,
+  .df-block-insert-button[aria-expanded="true"] {
+    background: var(--activity-green-soft);
+    color: var(--activity-green-strong);
+    opacity: 1;
+    outline: none;
   }
 
   .df-slash-menu {
@@ -414,6 +524,127 @@
   .df-editor-outline-item:hover {
     background: hsl(var(--primary) / 0.08);
     color: hsl(var(--primary));
+  }
+
+  .df-help-manual {
+    color: hsl(var(--foreground));
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .df-safe-markdown {
+    width: 100%;
+    max-width: 78ch;
+    margin-inline: auto;
+    overflow-wrap: anywhere;
+  }
+
+  .df-safe-markdown h2 {
+    margin: 0 0 1rem;
+    border-bottom: 1px solid hsl(var(--border));
+    padding-bottom: 0.7rem;
+    color: hsl(var(--foreground));
+    font-size: 1.62rem;
+    font-weight: 680;
+    line-height: 1.25;
+  }
+
+  .df-safe-markdown h2:not(:first-child) {
+    margin-top: 3.2rem;
+  }
+
+  .df-safe-markdown h3 {
+    margin: 2rem 0 0.7rem;
+    color: hsl(var(--primary));
+    font-size: 1.02rem;
+    font-weight: 680;
+    line-height: 1.35;
+  }
+
+  .df-safe-markdown h4 {
+    margin: 1.5rem 0 0.55rem;
+    font-size: 0.94rem;
+    font-weight: 650;
+  }
+
+  .df-safe-markdown p {
+    margin: 0.8rem 0;
+  }
+
+  .df-safe-markdown ul,
+  .df-safe-markdown ol {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0.85rem 0 1.15rem;
+    padding-left: 1.45rem;
+  }
+
+  .df-safe-markdown ul {
+    list-style: disc;
+  }
+
+  .df-safe-markdown ol {
+    list-style: decimal;
+  }
+
+  .df-safe-markdown li {
+    padding-left: 0.2rem;
+  }
+
+  .df-safe-markdown li::marker {
+    color: hsl(var(--primary));
+  }
+
+  .df-safe-markdown blockquote {
+    margin: 1.2rem 0;
+    border-left: 3px solid hsl(var(--primary) / 0.45);
+    background: hsl(var(--primary) / 0.05);
+    padding: 0.75rem 1rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .df-safe-markdown strong {
+    color: hsl(var(--foreground));
+    font-weight: 680;
+  }
+
+  .df-safe-markdown a {
+    color: hsl(var(--primary));
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: hsl(var(--primary) / 0.35);
+    text-underline-offset: 3px;
+  }
+
+  .df-safe-markdown a:hover {
+    text-decoration-color: hsl(var(--primary));
+  }
+
+  .df-safe-markdown code {
+    border: 1px solid hsl(var(--border));
+    border-radius: 4px;
+    background: hsl(var(--surface-muted));
+    padding: 0.1rem 0.35rem;
+    color: hsl(var(--foreground));
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+  }
+
+  .df-safe-markdown pre {
+    max-width: 100%;
+    overflow-x: auto;
+    margin: 1.2rem 0;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius-control);
+    background: hsl(var(--surface-muted));
+    padding: 0.9rem 1rem;
+    line-height: 1.65;
+  }
+
+  .df-safe-markdown pre code {
+    border: 0;
+    background: transparent;
+    padding: 0;
   }
 
   .df-journal-prosemirror .tableWrapper {

@@ -17,6 +17,7 @@ import {
   List,
   ListChecks,
   ListOrdered,
+  Plus,
   Quote,
   Sigma,
   Table2,
@@ -25,6 +26,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+import { useAppText, type AppText } from "../preferences/use-app-text.js";
 
 interface SlashMatch {
   readonly from: number;
@@ -35,9 +38,10 @@ interface SlashMatch {
 interface SlashItem {
   readonly id: string;
   readonly label: string;
+  readonly labelEn: string;
   readonly keywords: readonly string[];
   readonly icon: LucideIcon;
-  readonly run: (editor: Editor, match: SlashMatch) => void;
+  readonly run: (editor: Editor, match: SlashMatch, text: AppText) => void;
 }
 
 function readSlashMatch(editor: Editor): SlashMatch | null {
@@ -69,6 +73,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "heading",
     label: "二级标题",
+    labelEn: "Heading 2",
     keywords: ["heading", "title", "h2"],
     icon: Heading2,
     run: (editor, match) => {
@@ -79,6 +84,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "bullet-list",
     label: "无序列表",
+    labelEn: "Bullet list",
     keywords: ["list", "bullet", "ul"],
     icon: List,
     run: (editor, match) => {
@@ -89,6 +95,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "ordered-list",
     label: "有序列表",
+    labelEn: "Numbered list",
     keywords: ["list", "ordered", "ol"],
     icon: ListOrdered,
     run: (editor, match) => {
@@ -99,6 +106,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "task-list",
     label: "任务列表",
+    labelEn: "Task list",
     keywords: ["task", "todo", "check"],
     icon: ListChecks,
     run: (editor, match) => {
@@ -109,6 +117,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "quote",
     label: "引用",
+    labelEn: "Quote",
     keywords: ["quote", "blockquote"],
     icon: Quote,
     run: (editor, match) => {
@@ -119,6 +128,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "code",
     label: "代码块",
+    labelEn: "Code block",
     keywords: ["code", "pre"],
     icon: Code2,
     run: (editor, match) => {
@@ -129,6 +139,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "table",
     label: "表格",
+    labelEn: "Table",
     keywords: ["table", "grid"],
     icon: Table2,
     run: (editor, match) => {
@@ -139,9 +150,10 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "structured-block",
     label: "结构化块",
+    labelEn: "Structured block",
     keywords: ["structured", "block", "issue", "solution", "结构化"],
     icon: Box,
-    run: (editor, match) => {
+    run: (editor, match, text) => {
       removeQuery(editor, match);
       editor
         .chain()
@@ -152,7 +164,7 @@ const slashItems: readonly SlashItem[] = [
             id: createUuidV7(),
             blockType: "note",
             schemaVersion: 1,
-            data: { text: "结构化内容" },
+            data: { text: text("结构化内容", "Structured content") },
           },
         })
         .run();
@@ -161,6 +173,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "formula",
     label: "数学公式",
+    labelEn: "Math formula",
     keywords: ["formula", "math", "latex", "katex"],
     icon: Sigma,
     run: (editor, match) => {
@@ -175,16 +188,19 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "mermaid",
     label: "Mermaid 图表",
+    labelEn: "Mermaid diagram",
     keywords: ["mermaid", "diagram", "flowchart"],
     icon: Workflow,
-    run: (editor, match) => {
+    run: (editor, match, text) => {
       removeQuery(editor, match);
       editor
         .chain()
         .focus()
         .insertContent({
           type: "mermaidBlock",
-          attrs: { code: "graph LR\n  A[开始] --> B[结束]" },
+          attrs: {
+            code: text("graph LR\n  A[开始] --> B[结束]", "graph LR\n  A[Start] --> B[End]"),
+          },
         })
         .run();
     },
@@ -192,6 +208,7 @@ const slashItems: readonly SlashItem[] = [
   {
     id: "image",
     label: "图片",
+    labelEn: "Image",
     keywords: ["image", "img", "photo", "picture"],
     icon: ImagePlus,
     run: (editor, match) => {
@@ -207,6 +224,7 @@ function itemMatches(item: SlashItem, query: string): boolean {
   const normalized = query.toLocaleLowerCase();
   return (
     item.label.toLocaleLowerCase().includes(normalized) ||
+    item.labelEn.toLocaleLowerCase().includes(normalized) ||
     item.keywords.some((keyword) => keyword.includes(normalized))
   );
 }
@@ -220,17 +238,28 @@ export function SlashCommandMenu({
   editor,
   onImageUpload,
 }: SlashCommandMenuProps): React.JSX.Element | null {
-  const [match, setMatch] = useState<SlashMatch | null>(() => readSlashMatch(editor));
+  const text = useAppText();
+  const [slashMatch, setSlashMatch] = useState<SlashMatch | null>(() => readSlashMatch(editor));
+  const [plusMatch, setPlusMatch] = useState<SlashMatch | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState({ left: 32, top: 120 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const match = plusMatch ?? slashMatch;
   const items = match === null ? [] : slashItems.filter((item) => itemMatches(item, match.query));
 
   useEffect(() => {
     const refresh = (): void => {
-      setMatch(readSlashMatch(editor));
+      setSlashMatch(readSlashMatch(editor));
+      try {
+        const coordinates = editor.view.coordsAtPos(editor.state.selection.from);
+        setCursorPosition({ left: coordinates.left, top: coordinates.top });
+      } catch {
+        // Keep the last stable position while the editor is being laid out.
+      }
       setActiveIndex(0);
     };
+    refresh();
     editor.on("selectionUpdate", refresh);
     editor.on("update", refresh);
     return () => {
@@ -247,7 +276,8 @@ export function SlashCommandMenu({
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setMatch(null);
+        setSlashMatch(null);
+        setPlusMatch(null);
       } else if (event.key === "ArrowDown") {
         event.preventDefault();
         setActiveIndex((index) => (index + 1) % items.length);
@@ -259,12 +289,13 @@ export function SlashCommandMenu({
         if (item !== undefined) {
           event.preventDefault();
           if (item.id === "image") {
-            item.run(editor, match);
+            item.run(editor, match, text);
             fileInputRef.current?.click();
           } else {
-            item.run(editor, match);
+            item.run(editor, match, text);
           }
-          setMatch(null);
+          setSlashMatch(null);
+          setPlusMatch(null);
         }
       }
     };
@@ -273,7 +304,7 @@ export function SlashCommandMenu({
     return () => {
       document.removeEventListener("keydown", handleKeyDown, true);
     };
-  }, [activeIndex, editor, items, match]);
+  }, [activeIndex, editor, items, match, text]);
 
   let position = { left: 16, top: 96 };
   if (match !== null) {
@@ -287,10 +318,29 @@ export function SlashCommandMenu({
 
   return (
     <>
+      <button
+        type="button"
+        aria-label={text("在光标处插入内容", "Insert content at cursor")}
+        aria-expanded={plusMatch !== null}
+        className="df-block-insert-button"
+        style={{ left: cursorPosition.left - 34, top: cursorPosition.top }}
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => {
+          const { from, empty } = editor.state.selection;
+          if (!empty) {
+            return;
+          }
+          setSlashMatch(null);
+          setPlusMatch({ from, to: from, query: "" });
+          setActiveIndex(0);
+        }}
+      >
+        <Plus aria-hidden="true" className="size-4" />
+      </button>
       {match !== null && items.length > 0 ? (
         <div
           role="menu"
-          aria-label="插入内容"
+          aria-label={text("插入内容", "Insert content")}
           className="df-slash-menu"
           style={{ left: position.left, top: position.top }}
           onMouseDown={(event) => event.preventDefault()}
@@ -306,15 +356,16 @@ export function SlashCommandMenu({
                 data-active={index === activeIndex ? "true" : "false"}
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => {
-                  item.run(editor, match);
-                  setMatch(null);
+                  item.run(editor, match, text);
+                  setSlashMatch(null);
+                  setPlusMatch(null);
                   if (item.id === "image") {
                     fileInputRef.current?.click();
                   }
                 }}
               >
                 <Icon aria-hidden="true" className="size-4" />
-                <span>{item.label}</span>
+                <span>{text(item.label, item.labelEn)}</span>
               </button>
             );
           })}
@@ -323,7 +374,7 @@ export function SlashCommandMenu({
       <input
         ref={fileInputRef}
         type="file"
-        aria-label="选择图片"
+        aria-label={text("选择图片", "Choose image")}
         accept="image/*"
         className="sr-only"
         onChange={(event) => {
@@ -355,6 +406,7 @@ export interface TableEditingToolbarProps {
 export function TableEditingToolbar({
   editor,
 }: TableEditingToolbarProps): React.JSX.Element | null {
+  const text = useAppText();
   const [, setVersion] = useState(0);
 
   useEffect(() => {
@@ -372,22 +424,22 @@ export function TableEditingToolbar({
   }
 
   return (
-    <div role="toolbar" aria-label="表格操作" className="df-table-toolbar">
+    <div role="toolbar" aria-label={text("表格操作", "Table actions")} className="df-table-toolbar">
       <button type="button" onClick={() => commandTableAction(editor, addRowAfter)}>
-        增加行
+        {text("增加行", "Add row")}
       </button>
       <button type="button" onClick={() => commandTableAction(editor, deleteRow)}>
-        删除行
+        {text("删除行", "Delete row")}
       </button>
       <button type="button" onClick={() => commandTableAction(editor, addColumnAfter)}>
-        增加列
+        {text("增加列", "Add column")}
       </button>
       <button type="button" onClick={() => commandTableAction(editor, deleteColumn)}>
-        删除列
+        {text("删除列", "Delete column")}
       </button>
       <button type="button" onClick={() => commandTableAction(editor, deleteTable)}>
         <Trash2 aria-hidden className="size-3.5" />
-        删除表格
+        {text("删除表格", "Delete table")}
       </button>
     </div>
   );

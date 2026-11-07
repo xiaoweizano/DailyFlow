@@ -1,5 +1,6 @@
 node_modules/
 .codex-tmp/
+.superpowers/
 .tmp/
 .tools/
 .playwright-browsers/

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { AppServicesContext, type AppRuntimeServices } from "./app-services-context.js";
+import { AppMessagesProvider } from "./preferences/app-messages-context.js";
 import { UserPreferencesProvider } from "./preferences/user-preferences-context.js";
 
 export interface AppServicesProviderProps {
@@ -14,7 +15,9 @@ export function AppServicesProvider({
 }: AppServicesProviderProps): React.JSX.Element {
   return (
     <AppServicesContext.Provider value={services}>
-      <UserPreferencesProvider settings={services.settings}>{children}</UserPreferencesProvider>
+      <UserPreferencesProvider settings={services.settings}>
+        <AppMessagesProvider>{children}</AppMessagesProvider>
+      </UserPreferencesProvider>
     </AppServicesContext.Provider>
   );
 }

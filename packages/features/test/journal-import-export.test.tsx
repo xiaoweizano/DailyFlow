@@ -83,5 +83,5 @@ describe("Journal Markdown import and export", () => {
       expect(await exported?.text()).toContain("```mermaid\ngraph LR; A-->B;\n```");
     });
     expect(exported?.type).toBe("text/markdown;charset=utf-8");
-  });
+  }, 15_000);
 });

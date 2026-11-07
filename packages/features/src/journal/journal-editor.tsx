@@ -12,12 +12,13 @@ import {
 import { Button, Input, SaveStatus, type SaveState } from "@dailyflow/ui";
 import type { AppError } from "@dailyflow/shared";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { BookPlus, History, Save } from "lucide-react";
+import { BookPlus, History, LayoutTemplate, Save } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "zustand";
 
 import { useAppServices } from "../app-services-hooks.js";
+import { getSaveStatusLabels, useAppText, type AppText } from "../preferences/use-app-text.js";
 import { useUserPreferences } from "../preferences/use-user-preferences.js";
 import { AttachmentUploadPlaceholder } from "./attachment-node-view.js";
 import { EditorOutline } from "./editor-outline.js";
@@ -26,6 +27,8 @@ import { createJournalEditorExtensions } from "./journal-editor-extensions.js";
 import { createJournalEditorStore, type JournalEditorStore } from "./journal-editor-store.js";
 import { HistoryPanel } from "./history-panel.js";
 import { JournalImportExport } from "./journal-import-export.js";
+import { JournalTemplatePicker } from "./journal-template-picker.js";
+import { journalTemplateEditorContent, type JournalTemplate } from "./journal-templates.js";
 import { SaveCoordinator, type SaveCoordinatorStatus } from "./save-coordinator.js";
 import { SlashCommandMenu, TableEditingToolbar } from "./slash-command.js";
 import { KnowledgePromotionDialog } from "../knowledge/knowledge-promotion-dialog.js";
@@ -53,20 +56,26 @@ function parseTags(value: string): readonly string[] {
     .filter(Boolean);
 }
 
-function attachmentErrorMessage(error: AppError): string {
+function attachmentErrorMessage(error: AppError, text: AppText): string {
   switch (error.code) {
     case "VALIDATION_ERROR":
-      return Object.values(error.fields ?? {})[0] ?? "文件类型或大小不符合要求";
+      return (
+        Object.values(error.fields ?? {})[0] ??
+        text("文件类型或大小不符合要求", "The file type or size is not supported")
+      );
     case "NOT_FOUND":
-      return "日志尚未保存，暂时无法添加附件";
+      return text("日志尚未保存，暂时无法添加附件", "Save the journal before adding attachments");
     case "CONFLICT":
-      return "日志已在其他位置更新，请先保存当前内容";
+      return text(
+        "日志已在其他位置更新，请先保存当前内容",
+        "The journal changed elsewhere. Save the current draft first.",
+      );
     case "STORAGE_UNAVAILABLE":
-      return "附件存储暂时不可用";
+      return text("附件存储暂时不可用", "Attachment storage is temporarily unavailable");
     case "QUOTA_EXCEEDED":
-      return "存储空间不足";
+      return text("存储空间不足", "There is not enough storage space");
     default:
-      return "附件上传失败";
+      return text("附件上传失败", "Attachment upload failed");
   }
 }
 
@@ -77,6 +86,7 @@ interface AttachmentUploadFailure {
 
 export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
   const { preferences } = useUserPreferences();
   const { journal, isPersisted } = lookup;
   const [title, setTitle] = useState(journal.title);
@@ -87,6 +97,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const [promotionOpen, setPromotionOpen] = useState(false);
   const [promotionBlockId, setPromotionBlockId] = useState<EntityId | null>(null);
   const [promotedItem, setPromotedItem] = useState<KnowledgeItem | null>(null);
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const titleRef = useRef(title);
   const tagsTextRef = useRef(tagsText);
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
@@ -100,6 +111,9 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
   const [currentMarkdown, setCurrentMarkdown] = useState(() =>
     jsonToPlainText(initialEditorContent),
   );
+  const startsEmpty =
+    !isPersisted && title.trim().length === 0 && currentMarkdown.trim().length === 0;
+  const [initialTemplateChoicePending, setInitialTemplateChoicePending] = useState(startsEmpty);
 
   if (storeRef.current === null) {
     storeRef.current = createJournalEditorStore(isPersisted ? journal.revision : 0);
@@ -155,7 +169,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
     editorProps: {
       attributes: {
         role: "textbox",
-        "aria-label": "日志正文",
+        "aria-label": text("日志正文", "Journal content"),
         "aria-multiline": "true",
         class: "df-journal-prosemirror",
       },
@@ -195,7 +209,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
       if (!result.ok) {
         setAttachmentFailure({
           file,
-          message: attachmentErrorMessage(result.error),
+          message: attachmentErrorMessage(result.error, text),
         });
         return;
       }
@@ -212,7 +226,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
     } catch {
       setAttachmentFailure({
         file,
-        message: "无法读取或保存附件",
+        message: text("无法读取或保存附件", "The attachment could not be read or saved"),
       });
     } finally {
       setAttachmentBusy(false);
@@ -319,34 +333,71 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
     }
   }
 
+  function applyTemplate(template: JournalTemplate | null): void {
+    setInitialTemplateChoicePending(false);
+    setTemplatePickerOpen(false);
+    if (template === null || editor === null) {
+      return;
+    }
+
+    const content = journalTemplateEditorContent(template);
+    editor.commands.setContent(content, { emitUpdate: false });
+    setCurrentMarkdown(jsonToPlainText(content));
+    coordinator.update(currentDraft());
+    void coordinator.flush("explicit");
+  }
+
+  if (initialTemplateChoicePending || templatePickerOpen) {
+    return (
+      <section
+        aria-label={text("日志编辑器", "Journal editor")}
+        className="flex h-full min-h-0 flex-col bg-surface"
+        onKeyDown={handleKeyDown}
+      >
+        <JournalTemplatePicker
+          onSelect={applyTemplate}
+          {...(initialTemplateChoicePending ? {} : { onClose: () => setTemplatePickerOpen(false) })}
+        />
+      </section>
+    );
+  }
+
   return (
     <section
-      aria-label="日志编辑器"
+      aria-label={text("日志编辑器", "Journal editor")}
       className="flex h-full min-h-0 flex-col bg-surface"
       onKeyDown={handleKeyDown}
     >
       <div className="flex min-h-12 shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
         <div className="min-w-32 flex-1">
           <Input
-            aria-label="日志标题"
+            aria-label={text("日志标题", "Journal title")}
             value={title}
             maxLength={200}
-            placeholder="给这篇日志一个标题"
+            placeholder={text("给这篇日志一个标题", "Give this journal a title")}
             className="h-8 border-transparent bg-transparent px-1 text-base font-semibold shadow-none hover:border-border focus:border-primary"
             onChange={(event) => handleTitleChange(event.currentTarget.value)}
           />
         </div>
-        <SaveStatus status={toSaveState(saveStatus)} {...(savedAt === null ? {} : { savedAt })} />
+        <SaveStatus
+          status={toSaveState(saveStatus)}
+          labels={getSaveStatusLabels(text)}
+          {...(savedAt === null ? {} : { savedAt })}
+        />
+        <Button variant="secondary" size="sm" onClick={() => setTemplatePickerOpen(true)}>
+          <LayoutTemplate aria-hidden="true" className="size-4" />
+          {text("模板", "Template")}
+        </Button>
         <Button
           variant="ghost"
           size="sm"
-          aria-label="立即保存"
+          aria-label={text("立即保存", "Save now")}
           onClick={() => {
             void coordinator.flush("explicit");
           }}
         >
           <Save aria-hidden="true" className="size-4" />
-          <span className="max-[719px]:sr-only">保存</span>
+          <span className="max-[719px]:sr-only">{text("保存", "Save")}</span>
         </Button>
         <Button
           variant="secondary"
@@ -355,7 +406,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
           onClick={() => store.getState().setHistoryOpen(!historyOpen)}
         >
           <History aria-hidden="true" className="size-4" />
-          历史
+          {text("历史", "History")}
         </Button>
         {canPromoteJournal ? (
           <Button
@@ -367,7 +418,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
             }}
           >
             <BookPlus aria-hidden="true" className="size-4" />
-            沉淀整篇日志
+            {text("沉淀整篇日志", "Save journal to knowledge")}
           </Button>
         ) : null}
         {selectedBlockId === null || !canPromoteJournal ? null : (
@@ -380,7 +431,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
             }}
           >
             <BookPlus aria-hidden="true" className="size-4" />
-            沉淀当前块
+            {text("沉淀当前块", "Save current block")}
           </Button>
         )}
         {promotedItem === null ? null : (
@@ -388,7 +439,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
             to={`/knowledge/${promotedItem.id}`}
             className="text-xs font-medium text-primary hover:underline"
           >
-            打开知识项
+            {text("打开知识项", "Open knowledge item")}
           </Link>
         )}
         <JournalImportExport editor={editor} />
@@ -397,7 +448,9 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
       <div className="df-journal-editor-body flex min-h-0 flex-1 flex-col lg:flex-row">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {editor === null ? (
-            <p className="p-6 text-sm text-muted-foreground">正在初始化编辑器</p>
+            <p className="p-6 text-sm text-muted-foreground">
+              {text("正在初始化编辑器", "Initializing editor")}
+            </p>
           ) : (
             <>
               <EditorToolbar
@@ -410,7 +463,7 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
               <TableEditingToolbar editor={editor} />
               {attachmentBusy ? (
                 <p role="status" className="mx-3 mt-2 text-xs text-muted-foreground">
-                  正在上传附件
+                  {text("正在上传附件", "Uploading attachment")}
                 </p>
               ) : null}
               {attachmentFailure === null ? null : (
@@ -441,13 +494,13 @@ export function JournalEditor({ lookup, onRestored }: JournalEditorProps): React
               htmlFor="journal-tags"
               className="mb-1 block font-mono text-[10px] uppercase text-muted-foreground"
             >
-              Tags
+              {text("标签", "Tags")}
             </label>
             <Input
               id="journal-tags"
-              aria-label="日志标签"
+              aria-label={text("日志标签", "Journal tags")}
               value={tagsText}
-              placeholder="用逗号分隔标签"
+              placeholder={text("用逗号分隔标签", "Separate tags with commas")}
               className="h-8 border-transparent bg-surface-muted shadow-none"
               onChange={(event) => handleTagsChange(event.currentTarget.value)}
             />

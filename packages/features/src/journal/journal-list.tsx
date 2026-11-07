@@ -2,25 +2,35 @@ import type { JournalSummary } from "@dailyflow/application";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { getAppMessages, type AppMessages } from "../preferences/app-messages.js";
+
+const defaultCopy = getAppMessages("zh-CN").dashboard;
+
 export interface JournalListProps {
   readonly summaries: readonly JournalSummary[];
+  readonly copy?: AppMessages["dashboard"];
 }
 
-export function JournalList({ summaries }: JournalListProps): React.JSX.Element {
+export function JournalList({
+  summaries,
+  copy = defaultCopy,
+}: JournalListProps): React.JSX.Element {
   return (
     <section aria-labelledby="recent-journals-title" className="min-w-0">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase text-muted-foreground">Recent notes</p>
+          <p className="font-mono text-[10px] uppercase text-muted-foreground">
+            {copy.recentNotesEyebrow}
+          </p>
           <h2 id="recent-journals-title" className="mt-1 text-base font-semibold text-foreground">
-            最近记录
+            {copy.recentNotesTitle}
           </h2>
         </div>
       </div>
 
       {summaries.length === 0 ? (
         <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
-          最近还没有日志记录
+          {copy.noRecentJournals}
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-border border-y border-border">
@@ -38,10 +48,10 @@ export function JournalList({ summaries }: JournalListProps): React.JSX.Element 
                 </time>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">
-                    {summary.title.trim() || "无标题日志"}
+                    {summary.title.trim() || copy.untitledJournal}
                   </span>
                   <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                    {summary.excerpt || "暂无摘要"}
+                    {summary.excerpt || copy.noExcerpt}
                   </span>
                 </span>
                 <ArrowUpRight

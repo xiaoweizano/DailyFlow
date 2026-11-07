@@ -2,6 +2,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 
+import { chooseBlankJournal } from "./fixtures/seed.js";
+
 const routes = [
   "/",
   "/journal/2026-11-04",
@@ -64,6 +66,7 @@ test("runs the core workflow from the keyboard", async ({ page }) => {
   const navigation = page.getByRole("navigation", { name: "主导航" });
   await navigation.getByRole("link", { name: "每日日志" }).focus();
   await page.keyboard.press("Enter");
+  await chooseBlankJournal(page, { keyboard: true });
 
   await expect(page.getByLabel("日志标题")).toBeVisible();
   await page.getByLabel("日志标题").focus();

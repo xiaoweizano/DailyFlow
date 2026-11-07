@@ -148,11 +148,37 @@ afterEach(() => {
 });
 
 describe("JournalPage", () => {
+  it("starts an empty journal with a template chooser and remembers the selected template", async () => {
+    localStorage.clear();
+    const services = createServices("");
+    const user = userEvent.setup();
+    renderJournalPage(services);
+
+    expect(await screen.findByRole("heading", { name: "选择日志模板" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /空白日志/u })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /日报/u })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /周报/u })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /问题排查/u })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /复盘/u })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /日报/u }));
+
+    const editor = await screen.findByLabelText("日志正文");
+    expect(editor).toHaveTextContent("今日完成");
+    expect(JSON.parse(localStorage.getItem("dailyflow.journalTemplates.v1") ?? "{}")).toMatchObject(
+      {
+        recentTemplateIds: ["daily"],
+      },
+    );
+  });
+
   it("turns typed Markdown headings into heading nodes before autosave", async () => {
     const services = createServices("");
     const user = userEvent.setup();
     renderJournalPage(services);
 
+    await screen.findByRole("heading", { name: "选择日志模板" });
+    await user.click(screen.getByRole("button", { name: /空白日志/u }));
     const editor = await screen.findByLabelText("日志正文");
     await user.click(editor);
     await user.keyboard("## 标题");
@@ -300,5 +326,24 @@ describe("JournalPage", () => {
       isInline: true,
     });
     expect(await screen.findByRole("img", { name: "diagram.png" })).toBeTruthy();
+  });
+
+  it("renders journal controls in English when the persisted locale is en-US", async () => {
+    const services = createServices();
+    services.settings.load = vi.fn(async () => ({
+      preferences: {
+        ...DEFAULT_USER_PREFERENCES,
+        locale: "en-US" as const,
+      },
+      warning: null,
+    }));
+    renderJournalPage(services);
+
+    expect(await screen.findByRole("button", { name: "Previous day" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next day" })).toBeInTheDocument();
+    expect(await screen.findByRole("textbox", { name: "Journal content" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Template" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save now" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Undo" })).toBeInTheDocument();
   });
 });

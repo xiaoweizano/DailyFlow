@@ -2,6 +2,8 @@ import type { TimelineDaySummary } from "@dailyflow/application";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
+import { useAppMessages } from "../preferences/use-app-messages.js";
+import { useAppText } from "../preferences/use-app-text.js";
 import {
   buildAnnualHeatmapData,
   keyboardHeatmapDate,
@@ -10,32 +12,20 @@ import {
 
 const GRID_COLUMNS = "repeat(53, 0.875rem)";
 const GRID_ROWS = "repeat(7, 0.875rem)";
-const DATE_FORMATTER = new Intl.DateTimeFormat("zh-CN", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  weekday: "short",
-  timeZone: "UTC",
-});
-
 function activityClass(journalCount: number): string {
   if (journalCount >= 4) {
-    return "border-primary bg-primary/85";
+    return "df-activity-green-4";
   }
   if (journalCount === 3) {
-    return "border-primary/70 bg-primary/65";
+    return "df-activity-green-3";
   }
   if (journalCount === 2) {
-    return "border-primary/50 bg-primary/45";
+    return "df-activity-green-2";
   }
   if (journalCount === 1) {
-    return "border-primary/35 bg-primary/25";
+    return "df-activity-green-1";
   }
   return "border-border bg-surface-muted";
-}
-
-function formatAccessibleDate(value: string): string {
-  return DATE_FORMATTER.format(new Date(`${value}T00:00:00.000Z`));
 }
 
 export interface AnnualHeatmapProps {
@@ -57,6 +47,19 @@ export function AnnualHeatmap({
   onYearChange,
   onOpenDate,
 }: AnnualHeatmapProps): React.JSX.Element {
+  const text = useAppText();
+  const { locale } = useAppMessages();
+  const dateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+        timeZone: "UTC",
+      }),
+    [locale],
+  );
   const data = useMemo(
     () =>
       buildAnnualHeatmapData({
@@ -64,9 +67,10 @@ export function AnnualHeatmap({
         timezone,
         weekStartsOn,
         days,
+        locale,
         ...(today === undefined ? {} : { today }),
       }),
-    [days, timezone, today, weekStartsOn, year],
+    [days, locale, timezone, today, weekStartsOn, year],
   );
   const initialDate =
     today !== undefined && data.cells.some((cell) => cell.date === today)
@@ -120,38 +124,43 @@ export function AnnualHeatmap({
     <section aria-labelledby="annual-heatmap-title" className="min-w-0">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] uppercase text-muted-foreground">Annual rhythm</p>
+          <p className="font-mono text-[10px] uppercase text-muted-foreground">
+            {text("年度节奏", "Annual rhythm")}
+          </p>
           <h2 id="annual-heatmap-title" className="mt-1 text-xl font-semibold text-foreground">
-            年度活动
+            {text("年度活动", "Annual activity")}
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            每格代表一天，颜色按日志数量分为 0、1、2、3、4+ 五级。
+            {text(
+              "每格代表一天，颜色按日志数量分为 0、1、2、3、4+ 五级。",
+              "Each cell is one day. Color intensity represents 0, 1, 2, 3, or 4+ journals.",
+            )}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
           <button
             type="button"
-            aria-label="上一年"
+            aria-label={text("上一年", "Previous year")}
             className="inline-flex size-8 items-center justify-center border border-border-strong bg-surface text-foreground hover:border-primary/40"
             onClick={() => onYearChange(year - 1)}
           >
             <ChevronLeft aria-hidden="true" className="size-4" />
           </button>
           <select
-            aria-label="选择年份"
+            aria-label={text("选择年份", "Select year")}
             value={year}
             className="h-8 border border-border-strong bg-surface px-2 text-sm font-semibold text-foreground outline-none focus:border-primary"
             onChange={(event) => onYearChange(Number(event.currentTarget.value))}
           >
             {optionYears.map((option) => (
               <option key={option} value={option}>
-                {option} 年
+                {text(`${option} 年`, String(option))}
               </option>
             ))}
           </select>
           <button
             type="button"
-            aria-label="下一年"
+            aria-label={text("下一年", "Next year")}
             className="inline-flex size-8 items-center justify-center border border-border-strong bg-surface text-foreground hover:border-primary/40"
             onClick={() => onYearChange(year + 1)}
           >
@@ -198,7 +207,7 @@ export function AnnualHeatmap({
             <div
               ref={gridRef}
               role="grid"
-              aria-label={`${year} 年全年日志热力图`}
+              aria-label={text(`${year} 年全年日志热力图`, `Journal activity heatmap for ${year}`)}
               className="grid"
               style={{
                 gridTemplateRows: GRID_ROWS,
@@ -219,8 +228,14 @@ export function AnnualHeatmap({
                       role="gridcell"
                       data-heatmap-date={cell.date}
                       tabIndex={cell.date === focusedCell?.date ? 0 : -1}
-                      aria-label={`${cell.date}，${cell.journalCount} 篇日志，${cell.taskDueCount} 个任务到期`}
-                      title={`${cell.date} · ${cell.journalCount} 篇日志 · ${cell.taskDueCount} 个任务到期`}
+                      aria-label={text(
+                        `${cell.date}，${cell.journalCount} 篇日志，${cell.taskDueCount} 个任务到期`,
+                        `${cell.date}, ${cell.journalCount} journal${cell.journalCount === 1 ? "" : "s"}, ${cell.taskDueCount} task${cell.taskDueCount === 1 ? "" : "s"} due`,
+                      )}
+                      title={text(
+                        `${cell.date} · ${cell.journalCount} 篇日志 · ${cell.taskDueCount} 个任务到期`,
+                        `${cell.date} · ${cell.journalCount} journal${cell.journalCount === 1 ? "" : "s"} · ${cell.taskDueCount} task${cell.taskDueCount === 1 ? "" : "s"} due`,
+                      )}
                       className={[
                         "relative size-3.5 shrink-0 rounded-[2px] border outline-none",
                         "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
@@ -255,14 +270,20 @@ export function AnnualHeatmap({
         <p aria-live="polite" aria-atomic="true">
           {focusedCell === undefined
             ? ""
-            : `${formatAccessibleDate(focusedCell.date)}，${focusedCell.journalCount} 篇日志，${focusedCell.taskDueCount} 个任务到期`}
+            : text(
+                `${dateFormatter.format(new Date(`${focusedCell.date}T00:00:00.000Z`))}，${focusedCell.journalCount} 篇日志，${focusedCell.taskDueCount} 个任务到期`,
+                `${dateFormatter.format(new Date(`${focusedCell.date}T00:00:00.000Z`))}, ${focusedCell.journalCount} journal${focusedCell.journalCount === 1 ? "" : "s"}, ${focusedCell.taskDueCount} task${focusedCell.taskDueCount === 1 ? "" : "s"} due`,
+              )}
         </p>
         <div
           role="img"
-          aria-label="颜色图例：颜色越深表示日志数量越多，从 0 篇到 4 篇以上"
+          aria-label={text(
+            "颜色图例：颜色越深表示日志数量越多，从 0 篇到 4 篇以上",
+            "Color legend: darker colors represent more journals, from 0 to 4 or more",
+          )}
           className="flex items-center gap-1.5"
         >
-          <span aria-hidden="true">少</span>
+          <span aria-hidden="true">{text("少", "Less")}</span>
           {[0, 1, 2, 3, 4].map((level) => (
             <span
               key={level}
@@ -270,7 +291,7 @@ export function AnnualHeatmap({
               className={`size-3 rounded-[2px] border ${activityClass(level)}`}
             />
           ))}
-          <span aria-hidden="true">多</span>
+          <span aria-hidden="true">{text("多", "More")}</span>
         </div>
       </div>
     </section>

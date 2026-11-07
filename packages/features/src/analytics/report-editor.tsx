@@ -9,6 +9,7 @@ import { useRef, useState } from "react";
 
 import { useAppServices } from "../app-services-hooks.js";
 import { EditorToolbar } from "../journal/editor-toolbar.js";
+import { getSaveStatusLabels, useAppText, type AppText } from "../preferences/use-app-text.js";
 
 export interface ReportEditorProps {
   readonly period: AnalyticsPeriod;
@@ -23,14 +24,20 @@ export interface ReportEditorProps {
 
 type ReportSaveState = "idle" | "saving" | "saved" | "error";
 
-function reportErrorMessage(error: AppError): string {
+function reportErrorMessage(error: AppError, text: AppText): string {
   if (error.code === "CONFLICT") {
-    return "报告已在其他位置更新，请重新打开后再保存";
+    return text(
+      "报告已在其他位置更新，请重新打开后再保存",
+      "This report was updated elsewhere. Reopen it before saving.",
+    );
   }
   if (error.code === "VALIDATION_ERROR") {
-    return Object.values(error.fields ?? {})[0] ?? "报告内容未通过校验";
+    return (
+      Object.values(error.fields ?? {})[0] ??
+      text("报告内容未通过校验", "The report content did not pass validation.")
+    );
   }
-  return "报告保存失败，请稍后重试";
+  return text("报告保存失败，请稍后重试", "Failed to save the report. Try again later.");
 }
 
 export function ReportEditor({
@@ -44,6 +51,7 @@ export function ReportEditor({
   onDraftChange,
 }: ReportEditorProps): React.JSX.Element {
   const services = useAppServices();
+  const text = useAppText();
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<ReportSaveState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,7 +77,7 @@ export function ReportEditor({
     editorProps: {
       attributes: {
         role: "textbox",
-        "aria-label": "报告正文",
+        "aria-label": text("报告正文", "Report body"),
         "aria-multiline": "true",
         class: "df-journal-prosemirror",
       },
@@ -106,7 +114,7 @@ export function ReportEditor({
 
     if (!result.ok) {
       setSaveState("error");
-      setErrorMessage(reportErrorMessage(result.error));
+      setErrorMessage(reportErrorMessage(result.error, text));
       return;
     }
 
@@ -122,28 +130,30 @@ export function ReportEditor({
     <section aria-labelledby="report-editor-title" className="border border-border bg-surface">
       <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-[10px] uppercase text-muted-foreground">Local report</p>
+          <p className="font-mono text-[10px] uppercase text-muted-foreground">
+            {text("本地报告", "Local report")}
+          </p>
           <h2 id="report-editor-title" className="mt-1 text-base font-semibold text-foreground">
-            周期报告
+            {text("周期报告", "Period report")}
           </h2>
         </div>
-        <SaveStatus status={saveStatus} />
+        <SaveStatus status={saveStatus} labels={getSaveStatusLabels(text)} />
         <Button variant="ghost" size="sm" onClick={onClose}>
-          关闭报告
+          {text("关闭报告", "Close report")}
         </Button>
         <Button
           variant="secondary"
           size="sm"
-          title="AI 辅助写作：未配置"
-          aria-label="AI 辅助写作：未配置"
+          title={text("AI 辅助写作：未配置", "AI-assisted writing: not configured")}
+          aria-label={text("AI 辅助写作：未配置", "AI-assisted writing: not configured")}
           disabled
         >
           <Bot aria-hidden="true" className="size-4" />
-          AI 辅助
+          {text("AI 辅助", "AI assist")}
         </Button>
         <Button size="sm" disabled={saveState === "saving"} onClick={() => void save()}>
           <Save aria-hidden="true" className="size-4" />
-          保存报告
+          {text("保存报告", "Save report")}
         </Button>
       </header>
 
@@ -157,15 +167,15 @@ export function ReportEditor({
       )}
       {saveState === "saved" ? (
         <p role="status" className="border-b border-success/25 bg-success/5 px-4 py-2 text-sm">
-          报告已保存
+          {text("报告已保存", "Report saved")}
         </p>
       ) : null}
 
       <div className="border-b border-border px-4 py-3">
         <label className="grid gap-1.5 text-xs font-medium text-foreground">
-          报告标题
+          {text("报告标题", "Report title")}
           <Input
-            aria-label="报告标题"
+            aria-label={text("报告标题", "Report title")}
             value={title}
             maxLength={500}
             onChange={(event) => {
@@ -181,7 +191,9 @@ export function ReportEditor({
       </div>
 
       {editor === null ? (
-        <p className="p-6 text-sm text-muted-foreground">正在初始化报告编辑器</p>
+        <p className="p-6 text-sm text-muted-foreground">
+          {text("正在初始化报告编辑器", "Initializing report editor")}
+        </p>
       ) : (
         <>
           <EditorToolbar editor={editor} />

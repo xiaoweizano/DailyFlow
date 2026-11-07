@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useRef } from "react";
 
+import { useAppText } from "../preferences/use-app-text.js";
+
 export interface EditorToolbarProps {
   readonly editor: Editor;
   readonly attachmentBusy?: boolean;
@@ -29,93 +31,94 @@ export function EditorToolbar({
   attachmentBusy = false,
   onAttach,
 }: EditorToolbarProps): React.JSX.Element {
+  const text = useAppText();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div
       role="toolbar"
-      aria-label="编辑工具栏"
+      aria-label={text("编辑工具栏", "Editor toolbar")}
       className="flex flex-wrap items-center gap-1 border-b border-border px-2 py-1.5"
     >
       <IconButton
-        label="撤销"
+        label={text("撤销", "Undo")}
         disabled={!editor.can().undo()}
         onClick={() => editor.chain().focus().undo().run()}
       >
         <Undo2 aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="重做"
+        label={text("重做", "Redo")}
         disabled={!editor.can().redo()}
         onClick={() => editor.chain().focus().redo().run()}
       >
         <Redo2 aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="一级标题"
+        label={text("一级标题", "Heading 1")}
         variant={editor.isActive("heading", { level: 1 }) ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
       >
         <Heading1 aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="二级标题"
+        label={text("二级标题", "Heading 2")}
         variant={editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
       >
         <Heading2 aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="粗体"
+        label={text("粗体", "Bold")}
         variant={editor.isActive("bold") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
         <Bold aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="斜体"
+        label={text("斜体", "Italic")}
         variant={editor.isActive("italic") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
         <Italic aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="删除线"
+        label={text("删除线", "Strikethrough")}
         variant={editor.isActive("strike") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleStrike().run()}
       >
         <Strikethrough aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="项目列表"
+        label={text("项目列表", "Bullet list")}
         variant={editor.isActive("bulletList") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
       >
         <List aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="编号列表"
+        label={text("编号列表", "Numbered list")}
         variant={editor.isActive("orderedList") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
       >
         <ListOrdered aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="任务列表"
+        label={text("任务列表", "Task list")}
         variant={editor.isActive("taskList") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleTaskList().run()}
       >
         <ListChecks aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="引用"
+        label={text("引用", "Quote")}
         variant={editor.isActive("blockquote") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
         <Quote aria-hidden="true" />
       </IconButton>
       <IconButton
-        label="代码块"
+        label={text("代码块", "Code block")}
         variant={editor.isActive("codeBlock") ? "secondary" : "ghost"}
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
       >
@@ -124,7 +127,7 @@ export function EditorToolbar({
       {onAttach === undefined ? null : (
         <>
           <IconButton
-            label="添加附件"
+            label={text("添加附件", "Add attachment")}
             disabled={attachmentBusy}
             onClick={() => fileInputRef.current?.click()}
           >
@@ -133,7 +136,7 @@ export function EditorToolbar({
           <input
             ref={fileInputRef}
             type="file"
-            aria-label="选择附件"
+            aria-label={text("选择附件", "Choose attachment")}
             accept={ATTACHMENT_ALLOWED_MIME_TYPES.join(",")}
             className="sr-only"
             onChange={(event) => {

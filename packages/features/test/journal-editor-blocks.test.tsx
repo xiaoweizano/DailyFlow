@@ -174,6 +174,22 @@ function renderJournal(content?: TiptapJsonNode) {
 }
 
 describe("Journal editor blocks", () => {
+  it("opens the insertion menu from the plus control at the current block", async () => {
+    renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
+    const user = userEvent.setup();
+    const editor = await screen.findByLabelText("日志正文");
+
+    await user.click(editor);
+    await user.keyboard("正文");
+    await user.click(await screen.findByRole("button", { name: "在光标处插入内容" }));
+
+    await user.click(await screen.findByRole("menuitem", { name: "二级标题" }));
+
+    const headings = editor.querySelectorAll("h2");
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent("正文");
+  });
+
   it("inserts a three-column table from the slash menu", async () => {
     const services = renderJournal({ type: "doc", content: [{ type: "paragraph" }] });
     const user = userEvent.setup();

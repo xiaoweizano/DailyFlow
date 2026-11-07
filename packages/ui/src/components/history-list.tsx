@@ -14,6 +14,8 @@ export interface HistoryListProps {
   readonly items: readonly HistoryListItem[];
   readonly selectedId?: string | null;
   readonly emptyLabel: string;
+  readonly loadingLabel?: string;
+  readonly loadMoreLabel?: string;
   readonly loading?: boolean;
   readonly hasMore?: boolean;
   readonly onSelect?: (id: string) => void;
@@ -25,6 +27,8 @@ export function HistoryList({
   items,
   selectedId,
   emptyLabel,
+  loadingLabel = "正在加载版本",
+  loadMoreLabel = "加载更多版本",
   loading = false,
   hasMore = false,
   onSelect,
@@ -72,7 +76,7 @@ export function HistoryList({
       )}
 
       {loading ? (
-        <p className="px-3 py-2 text-center text-xs text-muted-foreground">正在加载版本</p>
+        <p className="px-3 py-2 text-center text-xs text-muted-foreground">{loadingLabel}</p>
       ) : null}
       {hasMore ? (
         <div className="border-t border-border p-2">
@@ -84,7 +88,7 @@ export function HistoryList({
             onClick={onLoadMore}
           >
             <RefreshCw aria-hidden="true" className="size-3.5" />
-            加载更多版本
+            {loadMoreLabel}
           </Button>
         </div>
       ) : null}

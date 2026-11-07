@@ -19,6 +19,8 @@ import { Input, SaveStatus } from "@dailyflow/ui";
 
 import { appModules, type AppModuleId, type AppRouteOptions } from "./app-modules.js";
 import { createCommandRegistry, detectShortcutPlatform } from "./platform/command-registry.js";
+import { useAppMessages } from "./preferences/use-app-messages.js";
+import { getSaveStatusLabels, useAppText } from "./preferences/use-app-text.js";
 import { SearchCommand } from "./search/search-command.js";
 
 export type AppShellProps = AppRouteOptions;
@@ -63,14 +65,18 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
   const params = useParams();
+  const { messages } = useAppMessages();
+  const text = useAppText();
   const currentModule = resolveCurrentModule(location.pathname);
   const isSettings = location.pathname === "/settings";
   const isHelp = location.pathname === "/help" || location.pathname.startsWith("/help/");
   const currentLabel = isSettings
-    ? "设置"
+    ? messages.shell.settings
     : isHelp
-      ? "帮助"
-      : (currentModule?.label ?? "DailyFlow");
+      ? messages.shell.help
+      : currentModule === undefined
+        ? "DailyFlow"
+        : messages.navigation[currentModule.id];
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -116,7 +122,7 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
         href="#main-workspace"
         className="sr-only fixed left-3 top-3 z-[100] rounded-[var(--radius-control)] bg-primary px-3 py-2 text-sm text-primary-foreground focus:not-sr-only"
       >
-        跳到主要内容
+        {messages.shell.skipToContent}
       </a>
 
       <aside className="df-sidebar">
@@ -142,20 +148,24 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
           </Link>
         </div>
 
-        <nav aria-label="主导航" className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-3">
+        <nav
+          aria-label={messages.shell.primaryNavigation}
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 py-3"
+        >
           <p className="df-nav-section-label mb-2 px-2 font-mono text-[10px] uppercase text-muted-foreground">
             Workspace
           </p>
           <ul className="grid gap-1">
             {appModules.map((module) => {
               const Icon = navIcons[module.id];
+              const label = messages.navigation[module.id];
 
               return (
                 <li key={module.id}>
                   <NavLink
                     to={navDestination(module.id)}
                     end={module.id === "dashboard"}
-                    title={module.label}
+                    title={label}
                     className={({ isActive }) =>
                       [
                         "df-nav-link flex h-9 min-w-0 items-center gap-2.5 rounded-[var(--radius-control)] border px-2.5 text-sm font-medium transition-colors",
@@ -166,7 +176,7 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
                     }
                   >
                     <Icon aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.8} />
-                    <span className="df-nav-copy truncate">{module.label}</span>
+                    <span className="df-nav-copy truncate">{label}</span>
                   </NavLink>
                 </li>
               );
@@ -177,7 +187,7 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
         <div className="border-t border-border p-2">
           <NavLink
             to="/settings"
-            title="设置"
+            title={messages.shell.settings}
             className={({ isActive }) =>
               [
                 "df-nav-link flex h-9 min-w-0 items-center gap-2.5 rounded-[var(--radius-control)] border px-2.5 text-sm font-medium transition-colors",
@@ -188,14 +198,17 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
             }
           >
             <Settings aria-hidden="true" className="size-4 shrink-0" strokeWidth={1.8} />
-            <span className="df-nav-copy truncate">设置</span>
+            <span className="df-nav-copy truncate">{messages.shell.settings}</span>
           </NavLink>
         </div>
       </aside>
 
       <div className="df-main">
         <header className="flex min-w-0 items-center gap-3 border-b border-border bg-surface/95 px-4 max-[719px]:px-3">
-          <nav aria-label="面包屑" className="flex min-w-0 shrink-0 items-center gap-1.5">
+          <nav
+            aria-label={messages.shell.breadcrumb}
+            className="flex min-w-0 shrink-0 items-center gap-1.5"
+          >
             <Link
               to="/"
               className="hidden text-xs text-muted-foreground hover:text-foreground sm:inline"
@@ -219,7 +232,7 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
             className="df-topbar-search min-w-0 flex-1 max-w-xl"
           >
             <label htmlFor="global-search" className="sr-only">
-              搜索日志、知识和任务
+              {messages.shell.searchLabel}
             </label>
             <div className="relative">
               <Search
@@ -229,7 +242,8 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
               <Input
                 id="global-search"
                 name="q"
-                placeholder="搜索日志、知识和任务"
+                type="search"
+                placeholder={messages.shell.searchLabel}
                 className="h-8 bg-surface-muted pl-9 pr-10 shadow-none max-[719px]:pl-3"
               />
               <span
@@ -242,12 +256,12 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
           </form>
 
           <div className="ml-auto flex shrink-0 items-center gap-3">
-            <SaveStatus status="idle" />
+            <SaveStatus status="idle" labels={getSaveStatusLabels(text)} />
             <span className="hidden h-4 w-px bg-border xl:block" aria-hidden="true" />
             <Link
               to="/help"
-              aria-label="帮助中心"
-              title="帮助中心"
+              aria-label={messages.shell.helpCenter}
+              title={messages.shell.helpCenter}
               className="inline-flex size-8 items-center justify-center rounded-[var(--radius-control)] border border-border bg-surface text-muted-foreground hover:border-primary/40 hover:text-foreground"
             >
               <BookOpenText aria-hidden="true" className="size-4" />
@@ -256,7 +270,7 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
               to={params.date ? `/journal/${params.date}` : navDestination("journal")}
               className="inline-flex h-8 items-center rounded-[var(--radius-control)] border border-primary bg-primary px-3 text-xs font-medium text-primary-foreground shadow-sm hover:bg-primary-hover max-[719px]:hidden"
             >
-              打开今日日志
+              {messages.shell.openTodayJournal}
             </Link>
           </div>
         </header>
@@ -269,11 +283,11 @@ export function AppShell({ version }: AppShellProps): React.JSX.Element {
       <footer className="df-statusbar">
         <div className="flex min-w-0 items-center gap-2">
           <span className="size-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
-          <span className="truncate">本地数据已就绪</span>
+          <span className="truncate">{messages.shell.localDataReady}</span>
         </div>
         <div className="df-statusbar-secondary flex shrink-0 items-center gap-3 font-mono">
           <span>v{version}</span>
-          <span>本地优先</span>
+          <span>{messages.shell.localFirst}</span>
         </div>
       </footer>
 

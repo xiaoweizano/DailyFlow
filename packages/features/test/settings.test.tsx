@@ -12,12 +12,13 @@ import {
 } from "@dailyflow/application";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AppRuntimeServices } from "../src/app-services-context.js";
 import type { StorageLocationRuntimeServices } from "../src/app-services-context.js";
 import { AppServicesProvider } from "../src/app-services-provider.js";
+import { AppShell } from "../src/app-shell.js";
 import { SettingsPage } from "../src/settings/settings-page.js";
 
 interface SettingsRuntimeStub {
@@ -79,6 +80,20 @@ function renderSettings(
     <MemoryRouter initialEntries={["/settings"]}>
       <AppServicesProvider services={services}>
         <SettingsPage platform={platform} />
+      </AppServicesProvider>
+    </MemoryRouter>,
+  );
+}
+
+function renderSettingsInsideShell(services: AppRuntimeServices): void {
+  render(
+    <MemoryRouter initialEntries={["/settings"]}>
+      <AppServicesProvider services={services}>
+        <Routes>
+          <Route element={<AppShell platform="web" storageLabel="IndexedDB" version="0.1.0" />}>
+            <Route path="settings" element={<SettingsPage platform="web" />} />
+          </Route>
+        </Routes>
       </AppServicesProvider>
     </MemoryRouter>,
   );
@@ -321,6 +336,46 @@ describe("settings page", () => {
     );
   });
 
+  it("previews the selected language across the application shell before saving", async () => {
+    const user = userEvent.setup();
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+
+    renderSettingsInsideShell(createSettingsServices({ load, save }));
+
+    expect(await screen.findByRole("link", { name: "工作台" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("界面语言"), "en-US");
+
+    expect(screen.getByRole("link", { name: "Workbench" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Daily Journal" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open today's journal" })).toBeInTheDocument();
+    expect(screen.getByText("Local data ready")).toBeInTheDocument();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it("presents interface feedback outside the startup settings group", async () => {
+    const load = vi.fn(async () => loaded());
+    const save = vi.fn(async (input: unknown) => ({
+      preferences: input as UserPreferences,
+      persisted: true,
+      warning: null,
+    }));
+
+    renderSettings(createSettingsServices({ load, save }));
+
+    const warningSwitch = await screen.findByRole("switch", { name: "显示设置提示" });
+    expect(warningSwitch.closest("[data-settings-group]")).toHaveAttribute(
+      "data-settings-group",
+      "interface-feedback",
+    );
+    expect(screen.getByRole("heading", { name: "界面反馈" })).toBeInTheDocument();
+  });
+
   it("exposes general, appearance, editor, data, and about settings", async () => {
     const user = userEvent.setup();
     const load = vi.fn(async () => loaded());
@@ -348,7 +403,10 @@ describe("settings page", () => {
     );
 
     await user.click(screen.getByRole("tab", { name: "外观" }));
-    expect(screen.getByRole("group", { name: "强调色" })).toBeInTheDocument();
+    const accent = screen.getByRole("group", { name: "强调色" });
+    expect(accent).toBeInTheDocument();
+    expect(accent).not.toHaveClass("overflow-x-auto");
+    expect(accent).toHaveClass("flex-wrap");
     expect(screen.getByRole("group", { name: "密度" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("tab", { name: "编辑器" }));
@@ -463,5 +521,34 @@ describe("settings page", () => {
     expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "General" })).toBeInTheDocument();
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it("renders secondary settings panels in English when the persisted locale is en-US", async () => {
+    const user = userEvent.setup();
+    const load = vi.fn(async () =>
+      loaded({
+        ...DEFAULT_USER_PREFERENCES,
+        locale: "en-US",
+      }),
+    );
+    const save = vi.fn(async () => ({
+      preferences: DEFAULT_USER_PREFERENCES,
+      persisted: true,
+      warning: null,
+    }));
+
+    renderSettings(createSettingsServices({ load, save }));
+
+    expect(await screen.findByRole("heading", { name: "Settings" })).toBeInTheDocument();
+    await user.click(screen.getByRole("tab", { name: "Data" }));
+    expect(screen.getByRole("heading", { name: "Data and storage" })).toBeInTheDocument();
+    expect(screen.getByText("Migration and backup")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change storage location" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("tab", { name: "About" }));
+    expect(screen.getByRole("region", { name: "Keyboard shortcuts" })).toBeInTheDocument();
+    expect(screen.getByText("Global search")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open help center" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "AI extension" })).toBeInTheDocument();
   });
 });

@@ -9,6 +9,7 @@ import type {
 } from "../app-services-context.js";
 import type { SettingsMessages } from "../preferences/messages.js";
 import type { ShortcutPlatform } from "../platform/command-registry.js";
+import { useAppText } from "../preferences/use-app-text.js";
 import { SettingsSection } from "./settings-section.js";
 
 export interface DataStorageSettingsProps {
@@ -28,6 +29,7 @@ export function DataStorageSettings({
   storageLocation,
   onUpdate,
 }: DataStorageSettingsProps): React.JSX.Element {
+  const text = useAppText();
   const isDesktop = platform === "windows" || platform === "macos";
   const [storageInfo, setStorageInfo] = useState<StorageLocationInfo | null>(null);
   const [migrating, setMigrating] = useState(false);
@@ -50,14 +52,19 @@ export function DataStorageSettings({
       })
       .catch(() => {
         if (active) {
-          setStorageError("无法读取当前数据目录，请稍后重试。");
+          setStorageError(
+            text(
+              "无法读取当前数据目录，请稍后重试。",
+              "Unable to read the current data directory. Try again later.",
+            ),
+          );
         }
       });
 
     return () => {
       active = false;
     };
-  }, [isDesktop, storageLocation]);
+  }, [isDesktop, storageLocation, text]);
 
   async function handleMigrate(): Promise<void> {
     if (storageLocation === undefined) {
@@ -81,11 +88,19 @@ export function DataStorageSettings({
       });
       setMigrationMessage(
         result.restartRequired
-          ? `数据已迁移并校验完成。请重启 DailyFlow 后使用新位置。原数据备份保存在 ${result.backupDirectory}`
-          : "数据已迁移并校验完成。",
+          ? text(
+              `数据已迁移并校验完成。请重启 DailyFlow 后使用新位置。原数据备份保存在 ${result.backupDirectory}`,
+              `Data was migrated and verified. Restart DailyFlow before using the new location. The original data backup is at ${result.backupDirectory}`,
+            )
+          : text("数据已迁移并校验完成。", "Data was migrated and verified."),
       );
     } catch {
-      setStorageError("更改存储位置失败，原数据没有被删除，请检查目标目录后重试。");
+      setStorageError(
+        text(
+          "更改存储位置失败，原数据没有被删除，请检查目标目录后重试。",
+          "The storage location could not be changed. Existing data was not deleted. Check the destination and try again.",
+        ),
+      );
     } finally {
       setMigrating(false);
     }
@@ -121,8 +136,14 @@ export function DataStorageSettings({
               />
               <p className="mt-1.5 break-words text-[11px] leading-5 text-muted-foreground">
                 {isDesktop
-                  ? `桌面端使用 ${storageLabel} 保存结构化数据，附件由同一应用数据目录管理。`
-                  : `Web 端使用 ${storageLabel}，浏览器负责持久化与空间配额。`}
+                  ? text(
+                      `桌面端使用 ${storageLabel} 保存结构化数据，附件由同一应用数据目录管理。`,
+                      `The desktop app stores structured data in ${storageLabel}; attachments live in the same application-data directory.`,
+                    )
+                  : text(
+                      `Web 端使用 ${storageLabel}，浏览器负责持久化与空间配额。`,
+                      `The web app uses ${storageLabel}; the browser manages persistence and storage quotas.`,
+                    )}
               </p>
               {storageError === null ? null : (
                 <p role="alert" className="mt-1.5 text-xs leading-5 text-danger">
@@ -141,11 +162,19 @@ export function DataStorageSettings({
             <div className="flex items-start gap-2.5">
               <MapPin aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
               <div>
-                <p className="text-sm font-medium text-foreground">迁移与备份</p>
+                <p className="text-sm font-medium text-foreground">
+                  {text("迁移与备份", "Migration and backup")}
+                </p>
                 <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
                   {isDesktop
-                    ? "更改数据目录前会复制并校验现有数据；恢复入口位于“数据”模块。"
-                    : "浏览器不提供自定义数据目录；请定期导出或创建备份。"}
+                    ? text(
+                        "更改数据目录前会复制并校验现有数据；恢复入口位于“数据”模块。",
+                        "Existing data is copied and verified before changing directories. Recovery is available in Data.",
+                      )
+                    : text(
+                        "浏览器不提供自定义数据目录；请定期导出或创建备份。",
+                        "The browser does not provide a custom data directory. Export or create backups regularly.",
+                      )}
                 </p>
               </div>
             </div>
@@ -153,16 +182,16 @@ export function DataStorageSettings({
               <p className="text-xs leading-5 text-muted-foreground sm:text-right">
                 {isDesktop
                   ? storageInfo?.isCustom
-                    ? "当前使用自定义位置"
-                    : "当前使用默认位置"
-                  : "由浏览器管理"}
+                    ? text("当前使用自定义位置", "Using a custom location")
+                    : text("当前使用默认位置", "Using the default location")
+                  : text("由浏览器管理", "Managed by the browser")}
               </p>
-              {isDesktop && storageLocation !== undefined ? (
+              {isDesktop ? (
                 <Button
                   type="button"
                   variant="secondary"
                   size="sm"
-                  disabled={migrating}
+                  disabled={migrating || storageLocation === undefined}
                   onClick={() => void handleMigrate()}
                 >
                   {migrating ? (
@@ -170,7 +199,9 @@ export function DataStorageSettings({
                   ) : (
                     <FolderCog aria-hidden="true" className="size-3.5" />
                   )}
-                  {migrating ? "正在迁移" : "更改存储位置"}
+                  {migrating
+                    ? text("正在迁移", "Migrating")
+                    : text("更改存储位置", "Change storage location")}
                 </Button>
               ) : null}
             </div>

@@ -2,51 +2,78 @@
 
 import "./setup-dom.js";
 
+import { DEFAULT_USER_PREFERENCES, type LocalePreference } from "@dailyflow/application";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
+import { createRuntimeSettingsStub } from "./runtime-settings-stub.js";
+import { AppMessagesProvider } from "../src/preferences/app-messages-context.js";
+import { UserPreferencesProvider } from "../src/preferences/user-preferences-context.js";
 import { HelpCenter, SafeMarkdown } from "../src/help/help-center.js";
 
-function renderHelp(): void {
+function renderHelp(locale: LocalePreference = "zh-CN"): void {
+  const settings = {
+    ...createRuntimeSettingsStub().settings,
+    load: async () => ({
+      preferences: {
+        ...DEFAULT_USER_PREFERENCES,
+        locale,
+      },
+      warning: null,
+    }),
+  };
+
   render(
-    <MemoryRouter initialEntries={["/help"]}>
-      <HelpCenter />
-    </MemoryRouter>,
+    <UserPreferencesProvider settings={settings}>
+      <AppMessagesProvider>
+        <MemoryRouter initialEntries={["/help"]}>
+          <HelpCenter />
+        </MemoryRouter>
+      </AppMessagesProvider>
+    </UserPreferencesProvider>,
   );
 }
 
 describe("offline help center", () => {
-  it("switches between Chinese and English documentation", async () => {
-    const user = userEvent.setup();
-    renderHelp();
+  it("uses the persisted application language for one continuous manual", async () => {
+    renderHelp("en-US");
 
-    expect(screen.getByRole("heading", { name: "DailyFlow 帮助中心" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "快速开始" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "English" }));
-
-    expect(screen.getByRole("heading", { name: "DailyFlow Help Center" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Quick Start" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "DailyFlow User Manual" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Manual contents" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Journals and Templates/u })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "English" })).not.toBeInTheDocument();
   });
 
-  it("filters the offline table of contents with help search", async () => {
+  it("filters manual sections with help search", async () => {
     const user = userEvent.setup();
     renderHelp();
 
     await user.type(screen.getByRole("searchbox", { name: "搜索帮助" }), "结构化块");
 
-    const directory = screen.getByRole("navigation", { name: "帮助目录" });
-    expect(within(directory).getByRole("button", { name: /每日日志/u })).toBeInTheDocument();
-    expect(within(directory).queryByRole("button", { name: /数据管理/u })).not.toBeInTheDocument();
+    const directory = screen.getByRole("navigation", { name: "手册目录" });
+    expect(within(directory).getByRole("button", { name: /每日日志与模板/u })).toBeInTheDocument();
+    expect(
+      within(directory).queryByRole("button", { name: /数据、备份与恢复/u }),
+    ).not.toBeInTheDocument();
   });
 
-  it("only renders safe internal and allowlisted external links", () => {
+  it("renders safe headings, grouped lists, and local anchors", () => {
     render(
       <MemoryRouter>
         <SafeMarkdown>
           {[
+            "## Section One {#section-one}",
+            "",
+            "### Detail",
+            "",
+            "- First",
+            "- Second",
+            "",
+            "[Jump to section](#section-one)",
             "<script>alert('unsafe')</script>",
             "[内部日志](/journal/2026-11-06)",
             "[不安全链接](javascript:alert('unsafe'))",
@@ -58,6 +85,15 @@ describe("offline help center", () => {
       </MemoryRouter>,
     );
 
+    expect(screen.getByRole("heading", { name: "Section One" })).toHaveAttribute(
+      "id",
+      "section-one",
+    );
+    expect(screen.getByRole("list").querySelectorAll("li")).toHaveLength(2);
+    expect(screen.getByRole("link", { name: "Jump to section" })).toHaveAttribute(
+      "href",
+      "#section-one",
+    );
     expect(document.querySelector("script")).toBeNull();
     expect(screen.getByRole("link", { name: "内部日志" })).toHaveAttribute(
       "href",

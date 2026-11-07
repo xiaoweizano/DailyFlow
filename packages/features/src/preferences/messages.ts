@@ -30,6 +30,8 @@ export interface SettingsMessages {
     readonly silentStartDescription: string;
     readonly closeToTray: string;
     readonly closeToTrayDescription: string;
+    readonly interfaceFeedback: string;
+    readonly interfaceFeedbackDescription: string;
     readonly warnings: string;
     readonly warningsDescription: string;
   };
@@ -124,6 +126,8 @@ const zhCN: SettingsMessages = {
     silentStartDescription: "开机启动时只保留托盘入口，不主动显示主窗口。",
     closeToTray: "关闭到托盘",
     closeToTrayDescription: "点击关闭按钮时隐藏窗口，而不退出应用。",
+    interfaceFeedback: "界面反馈",
+    interfaceFeedbackDescription: "控制应用在设置读写异常时的提示方式。",
     warnings: "显示设置提示",
     warningsDescription: "读取或保存异常时显示可恢复提示。",
   },
@@ -219,6 +223,8 @@ const enUS: SettingsMessages = {
     silentStartDescription: "Start in the tray without opening the main window.",
     closeToTray: "Close to tray",
     closeToTrayDescription: "Hide the window instead of quitting when closing it.",
+    interfaceFeedback: "Interface feedback",
+    interfaceFeedbackDescription: "Control how settings read and write failures are surfaced.",
     warnings: "Show settings warnings",
     warningsDescription: "Show recoverable messages when settings cannot be read or saved.",
   },

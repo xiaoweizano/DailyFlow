@@ -28,7 +28,7 @@ export function SegmentedControl<T extends string>({
       role="group"
       aria-label={label}
       className={cn(
-        "inline-flex h-9 max-w-full items-center gap-0.5 overflow-x-auto rounded-[var(--radius-control)] border border-border bg-surface-muted p-0.5",
+        "flex min-h-9 max-w-full flex-wrap items-center gap-0.5 rounded-[var(--radius-control)] border border-border bg-surface-muted p-0.5",
         className,
       )}
     >
